@@ -1,0 +1,10 @@
+{
+  "name": "ean-scan-liste",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EAN-Codes als Barcode anzeigen – beim Piepton des Scanners automatisch zum nächsten Code.",
+  "scripts": {
+    "start": "npx --yes http-server -c-1 -p 8080 .",
+    "test": "node --test"
+  }
+}
