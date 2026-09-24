@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Zeigt EAN-Codes nacheinander als Barcode an und schaltet beim Piepton des Scanners automatisch zum nächsten Code.">
+  <title>EAN Scan-Liste</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-title">EAN Scan-Liste</span>
+        <span class="brand-sub" id="list-summary">keine Liste</span>
+      </div>
+      <nav class="topbar-actions">
+        <button type="button" class="icon-btn" id="btn-list" title="Liste bearbeiten">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span>Liste</span>
+        </button>
+        <button type="button" class="icon-btn" id="btn-settings" title="Einstellungen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+          <span>Einstellungen</span>
+        </button>
+        <button type="button" class="icon-btn" id="btn-fullscreen" title="Vollbild" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          <span class="sr-only">Vollbild</span>
+        </button>
+      </nav>
+    </header>
+
+    <main class="stage">
+      <section class="panel" id="view-empty" hidden>
+        <h1>EAN-Codes zum Durchscannen</h1>
+        <p>Jeder Code wird groß als Barcode angezeigt. Sobald der Scanner piept, erscheint automatisch der nächste.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" data-action="open-list">Liste einfügen</button>
+          <button type="button" class="btn" data-action="open-off">Netto-Produkte laden</button>
+          <button type="button" class="btn ghost" data-action="load-demo">Testcodes laden</button>
+        </div>
+      </section>
+
+      <section class="current" id="view-code" hidden>
+        <div class="item-head">
+          <span class="pos" id="pos"></span>
+          <h1 class="item-name" id="item-name"></h1>
+        </div>
+        <div class="barcode-area" id="barcode-area">
+          <div class="barcode-card" id="barcode-card"><div id="barcode"></div></div>
+        </div>
+        <div class="item-foot">
+          <span class="item-code" id="item-code"></span>
+          <span class="item-note" id="item-note"></span>
+        </div>
+        <div class="progress" aria-hidden="true"><div class="progress-bar" id="progress-bar"></div></div>
+      </section>
+
+      <section class="panel" id="view-done" hidden>
+        <div class="done-check" aria-hidden="true">✓</div>
+        <h1>Fertig!</h1>
+        <p id="done-text"></p>
+        <div class="actions">
+          <button type="button" class="btn primary" data-action="restart">Von vorne beginnen</button>
+          <button type="button" class="btn" data-action="open-list">Liste ansehen</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="controls">
+      <div class="nav">
+        <button type="button" class="btn nav-btn" id="btn-prev" aria-label="Vorheriger Code">‹</button>
+        <button type="button" class="btn primary listen-btn" id="btn-listen">Scan-Ton-Erkennung starten</button>
+        <button type="button" class="btn nav-btn" id="btn-next" aria-label="Nächster Code">›</button>
+      </div>
+      <div class="meter" data-meter hidden>
+        <div class="meter-track"><div class="meter-fill"></div><div class="meter-threshold"></div></div>
+        <div class="meter-info"><span class="meter-dot"></span><span class="meter-label"></span></div>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Liste -->
+  <dialog class="sheet" id="dlg-list" aria-labelledby="dlg-list-title">
+    <form method="dialog" class="sheet-inner">
+      <header class="sheet-head">
+        <h2 id="dlg-list-title">EAN-Liste</h2>
+        <button class="icon-btn" value="close" aria-label="Schließen">✕</button>
+      </header>
+      <div class="sheet-body">
+        <p class="hint">Ein Code pro Zeile, optional mit Artikelname – z. B. direkt aus Excel kopiert oder <code>4006381333931;Textmarker</code>. Zeilen mit <code>#</code> werden ignoriert. Ein USB-Scanner kann auch direkt hier hinein scannen.</p>
+        <textarea id="list-text" rows="9" spellcheck="false" autocomplete="off" autocapitalize="off"
+          placeholder="4006381333931;Artikel 1&#10;96385074;Artikel 2"></textarea>
+        <p class="list-check" id="list-check"></p>
+        <div class="row">
+          <button type="button" class="btn primary" id="btn-apply-list">Übernehmen</button>
+          <label class="btn file-btn">Datei (CSV/TXT)<input type="file" id="list-file" accept=".txt,.csv,.tsv,text/plain,text/csv"></label>
+          <button type="button" class="btn ghost" data-action="load-demo">Testcodes</button>
+        </div>
+
+        <details class="off" id="off-box">
+          <summary>Netto-Produkte aus Open Food Facts laden</summary>
+          <p class="hint">Lädt EAN-Codes von Produkten, die in der freien Datenbank
+            <a href="https://world.openfoodfacts.org/store/netto-marken-discount" target="_blank" rel="noopener">Open Food Facts</a>
+            dem Händler „Netto Marken-Discount“ zugeordnet sind. Community-Daten, ohne Gewähr – Internet nötig.</p>
+          <div class="row">
+            <select id="off-count" aria-label="Anzahl Produkte">
+              <option value="25">25 Produkte</option>
+              <option value="50" selected>50 Produkte</option>
+              <option value="100">100 Produkte</option>
+              <option value="200">200 Produkte</option>
+            </select>
+            <button type="button" class="btn" id="btn-off-replace">Liste ersetzen</button>
+            <button type="button" class="btn ghost" id="btn-off-append">Anhängen</button>
+          </div>
+          <p class="hint" id="off-status" role="status"></p>
+        </details>
+
+        <h3 class="overview-title">Übersicht <span id="overview-stats"></span></h3>
+        <ol class="overview" id="overview"></ol>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Einstellungen -->
+  <dialog class="sheet" id="dlg-settings" aria-labelledby="dlg-settings-title">
+    <form method="dialog" class="sheet-inner">
+      <header class="sheet-head">
+        <h2 id="dlg-settings-title">Einstellungen</h2>
+        <button class="icon-btn" value="close" aria-label="Schließen">✕</button>
+      </header>
+      <div class="sheet-body">
+        <section class="group">
+          <h3>Scan-Ton (Mikrofon)</h3>
+          <label class="switch"><input type="checkbox" id="set-mic"><span>Beim Piepton des Scanners weiterschalten</span></label>
+          <div class="calib">
+            <p id="calib-state"></p>
+            <div class="calib-progress" id="calib-progress" hidden><div id="calib-bar"></div></div>
+            <div class="row">
+              <button type="button" class="btn primary" id="btn-calibrate">Scan-Ton anlernen</button>
+              <button type="button" class="btn ghost" id="btn-calib-reset">Auf automatisch</button>
+            </div>
+          </div>
+          <div class="meter" data-meter hidden>
+            <div class="meter-track"><div class="meter-fill"></div><div class="meter-threshold"></div></div>
+            <div class="meter-info"><span class="meter-dot"></span><span class="meter-label"></span></div>
+          </div>
+          <label class="field">
+            <span>Mindestlautstärke <output id="out-level"></output></span>
+            <input type="range" id="set-level" min="-100" max="-20" step="1">
+          </label>
+          <p class="hint">Der Balken zeigt die Lautstärke im Suchbereich. Beim Piepen muss er über die Linie gehen.
+            Schaltet es durch fremde Geräusche weiter (z. B. Kassen-Piepen), die Linie nach rechts schieben.</p>
+          <label class="field">
+            <span>Sperrzeit nach einem Scan <output id="out-cooldown"></output></span>
+            <input type="range" id="set-cooldown" min="150" max="3000" step="50">
+          </label>
+        </section>
+
+        <section class="group">
+          <h3>Scanner am selben Gerät (USB/Bluetooth)</h3>
+          <label class="switch"><input type="checkbox" id="set-keyboard"><span>Eingabe des Scanners erkennen</span></label>
+          <p class="hint">Ist der Scanner mit diesem Gerät verbunden, „tippt“ er den gelesenen Code. Das wird auch ohne Mikrofon erkannt.</p>
+        </section>
+
+        <section class="group">
+          <h3>Anzeige</h3>
+          <label class="field">
+            <span>Barcode-Größe <output id="out-size"></output></span>
+            <input type="range" id="set-size" min="40" max="160" step="5">
+          </label>
+          <label class="switch"><input type="checkbox" id="set-loop"><span>Nach dem letzten Code wieder von vorne</span></label>
+        </section>
+
+        <section class="group">
+          <h3>Fortschritt</h3>
+          <button type="button" class="btn danger" id="btn-reset-progress">Zurück zum ersten Code</button>
+        </section>
+
+        <p class="hint">Solange dieses Fenster offen ist, wird nicht weitergeschaltet – ein erkannter Ton lässt nur den Punkt an der Anzeige grün aufleuchten.</p>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/ean.js"></script>
+  <script src="js/tone-detector.js"></script>
+  <script src="js/keyboard-scanner.js"></script>
+  <script src="js/off-import.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
