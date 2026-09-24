@@ -652,7 +652,7 @@
       (c.skip ? ' · ' + c.skip + ' ↷ übersprungen' : '') + ' · ' + c.open + ' offen';
     el.dataInfo.textContent =
       'Tagesliste vom ' + formatDay(state.day) + ': ' + state.items.length + ' von ' + state.all.length +
-      ' Artikeln aus dem Sortiment von Netto Marken-Discount (Deutschland), Eigenmarken-Lebensmittel' +
+      ' Artikeln aus dem Sortiment von Netto Marken-Discount (Deutschland), Eigenmarken' +
       (state.datenstand ? ', Datenstand ' + state.datenstand : '') + '. Angaben ohne Gewähr.';
   }
 

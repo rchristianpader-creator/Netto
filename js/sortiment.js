@@ -2,6 +2,7 @@
  * Lädt das Sortiment aus einer CSV-Datei (data/netto-sortiment.csv).
  * Erwartete Spalten (Reihenfolge egal, weitere Spalten werden ignoriert):
  *   ean; produktname; marke; inhalt; kategorie; …; datenstand (optional: warengruppe)
+ * Englische Spaltennamen wie bei Open Food Facts gehen auch: ean, product_name, brand, quantity, category.
  * Trennzeichen Semikolon, Komma oder Tab; Felder dürfen in "Anführungszeichen" stehen.
  */
 (function (root, factory) {
@@ -13,10 +14,10 @@
 
   const COLUMNS = {
     ean: ['ean', 'gtin', 'barcode', 'ean-code'],
-    name: ['produktname', 'name', 'artikel', 'bezeichnung'],
+    name: ['produktname', 'name', 'artikel', 'bezeichnung', 'product_name'],
     marke: ['marke', 'brand'],
-    inhalt: ['inhalt', 'menge', 'größe', 'groesse'],
-    kategorie: ['kategorie'],
+    inhalt: ['inhalt', 'menge', 'größe', 'groesse', 'quantity'],
+    kategorie: ['kategorie', 'category'],
     warengruppe: ['warengruppe', 'abteilung'],
     datenstand: ['datenstand', 'stand'],
   };

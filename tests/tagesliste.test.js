@@ -39,7 +39,7 @@ test('gleicher Tag = gleiche Liste, jeder Tag eine andere', () => {
 
 test('Auswahl: jeder Artikel höchstens einmal, nur aus dem Sortiment; nach und nach kommt jeder dran', () => {
   const gesehen = new Set();
-  for (const tag of tage(60)) {
+  for (const tag of tage(365)) {
     const auswahl = tagesliste(tag);
     assert.equal(new Set(auswahl).size, auswahl.length);
     auswahl.forEach((it) => {
@@ -47,7 +47,7 @@ test('Auswahl: jeder Artikel höchstens einmal, nur aus dem Sortiment; nach und 
       gesehen.add(it.code);
     });
   }
-  assert.equal(gesehen.size, items.length, 'in 60 Tagen kommt jeder Artikel mindestens einmal vor');
+  assert.equal(gesehen.size, items.length, 'im Lauf eines Jahres kommt jeder Artikel mindestens einmal vor');
 });
 
 test('Auswahl bleibt stabil, wenn sich das Sortiment ändert', () => {
@@ -72,7 +72,7 @@ test('Bereich "Artikel pro Tag": eigene Grenzen, vertauscht, Unsinn → Standard
     assert.ok(n >= 10 && n <= 12, String(n));
   }
   assert.equal(tagesliste('2026-09-24', { min: 7, max: 7 }).length, 7);
-  assert.equal(tagesliste('2026-09-24', { min: 300, max: 400 }).length, items.length);
+  assert.equal(tagesliste('2026-09-24', { min: items.length + 1, max: items.length + 50 }).length, items.length);
   assert.equal(T.pick(items.slice(0, 30), 1).length, 30);
   // größerer Bereich: die bisherige Auswahl bleibt, es kommen nur Artikel dazu
   const klein = tagesliste('2026-09-24', { min: 50, max: 50 });

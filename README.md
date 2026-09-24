@@ -6,8 +6,9 @@ Seite automatisch zum nächsten Artikel.** Dafür hört die Seite über das Mikr
 
 **Online:** <https://rchristianpader-creator.github.io/Netto/>
 
-- 245 Netto-Eigenmarken-Lebensmittel (BioBio, Gutes Land, Gut Ponholz, Lieblings, Mondo Italiano, Clarky's, …)
-  aus [`data/netto-sortiment.csv`](data/netto-sortiment.csv), alle EANs geprüft
+- 571 Netto-Eigenmarken-Artikel: Lebensmittel, Getränke, Drogerie und Haushalt (BioBio, Gutes Land, Gut Ponholz,
+  Hofmaier, Mondo Italiano, Clarkys, Goutier, Pure & Basic, …) aus [`data/netto-sortiment.csv`](data/netto-sortiment.csv),
+  alle EANs mit gültiger Prüfziffer
 - **Jeden Tag eine neue Liste:** 50 bis 80 zufällig ausgewählte Artikel, auch die Anzahl ist zufällig
 - Reihenfolge wie beim Gang durch den Laden: Warengruppe für Warengruppe, innerhalb jeder Gruppe zufällig gemischt
 - Barcodes pixelgenau gerendert (EAN-13 und EAN-8), auch im Dunkelmodus schwarz auf weiß
@@ -39,9 +40,10 @@ Häkchen (✓, ↷) gelten jeweils für den Tag.
 
 Die Artikel der Tagesliste kommen nach Warengruppen sortiert, in der Reihenfolge eines Rundgangs durch die Filiale:
 
-Milch & Milchgetränke → Joghurt → Quark & Desserts → Butter, Sahne & Margarine → Käse → Wurst & Aufschnitt →
-Feinkost & Salate → Fleisch & Geflügel → H-Milch & Kondensmilch → Konserven & Fertiggerichte →
-Nudeln, Reis & Backzutaten → Saucen, Fonds & Gewürze → Frühstück & Brotaufstrich → Snacks & Nüsse → Getränke → Tiefkühl
+Obst & Gemüse → Brot & Backwaren → Milch & Milchgetränke → Joghurt → Quark & Desserts → Butter, Sahne & Margarine →
+Eier → Käse → Wurst & Aufschnitt → Feinkost & Salate → Fleisch & Geflügel → H-Milch & Kondensmilch →
+Konserven & Fertiggerichte → Nudeln, Reis & Backzutaten → Saucen, Fonds & Gewürze → Frühstück & Brotaufstrich →
+Süßwaren & Snacks → Drogerie & Körperpflege → Haushalt & Papierwaren → Tiernahrung → Getränke → Tiefkühl
 
 Innerhalb jeder Warengruppe ist die Reihenfolge zufällig (gehört zur Tagesliste, bleibt also beim Neuladen gleich).
 Die Warengruppe steht über dem Produktnamen; beim Wechsel in die nächste Gruppe kommt ein kurzer Hinweis
@@ -51,8 +53,10 @@ Die Warengruppe steht über dem Produktnamen; beim Wechsel in die nächste Grupp
   eigenen Filiale). „Standard-Reihenfolge“ stellt den Ausgangszustand wieder her.
 
 Die Warengruppe wird aus Kategorie, Produktname und Marke bestimmt (z. B. „Feiner Leberkäse“ → Wurst & Aufschnitt,
-„Butterkäse“ → Käse). Soll ein Artikel woanders einsortiert werden, in der CSV eine Spalte `warengruppe` mit dem
-Gruppennamen ergänzen – sie hat Vorrang.
+„Butterkäse“ → Käse). Kategorie-Kürzel wie bei Open Food Facts (`frozen`, `personal_care`, `dairy`, `meat_fish`, …)
+werden erkannt; bei groben Kürzeln entscheidet der Name genauer („Kräuterquark“ → Quark & Desserts, „Sardinen in
+Sonnenblumenöl“ → Konserven). Soll ein Artikel woanders einsortiert werden, in der CSV eine Spalte `warengruppe` mit
+dem Gruppennamen ergänzen – sie hat Vorrang.
 
 Über **Tagesliste** oben rechts: Übersicht der heutigen Artikel mit Stand (✓ gescannt, ↷ übersprungen, offen) und
 Suche nach Name, Marke oder EAN. Antippen springt direkt zu diesem Artikel.
@@ -88,12 +92,14 @@ ean;produktname;marke;inhalt;kategorie;status;quelle;datenstand
 ```
 
 Pflicht ist nur die Spalte `ean`; `produktname`, `marke` und `inhalt` werden angezeigt, `kategorie` bzw. `warengruppe`
-bestimmen die Einsortierung, weitere Spalten werden ignoriert. Zum Aktualisieren die Datei auf GitHub ersetzen (im Ordner `data` → *Add file → Upload files*, gleicher
-Dateiname). Ein bis zwei Minuten später wird aus dem neuen Sortiment ausgelost; die heutige Liste bleibt dabei weitgehend
-gleich, der Fortschritt bleibt je EAN erhalten.
+bestimmen die Einsortierung, weitere Spalten werden ignoriert. Englische Spaltennamen wie bei Open Food Facts
+(`ean,product_name,brand,category,quantity,source`, mit Komma getrennt) gehen auch. Zum Aktualisieren die Datei auf GitHub ersetzen (im Ordner `data` → *Add file → Upload files*, gleicher
+Dateiname). Ein bis zwei Minuten später wird aus dem neuen Sortiment ausgelost; bei kleinen Änderungen bleibt die
+heutige Liste weitgehend gleich, der Fortschritt bleibt je EAN erhalten.
 
-Datenstand der mitgelieferten Liste: 24.09.2026, eigene Recherche (Open Food Facts, identitaetskennzeichen.de,
-Netto-Produktseiten). Angaben ohne Gewähr.
+Datenstand der mitgelieferten Liste: 24.09.2026, eigene Recherche (Open Food Facts, Open Beauty Facts,
+identitaetskennzeichen.de, Netto-Produktseiten) sowie Einträge aus Buycott, die nicht verifiziert sind (Spalte
+`status`). Angaben ohne Gewähr.
 
 ## Veröffentlichung
 

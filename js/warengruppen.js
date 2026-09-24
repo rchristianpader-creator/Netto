@@ -10,7 +10,8 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  // Standard-Laufweg: Frische am Eingang, Kühlregal, Trockensortiment, Getränke, Tiefkühl vor der Kasse.
+  // Standard-Laufweg: Frische am Eingang, Kühlregal, Trockensortiment, Drogerie/Haushalt, Getränke,
+  // Tiefkühl vor der Kasse.
   const GRUPPEN = [
     { id: 'obst', name: 'Obst & Gemüse' },
     { id: 'brot', name: 'Brot & Backwaren' },
@@ -18,6 +19,7 @@
     { id: 'joghurt', name: 'Joghurt' },
     { id: 'dessert', name: 'Quark & Desserts' },
     { id: 'butter', name: 'Butter, Sahne & Margarine' },
+    { id: 'eier', name: 'Eier' },
     { id: 'kaese', name: 'Käse' },
     { id: 'wurst', name: 'Wurst & Aufschnitt' },
     { id: 'feinkost', name: 'Feinkost & Salate' },
@@ -27,7 +29,10 @@
     { id: 'nudeln', name: 'Nudeln, Reis & Backzutaten' },
     { id: 'saucen', name: 'Saucen, Fonds & Gewürze' },
     { id: 'fruehstueck', name: 'Frühstück & Brotaufstrich' },
-    { id: 'snacks', name: 'Snacks & Nüsse' },
+    { id: 'snacks', name: 'Süßwaren & Snacks' },
+    { id: 'drogerie', name: 'Drogerie & Körperpflege' },
+    { id: 'haushalt', name: 'Haushalt & Papierwaren' },
+    { id: 'tier', name: 'Tiernahrung' },
     { id: 'getraenke', name: 'Getränke' },
     { id: 'tk', name: 'Tiefkühl' },
     { id: 'sonstiges', name: 'Sonstiges' },
@@ -54,17 +59,20 @@
 
   // 2) Produktname – Reihenfolge ist wichtig (z. B. Leberkäse vor Käse, Buttermilch vor Butter).
   const NAME_REGELN = [
+    ['eier', /\beier\b/],
     ['tk', /tiefkühl|pizza(?!käse)|schlemmerfilet|fischstäbchen|\beis\b|eiscreme|pommes/],
     ['getraenke', /\bbier\b|pils|export|saft\b|schorle|limonade|eistee|mineralwasser|\bcola\b|nektar/],
     ['milch', /espresso|macchiato|cappuccino|latte\b|milchkaffee/],
-    ['hmilch', /\bh-|haltbar|kondensmilch|kaffeesahne/],
+    ['hmilch', /\bh-|haltbar|kondensmilch|kaffeesahne|kaffeeweißer/],
     ['konserven', /eintopf|topf\b|konserve|\bdose\b/],
     ['dessert', /panna cotta|pudding|dessert|milchreis|grießbrei|mousse/],
+    ['feinkost', /kartoffelsalat|nudelsalat|krautsalat|eiersalat|heringssalat|wurstsalat/],
     ['saucen', /sauce|soße|mayonnaise|ketchup|senf|dressing|\bfond\b|brühe|zitronello|essig/],
     ['wurst', /leberkäse|fleischkäse/],
     ['fleisch', /leberkäsbrät|\bbrät\b|\broh\b/],
     ['kaese', /käse|gouda|mozzarella|maasdamer|emmentaler|tilsiter|limburger|\bfeta\b|camembert|parmesan|edamer/],
     ['feinkost', /fleischsalat|salat\b|antipasti|hummus|\bdip\b/],
+    ['konserven', /sardine|thunfisch|makrele|hering|bückling/],
     ['fleisch', /hackfleisch|gulasch|steak|hähnchen|puten|geschnetzeltes|schenkel|beinscheiben|innenfilet|kotelett|schnitzel|burger|braten\b/],
     ['wurst', /wurst|würstchen|schinken|lyoner|salami|mortadella|kasseler|aufschnitt|pastete|pfefferbeisser|prosciutto|speck\b|cabanossi/],
     ['dessert', /quark|protein|genussmoment/],
@@ -87,6 +95,35 @@
     ['getraenke', /stardrink|schloss/],
   ];
 
+  // 0) Kategorie-Kürzel wie bei Open Food Facts ("frozen", "meat_fish", …). Eindeutige Kürzel legen die
+  //    Warengruppe fest. Grobe Kürzel: [Gruppe, Namensregeln, die innerhalb davon genauer einsortieren].
+  const nameRegeln = (...ids) => NAME_REGELN.filter(([id]) => ids.includes(id));
+  const KUERZEL = new Map(
+    Object.entries({
+      fruit_vegetables: 'obst',
+      bakery: 'brot',
+      cheese: 'kaese',
+      canned_jarred: 'konserven',
+      pasta_rice_grains: 'nudeln',
+      baking: 'nudeln',
+      sauces_spices_condiments: 'saucen',
+      coffee_tea: 'fruehstueck',
+      breakfast_cereals: 'fruehstueck',
+      snacks: 'snacks',
+      personal_care: 'drogerie',
+      household_cleaning: 'haushalt',
+      paper_hygiene: 'haushalt',
+      pet: 'tier',
+      beverages_nonalcoholic: 'getraenke',
+      beverages_alcoholic: 'getraenke',
+      frozen: 'tk',
+      dairy: ['milch', nameRegeln('milch', 'joghurt', 'dessert', 'butter', 'hmilch', 'kaese')],
+      meat_fish: ['fleisch', nameRegeln('wurst', 'fleisch', 'feinkost', 'konserven')],
+      sweets: ['snacks', [['fruehstueck', /honig|konfitüre|marmelade|aufstrich|dicksaft/]]],
+      plant_based: ['hmilch', [['fruehstueck', /aufstrich|streichcreme/]]],
+    })
+  );
+
   const first = (rules, text) => {
     for (const [id, re] of rules) if (re.test(text)) return id;
     return null;
@@ -99,20 +136,33 @@
       const g = GRUPPEN.find((x) => x.id === explicit || x.name.toLowerCase() === explicit);
       if (g) return g.id;
     }
-    const kategorie = String(item.kategorie || '').toLowerCase();
+    const kategorie = String(item.kategorie || '').trim().toLowerCase();
+    const name = String(item.name || '').toLowerCase();
+    const kuerzel = KUERZEL.get(kategorie);
+    if (typeof kuerzel === 'string') return kuerzel;
+    if (kuerzel) return first(kuerzel[1], name) || kuerzel[0];
     return (
       (kategorie && first(KATEGORIE_REGELN, kategorie)) ||
-      first(NAME_REGELN, String(item.name || '').toLowerCase()) ||
+      first(NAME_REGELN, name) ||
       first(MARKE_REGELN, String(item.marke || '').toLowerCase()) ||
       'sonstiges'
     );
   }
 
-  /** Gespeicherte Reihenfolge bereinigen: unbekannte raus, fehlende ergänzen, "Sonstiges" immer zuletzt. */
+  /**
+   * Gespeicherte Reihenfolge bereinigen: unbekannte raus, fehlende an ihrer Standardstelle einfügen
+   * (hinter der Gruppe, die im Standard-Laufweg davor kommt), "Sonstiges" immer zuletzt.
+   */
   function normalizeOrder(order) {
-    const known = (Array.isArray(order) ? order : []).filter((id, i, a) => BY_ID.has(id) && a.indexOf(id) === i);
-    const missing = DEFAULT_ORDER.filter((id) => !known.includes(id));
-    return known.concat(missing).filter((id) => id !== 'sonstiges').concat('sonstiges');
+    const result = (Array.isArray(order) ? order : []).filter(
+      (id, i, a) => BY_ID.has(id) && id !== 'sonstiges' && a.indexOf(id) === i
+    );
+    DEFAULT_ORDER.forEach((id, i) => {
+      if (id === 'sonstiges' || result.includes(id)) return;
+      const davor = DEFAULT_ORDER.slice(0, i).reverse().find((g) => result.includes(g));
+      result.splice(davor ? result.indexOf(davor) + 1 : 0, 0, id);
+    });
+    return result.concat('sonstiges');
   }
 
   // Stabiler Pseudozufall je (seed, EAN): gleiche Mischung nach Neuladen, neue Mischung bei neuem seed.
