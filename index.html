@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#0f172a">
-  <meta name="description" content="Zeigt das Netto-Marken-Discount-Sortiment als Barcodes an und schaltet beim Piepton des Scanners automatisch zum nächsten Artikel.">
+  <meta name="description" content="Zeigt jeden Tag 50 bis 80 zufällige Artikel aus dem Netto-Marken-Discount-Sortiment als Barcodes an und schaltet beim Piepton des Scanners automatisch zum nächsten Artikel.">
   <title>EAN Scan-Liste</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
@@ -19,9 +19,9 @@
         <span class="brand-sub" id="list-summary">Sortiment wird geladen …</span>
       </div>
       <nav class="topbar-actions">
-        <button type="button" class="icon-btn" id="btn-list" title="Sortiment">
+        <button type="button" class="icon-btn" id="btn-list" title="Tagesliste">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-          <span>Sortiment</span>
+          <span>Tagesliste</span>
         </button>
         <button type="button" class="icon-btn" id="btn-settings" title="Einstellungen">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
@@ -89,11 +89,11 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-  <!-- Sortiment -->
+  <!-- Tagesliste -->
   <dialog class="sheet" id="dlg-list" aria-labelledby="dlg-list-title">
     <form method="dialog" class="sheet-inner">
       <header class="sheet-head">
-        <h2 id="dlg-list-title">Sortiment</h2>
+        <h2 id="dlg-list-title">Tagesliste</h2>
         <button class="icon-btn" value="close" aria-label="Schließen">✕</button>
       </header>
       <div class="sheet-body">
@@ -142,9 +142,27 @@
         </section>
 
         <section class="group">
+          <h3>Tagesliste</h3>
+          <p class="hint">Jeden Tag wird aus dem Sortiment eine neue Liste ausgelost, Artikel und Anzahl zufällig.
+            Sie bleibt bis Mitternacht gleich, auch nach dem Neuladen.</p>
+          <p class="tages-info" id="tages-info"></p>
+          <div class="per-day">
+            <span>Artikel pro Tag</span>
+            <label>von <input type="number" id="set-per-day-min" min="1" max="9999" step="1" inputmode="numeric"></label>
+            <label>bis <input type="number" id="set-per-day-max" min="1" max="9999" step="1" inputmode="numeric"></label>
+          </div>
+          <div class="row">
+            <button type="button" class="btn" id="btn-restart-day">Von vorne beginnen</button>
+            <button type="button" class="btn danger" id="btn-new-list">Neue Liste auslosen</button>
+          </div>
+          <p class="hint">„Von vorne beginnen“ setzt nur die Häkchen der heutigen Liste zurück.
+            „Neue Liste auslosen“ ersetzt sie sofort durch eine andere Zufallsauswahl.</p>
+        </section>
+
+        <section class="group">
           <h3>Laufweg durch den Laden</h3>
           <p class="hint">Die Warengruppen kommen in dieser Reihenfolge, die Artikel innerhalb einer Gruppe zufällig gemischt.
-            Mit ↑ ↓ an die eigene Filiale anpassen.</p>
+            Mit ↑ ↓ an die eigene Filiale anpassen. Die Zahl zeigt, wie viele Artikel der Gruppe heute dran sind.</p>
           <ol class="laufweg" id="laufweg"></ol>
           <div class="row">
             <button type="button" class="btn ghost" id="btn-laufweg-reset">Standard-Reihenfolge</button>
@@ -166,12 +184,6 @@
           <label class="switch"><input type="checkbox" id="set-loop"><span>Nach dem letzten Artikel wieder von vorne</span></label>
         </section>
 
-        <section class="group">
-          <h3>Fortschritt</h3>
-          <p class="hint">Setzt alle Markierungen zurück und mischt die Artikel innerhalb der Warengruppen neu.</p>
-          <button type="button" class="btn danger" id="btn-reset-progress">Neu starten (neu gemischt)</button>
-        </section>
-
         <p class="hint">Solange dieses Fenster offen ist, wird nicht weitergeschaltet – ein erkannter Ton lässt nur den Punkt an der Anzeige grün aufleuchten.</p>
       </div>
     </form>
@@ -180,6 +192,7 @@
   <script src="js/ean.js"></script>
   <script src="js/sortiment.js"></script>
   <script src="js/warengruppen.js"></script>
+  <script src="js/tagesliste.js"></script>
   <script src="js/tone-detector.js"></script>
   <script src="js/keyboard-scanner.js"></script>
   <script src="js/app.js"></script>

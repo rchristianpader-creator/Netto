@@ -1,4 +1,7 @@
-/* EAN Scan-Liste – Bedienoberfläche. Benötigt ean.js, sortiment.js, tone-detector.js, keyboard-scanner.js. */
+/*
+ * EAN Scan-Liste – Bedienoberfläche.
+ * Benötigt ean.js, sortiment.js, warengruppen.js, tagesliste.js, tone-detector.js, keyboard-scanner.js.
+ */
 (function () {
   'use strict';
 
@@ -8,6 +11,7 @@
   const BASE_WIDTH = 520; // maximale Barcode-Breite in CSS-Pixeln bei Größe 100 %
   const MIN_BAR_HEIGHT = 22; // Module
   const MAX_BAR_HEIGHT = 70; // Module (GS1-Nennmaß EAN-13: ca. 69)
+  const IDLE_MS = 10 * 60 * 1000; // neuer Tag bei offener Seite: erst so lange nach dem letzten Scan umschalten
   const MARKS = { ok: '✓', mismatch: '⚠', skip: '↷' };
   const DEFAULT_SETTINGS = {
     mic: true,
@@ -17,6 +21,7 @@
     cooldownMs: 400,
     size: 100,
     loop: false,
+    perDay: Tagesliste.DEFAULT_RANGE, // Artikel pro Tag: zufällige Anzahl in diesem Bereich
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -67,6 +72,9 @@
     calibReset: $('#btn-calib-reset'),
     laufweg: $('#laufweg'),
     laufwegReset: $('#btn-laufweg-reset'),
+    tagesInfo: $('#tages-info'),
+    setPerDayMin: $('#set-per-day-min'),
+    setPerDayMax: $('#set-per-day-max'),
   };
   const meters = Array.from(document.querySelectorAll('[data-meter]')).map((root) => ({
     root,
@@ -87,22 +95,29 @@
   }
 
   const newSeed = () => Math.floor(Math.random() * 0x100000000);
+  const formatDay = (day) => day.split('-').reverse().join('.'); // "2026-09-24" → "24.09.2026"
 
   const saved = load(STORE_KEY);
   const legacy = saved.settings ? {} : load(OLD_STORE_KEY);
+  const today = Tagesliste.dayKey();
+  // Der gespeicherte Stand gilt nur für denselben Tag – an einem neuen Tag gibt es eine neue Liste.
+  const sameDay = saved.day === today && Number.isInteger(saved.seed);
   const state = {
-    all: [], // Sortiment wie in der CSV
-    items: [], // nach Laufweg sortiert, innerhalb der Warengruppen gemischt
+    all: [], // ganzes Sortiment wie in der CSV
+    items: [], // heutige Auswahl, nach Laufweg sortiert, innerhalb der Warengruppen gemischt
     index: 0,
+    day: today,
     // Fortschritt je EAN ('ok' | 'mismatch' | 'skip'), damit er auch nach einer geänderten Liste passt
-    marks: saved.marks && typeof saved.marks === 'object' && !Array.isArray(saved.marks) ? saved.marks : {},
-    seed: Number.isInteger(saved.seed) ? saved.seed : newSeed(),
+    marks: sameDay && saved.marks && typeof saved.marks === 'object' && !Array.isArray(saved.marks) ? saved.marks : {},
+    seed: sameDay ? saved.seed : Tagesliste.daySeed(today),
     settings: Object.assign({}, DEFAULT_SETTINGS, legacy.settings, saved.settings),
     datenstand: '',
     loading: true,
     loadError: '',
   };
   state.settings.laufweg = Warengruppen.normalizeOrder(state.settings.laufweg);
+  state.settings.perDay = Tagesliste.normalizeRange(state.settings.perDay);
+  let resume = sameDay ? { code: saved.code, index: saved.index } : null; // Stelle, an der es heute weitergeht
 
   function save() {
     const item = state.items[state.index];
@@ -110,6 +125,7 @@
       localStorage.setItem(
         STORE_KEY,
         JSON.stringify({
+          day: state.day,
           code: item ? item.code : null,
           index: state.index,
           marks: state.marks,
@@ -130,6 +146,12 @@
     return c;
   }
 
+  // Heutige Liste: Zufallsauswahl aus dem Sortiment, nach Laufweg sortiert.
+  function arrangeDay() {
+    const s = state.settings;
+    return Warengruppen.arrange(Tagesliste.pick(state.all, state.seed, s.perDay), s.laufweg, state.seed);
+  }
+
   async function loadData() {
     state.loading = true;
     state.loadError = '';
@@ -138,12 +160,13 @@
       const data = await Sortiment.load(DATA_URL);
       data.items.forEach((it) => (it.gruppe = Warengruppen.classify(it)));
       state.all = data.items;
-      state.items = Warengruppen.arrange(state.all, state.settings.laufweg, state.seed);
+      state.items = arrangeDay();
       state.datenstand = data.datenstand;
       if (!state.items.length) state.loadError = 'Die Sortimentsliste enthält keine gültigen EAN-Codes.';
-      const byCode = saved.code ? state.items.findIndex((it) => it.code === saved.code) : -1;
-      const byIndex = Number.isInteger(saved.index) ? saved.index : 0;
+      const byCode = resume && resume.code ? state.items.findIndex((it) => it.code === resume.code) : -1;
+      const byIndex = resume && Number.isInteger(resume.index) ? resume.index : 0;
       state.index = byCode >= 0 ? byCode : Math.max(0, Math.min(byIndex, state.items.length));
+      if (!resume && state.items.length) toast('Neue Tagesliste: ' + state.items.length + ' Artikel', 'ok', 2500);
       save();
     } catch (err) {
       state.loadError = 'Das Sortiment konnte nicht geladen werden (' + ((err && err.message) || 'unbekannter Fehler') + ').';
@@ -152,12 +175,18 @@
     render();
   }
 
-  // Neu sortieren (Laufweg geändert oder neu gemischt); der aktuelle Artikel bleibt der aktuelle.
+  // Erster Artikel ohne Markierung (alle markiert: "Fertig"-Ansicht).
+  function firstOpen() {
+    const i = state.items.findIndex((it) => !markOf(it));
+    return i >= 0 ? i : state.items.length;
+  }
+
+  // Neu zusammenstellen (Laufweg oder Anzahl pro Tag geändert); der aktuelle Artikel bleibt der aktuelle.
   function rearrange() {
     const current = state.items[state.index];
-    const done = state.items.length > 0 && state.index >= state.items.length;
-    state.items = Warengruppen.arrange(state.all, state.settings.laufweg, state.seed);
-    state.index = current ? state.items.indexOf(current) : done ? state.items.length : 0;
+    state.items = arrangeDay();
+    const k = current ? state.items.indexOf(current) : -1;
+    state.index = k >= 0 ? k : firstOpen();
     save();
     render();
   }
@@ -184,11 +213,12 @@
       el.loadingActions.hidden = state.loading;
       return;
     }
-    el.summary.textContent = n + ' Artikel · ' + (c.ok + c.mismatch) + ' gescannt';
+    el.summary.textContent = 'Heute ' + n + ' Artikel · ' + (c.ok + c.mismatch) + ' gescannt';
 
     if (done) {
       el.doneText.textContent =
-        'Alle ' + n + ' Artikel durchlaufen – ' + (c.ok + c.mismatch) + ' per Scan' + (c.skip ? ', ' + c.skip + ' übersprungen.' : '.');
+        'Alle ' + n + ' Artikel der Tagesliste durchlaufen – ' + (c.ok + c.mismatch) + ' per Scan' +
+        (c.skip ? ', ' + c.skip + ' übersprungen' : '') + '. Morgen gibt es eine neue Liste.';
       return;
     }
 
@@ -269,11 +299,13 @@
 
   // ---------- Navigation ----------
 
+  let lastActivityAt = Date.now();
   function goTo(i) {
     const n = state.items.length;
     if (!n) return;
     if (i >= n && state.settings.loop) i = 0;
     state.index = Math.max(0, Math.min(i, n)); // n = "Fertig"-Ansicht
+    lastActivityAt = Date.now();
     save();
     render();
   }
@@ -299,15 +331,33 @@
     goTo(Math.min(state.index, state.items.length) - 1);
   }
 
-  // Neuer Durchgang: Markierungen zurücksetzen und innerhalb der Warengruppen neu mischen.
+  // Heutige Liste von vorne: Markierungen zurücksetzen, gleiche Artikel in gleicher Reihenfolge.
   function restart() {
     state.marks = {};
-    state.seed = newSeed();
-    state.items = Warengruppen.arrange(state.all, state.settings.laufweg, state.seed);
+    goTo(0);
+  }
+
+  // Andere Liste (neuer Tag oder neu ausgelost): Auswahl, Anzahl und Reihenfolge hängen am seed.
+  function startList(seed) {
+    state.seed = seed;
+    state.marks = {};
+    state.items = arrangeDay();
+    resume = null;
     goTo(0);
   }
 
   const dialogOpen = () => el.dlgList.open || el.dlgSettings.open;
+
+  // Neuer Tag bei offener Seite (z. B. über Nacht angelassen): neue Liste, aber nicht mitten im Scannen.
+  function checkDay() {
+    const day = Tagesliste.dayKey();
+    if (day === state.day || !state.all.length || dialogOpen()) return;
+    if (Date.now() - lastActivityAt < IDLE_MS) return;
+    state.day = day;
+    startList(Tagesliste.daySeed(day));
+    toast('Neuer Tag – neue Liste mit ' + state.items.length + ' Artikeln', 'ok', 3000);
+  }
+  setInterval(checkDay, 60 * 1000);
 
   // Ein Scan wurde erkannt (Piepton oder Tastatureingabe des Scanners).
   let lastScanAt = -Infinity;
@@ -474,6 +524,7 @@
 
   document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState !== 'visible') return;
+    checkDay();
     if (wantAwake) keepAwake(true);
     if (micState !== 'on') return;
     // Nach App-Wechsel/Sperrbildschirm ist das Audio oft angehalten (v. a. iOS).
@@ -600,7 +651,8 @@
       state.items.length + ' Artikel: ' + c.ok + ' ✓ gescannt' + (c.mismatch ? ' · ' + c.mismatch + ' ⚠ abweichend' : '') +
       (c.skip ? ' · ' + c.skip + ' ↷ übersprungen' : '') + ' · ' + c.open + ' offen';
     el.dataInfo.textContent =
-      'Netto Marken-Discount (Deutschland), Eigenmarken-Lebensmittel' +
+      'Tagesliste vom ' + formatDay(state.day) + ': ' + state.items.length + ' von ' + state.all.length +
+      ' Artikeln aus dem Sortiment von Netto Marken-Discount (Deutschland), Eigenmarken-Lebensmittel' +
       (state.datenstand ? ', Datenstand ' + state.datenstand : '') + '. Angaben ohne Gewähr.';
   }
 
@@ -624,14 +676,20 @@
   function openSettings() {
     fillSettings();
     renderCalibState();
+    renderTagesInfo();
     renderLaufweg();
     el.dlgSettings.showModal();
   }
 
-  // Laufweg: nur Warengruppen anzeigen, die im Sortiment vorkommen.
+  function renderTagesInfo() {
+    el.tagesInfo.textContent =
+      'Heute (' + formatDay(state.day) + '): ' + state.items.length + ' von ' + state.all.length + ' Artikeln';
+  }
+
+  // Laufweg: alle Warengruppen, die im Sortiment vorkommen (auch wenn heute keiner ihrer Artikel dran ist).
   function visibleGroups() {
-    const stats = groupStats();
-    return state.settings.laufweg.filter((id) => stats[id]);
+    const present = new Set(state.all.map((it) => it.gruppe));
+    return state.settings.laufweg.filter((id) => present.has(id));
   }
 
   function renderLaufweg() {
@@ -646,7 +704,7 @@
           '<button type="button" class="icon-btn" data-move="-1" aria-label="Nach oben">↑</button>' +
           '<button type="button" class="icon-btn" data-move="1" aria-label="Nach unten">↓</button>';
         li.querySelector('.lw-name').textContent = Warengruppen.nameOf(id);
-        li.querySelector('.lw-count').textContent = stats[id].total;
+        li.querySelector('.lw-count').textContent = stats[id] ? stats[id].total : 0;
         li.querySelector('[data-move="-1"]').disabled = i === 0;
         li.querySelector('[data-move="1"]').disabled = i === visible.length - 1;
         return li;
@@ -689,6 +747,8 @@
     el.setLevel.value = s.minLevelDb;
     el.setCooldown.value = s.cooldownMs;
     el.setSize.value = s.size;
+    el.setPerDayMin.value = s.perDay.min;
+    el.setPerDayMax.value = s.perDay.max;
     el.outLevel.textContent = s.minLevelDb + ' dB';
     el.outCooldown.textContent = (s.cooldownMs / 1000).toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' s';
     el.outSize.textContent = s.size + ' %';
@@ -726,6 +786,30 @@
   el.setSize.addEventListener('input', () => {
     changeSettings({ size: Number(el.setSize.value) });
     drawBarcode();
+  });
+
+  // Artikel pro Tag: die heutige Liste wird sofort angepasst, der Fortschritt bleibt.
+  function applyPerDay(edited) {
+    const s = state.settings;
+    let min = Number(el.setPerDayMin.value || s.perDay.min);
+    let max = Number(el.setPerDayMax.value || s.perDay.max);
+    if (min > max) {
+      // "von" über "bis" (oder umgekehrt): das gerade geänderte Feld gilt, das andere zieht nach
+      if (edited === el.setPerDayMin) max = min;
+      else min = max;
+    }
+    changeSettings({ perDay: Tagesliste.normalizeRange({ min, max }) });
+    rearrange();
+    renderTagesInfo();
+    renderLaufweg();
+  }
+  [el.setPerDayMin, el.setPerDayMax].forEach((input) => {
+    input.addEventListener('change', () => applyPerDay(input));
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault(); // sonst schließt das Formular den Dialog
+      applyPerDay(input);
+    });
   });
 
   el.calibrate.addEventListener('click', async () => {
@@ -767,11 +851,20 @@
 
   el.dlgSettings.addEventListener('close', () => listener.cancelCalibration());
 
-  $('#btn-reset-progress').addEventListener('click', () => {
+  $('#btn-restart-day').addEventListener('click', () => {
     restart();
     el.dlgSettings.close();
+    toast('Von vorne – ' + state.items.length + ' Artikel');
+  });
+
+  $('#btn-new-list').addEventListener('click', () => {
+    startList(newSeed());
+    el.dlgSettings.close();
     const first = state.items[0];
-    toast('Neu gemischt – los geht’s mit ' + (first ? Warengruppen.nameOf(first.gruppe) : 'dem ersten Artikel'));
+    toast(
+      'Neue Liste: ' + state.items.length + ' Artikel – los geht’s mit ' +
+        (first ? Warengruppen.nameOf(first.gruppe) : 'dem ersten Artikel')
+    );
   });
 
   // ---------- Kopfzeile & Aktionen ----------
