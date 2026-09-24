@@ -31,13 +31,13 @@ test('CSV: andere Spaltenreihenfolge, Komma als Trennzeichen', () => {
   assert.deepEqual(items.map((i) => [i.code, i.name, i.marke]), [['4006381333931', 'Textmarker', 'Stabilo']]);
 });
 
-test('Netto-Sortiment (data/netto-sortiment.csv): 245 Artikel, alle EANs gültig und eindeutig', () => {
+test('Netto-Sortiment (data/netto-sortiment.csv): 571 Artikel, alle EANs gültig und eindeutig', () => {
   const text = fs.readFileSync(path.join(__dirname, '..', 'data', 'netto-sortiment.csv'), 'utf8');
   const { items, errors, datenstand } = Sortiment.parse(text);
   assert.equal(errors.length, 0);
-  assert.equal(items.length, 245);
+  assert.equal(items.length, 571);
   assert.deepEqual(items.filter((i) => !i.valid).map((i) => i.code), []);
-  assert.equal(new Set(items.map((i) => i.code)).size, 245);
+  assert.equal(new Set(items.map((i) => i.code)).size, 571);
   assert.ok(items.every((i) => i.name && i.marke), 'jeder Artikel hat Name und Marke');
   assert.equal(items[0].code, '4316268687140');
   assert.equal(items[0].name, 'Bergkäse Kräuter italienische Art');
