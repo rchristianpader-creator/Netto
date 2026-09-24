@@ -72,7 +72,7 @@ test('Bereich "Artikel pro Tag": eigene Grenzen, vertauscht, Unsinn → Standard
     assert.ok(n >= 10 && n <= 12, String(n));
   }
   assert.equal(tagesliste('2026-09-24', { min: 7, max: 7 }).length, 7);
-  assert.equal(tagesliste('2026-09-24', { min: 300, max: 400 }).length, items.length);
+  assert.equal(tagesliste('2026-09-24', { min: 900, max: 999 }).length, items.length);
   assert.equal(T.pick(items.slice(0, 30), 1).length, 30);
   // größerer Bereich: die bisherige Auswahl bleibt, es kommen nur Artikel dazu
   const klein = tagesliste('2026-09-24', { min: 50, max: 50 });

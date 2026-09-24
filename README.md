@@ -6,8 +6,8 @@ Seite automatisch zum nächsten Artikel.** Dafür hört die Seite über das Mikr
 
 **Online:** <https://rchristianpader-creator.github.io/Netto/>
 
-- 245 Netto-Eigenmarken-Lebensmittel (BioBio, Gutes Land, Gut Ponholz, Lieblings, Mondo Italiano, Clarky's, …)
-  aus [`data/netto-sortiment.csv`](data/netto-sortiment.csv), alle EANs geprüft
+- 571 Netto-Eigenmarken-Artikel (BioBio, Gutes Land, Gut Ponholz, Lieblings, Mondo Italiano, Clarky's, …), Lebensmittel
+  sowie Drogerie & Haushalt, aus [`data/netto-sortiment.csv`](data/netto-sortiment.csv), alle EANs mit gültiger Prüfziffer
 - **Jeden Tag eine neue Liste:** 50 bis 80 zufällig ausgewählte Artikel, auch die Anzahl ist zufällig
 - Reihenfolge wie beim Gang durch den Laden: Warengruppe für Warengruppe, innerhalb jeder Gruppe zufällig gemischt
 - Barcodes pixelgenau gerendert (EAN-13 und EAN-8), auch im Dunkelmodus schwarz auf weiß
@@ -41,7 +41,7 @@ Die Artikel der Tagesliste kommen nach Warengruppen sortiert, in der Reihenfolge
 
 Milch & Milchgetränke → Joghurt → Quark & Desserts → Butter, Sahne & Margarine → Käse → Wurst & Aufschnitt →
 Feinkost & Salate → Fleisch & Geflügel → H-Milch & Kondensmilch → Konserven & Fertiggerichte →
-Nudeln, Reis & Backzutaten → Saucen, Fonds & Gewürze → Frühstück & Brotaufstrich → Snacks & Nüsse → Getränke → Tiefkühl
+Nudeln, Reis & Backzutaten → Saucen, Fonds & Gewürze → Frühstück & Brotaufstrich → Snacks & Nüsse → Drogerie & Haushalt → Getränke → Tiefkühl
 
 Innerhalb jeder Warengruppe ist die Reihenfolge zufällig (gehört zur Tagesliste, bleibt also beim Neuladen gleich).
 Die Warengruppe steht über dem Produktnamen; beim Wechsel in die nächste Gruppe kommt ein kurzer Hinweis

@@ -3,7 +3,7 @@
 4316268693646;Bio Bierschinken;BioBio;80 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
 4316268430814;Bio Joghurt pur;BioBio;150 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268654609;Bio Kasseler;BioBio;100 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
-4316268458450;Bio-Bergkäse;BioBio;150 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
+4316268458450;Bergkäse;BioBio;150 g;Käse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
 4316268693561;Bio-Gelbwurst;BioBio;100 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
 4316268700337;Bio-Schlemmerschinken;BioBio;100 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
 4316268613033;Bockwürstchen;BioBio;180 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
@@ -48,9 +48,9 @@
 4316268648042;Schmand;BioBio;150 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
 42255772;Speisequark;BioBio;250 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
 42457480;Speisequark;BioBio;250 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
-42316947;Speisequark Magerstufe;BioBio;250 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
+42316947;Speisequark Magerstufe;BioBio;250 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
 4316268414296;Steinofen Pizza Salami-Rucola;BioBio;340 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
-4316268392839;Süßrahmbutter Bio;BioBio;250 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
+4316268392839;Süßrahmbutter;BioBio;250 g;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
 4316268609975;Vanille Joghurt;BioBio;400 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268521413;Vanillejoghurt;BioBio;150 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268610513;Wiener Würstchen;BioBio;200 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
@@ -58,7 +58,7 @@
 4004951056495;Bayerisches Leberkäsbrät;Gut Ponholz;500 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4019474662801;Beinscheiben;Gut Ponholz;;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4004951058864;Bratwurst grob roh;Gut Ponholz;280 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
-4052485408488;Frisch vom Hähnchen;Gut Ponholz;400 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
+4052485408488;Frisch vom Hähnchen;Gut Ponholz;400 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
 4004951037081;Gemischtes Hackfleisch;Gut Ponholz;500 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4019474611571;Gulasch;Gut Ponholz;500 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4015051097264;Hackfleisch Rind;Gut Ponholz;500 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
@@ -92,8 +92,8 @@
 4316268627283;Deutsche Markenbutter mildgesäuert;Gutes Land;250 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268474405;Fettarme H-Milch;Gutes Land;1 l;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 42306351;Fettarmer Fruchtjoghurt;Gutes Land;250 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
-4316268519359;Fettarmer Fruchtjoghurt;Gutes Land;250 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
-4316268592901;Fettarmer Joghurt mild;Gutes Land;500 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
+4316268519359;Fettarmer Joghurt Pfirsich-Mango;Gutes Land;250 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268592901;Fettarmer Joghurt mild;Gutes Land;500 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
 42314714;Fruchtjoghurt;Gutes Land;250 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268656276;Fruchtjoghurt Erdbeere 3,8%;Gutes Land;8 x 150 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 42306368;Fruchtjoghurt Heidelbeer-Vanille;Gutes Land;250 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
@@ -106,7 +106,7 @@
 42299189;H-Schlagsahne;Gutes Land;200 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 42381693;H-Schlagsahne;Gutes Land;200 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268417075;H-Vollmilch;Gutes Land;1 l;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
-4316268474382;H-Vollmilch;Gutes Land;1 l;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
+4316268474382;Haltbare Vollmilch 3,5%;Netto;1 l;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
 4316268617727;H-Vollmilch;Gutes Land;1 l;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268532662;H-Vollmilch 3,5%;Gutes Land;1 l;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268608756;Haltbarer Schmand;Gutes Land;200 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
@@ -135,7 +135,7 @@
 42317296;Sahnekefir Erdbeere;Gutes Land;250 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 42317302;Sahnekefir Pfirsich-Maracuja;Gutes Land;250 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 42317289;Sahnekefir Rote Grütze;Gutes Land;250 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
-4316268478380;Schoko Drink;Gutes Land;500 ml;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
+4316268478380;Schoko Drink;Gutes Land;500 ml;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
 4316268598521;Schoko Drink;Gutes Land;500 ml;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268582346;Tilsiter;Gutes Land;400 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268711289;Burger mit Trüffelgeschmack;Lieblings;230 g;;"öffentlich belegte Eigenmarke; Pflicht-/Dauerstatus nicht intern verifiziert";"Open Food Facts / identitaetskennzeichen.de; Netto Markenwelt";2026-09
@@ -163,11 +163,11 @@
 4316268575461;Mozzarella-Minikugeln;Mondo Italiano;250 g / 125 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 42413769;Mozzarellakugel;Mondo Italiano;250 g / 125 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268453271;Pizzaburger Diavolo Steinofen;Mondo Italiano;700 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
-4316268439749;Prosciutto cotto;Mondo Italiano;200 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
+4316268439749;Prosciutto Cotto;Mondo Italiano;200 g;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
 4063516000748;Espresso macchiato;Netto;330 ml;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268656795;Geflügel Brühwurstpastete;Netto;200 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268562409;Geflügel Mortadella;Netto;200 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
-4316268678452;Geflügel-Bierschinken;Netto;150 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
+4316268678452;Geflügel-Bierschinken;Hofmaier;150 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
 4316268656788;Geflügel-Paprikalyoner;Netto;200 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268659987;Jagdwurst;Netto;200 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
 4316268659994;Paprika-Lyoner;Netto;200 g;;"öffentlich belegter Netto-Artikel; interner Pflichtartikelstatus nicht öffentlich verifizierbar";Open Food Facts via identitaetskennzeichen.de;2026-09-10
@@ -244,3 +244,329 @@
 4316268614429;Bio-Knusperriegel verschiedene Sorten;BioBio;75 g;Snacks / Riegel;"EAN auf Netto-Produktseite verifiziert; Filial-Pflichtstatus nicht öffentlich ausgewiesen";Netto Produktseite 2599715000;2026-09-24
 4316268697576;Fond verschiedene Sorten;Lieblings;400 ml;Suppen / Fonds;"EAN direkt auf Netto-Produktseite belegt; interner Filial-Pflichtstatus nicht öffentlich";Netto Produktseite 2719561000;2026-09-24
 4316268602563;Zitronello verschiedene Sorten Bio;BioBio;200 ml;Würzmittel;"EAN auf Netto-Produktseite verifiziert; Filial-Pflichtstatus nicht öffentlich ausgewiesen";Netto Produktseite 2529472000;2026-09-24
+4316268604710;Blütenhonig;Netto Marken-Discount;500 g;Brotaufstrich;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268634328;Brauner Rohrzucker;Netto Marken-Discount;500 g;Backzutaten;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268660099;Instant China Mie Nudeln;Netto Marken-Discount;250 g;Nudeln / Reis;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268730952;Maiswaffeln gesalzen;BioBio;;Snacks / Nüsse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268674669;Agavendicksaft;BioBio;;Brotaufstrich;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+42470700;Kräuterquark;BioBio;;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268686877;Haferdrink Schoko;BioBio;1 l;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268687867;Barista Haferdrink mit Soja;BioBio;1 l;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268637862;Apfel Direktsaft naturtrüb;BioBio;1 l;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268643672;Schmelzkäse-Snack mit Brotsticks;Gutes Land;250 g;Käse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+42413646;Schnittlauch-Käse-Ring;Gutes Land;200 g;Käse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268682220;Crème fraîche 30%;Gutes Land;200 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268487269;Milchreis;Gutes Land;1000 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268645973;Hirtenkäse;Gutes Land;250 g;Käse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268637350;Joghurt nach griechischer Art;Gutes Land;4 x 150 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+42314677;Fettarmer Fruchtjoghurt mild 1,8% Fett;Gutes Land;250 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268620109;Toffee Ganznuss Schokolade;Schokoliebe;300 g;Süßwaren;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268638265;Pekan-Kokos Zartbitter Schokolade;Schokoliebe;180 g;Süßwaren;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268629836;Choco Nuts;Schokoliebe;400 g;Süßwaren;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268669948;Trigger;Schokoliebe;5 x 58 g;Süßwaren;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268689625;Choco Crisp;Schokoliebe;340 g;Süßwaren;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268666763;Schweizer Edel-Zartbitter Schokolade;Schokoliebe;100 g;Süßwaren;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268637138;Linsenchips Joghurt Gurke;Clarky's;100 g;Snacks / Nüsse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268666039;Chips;Clarky's;;Snacks / Nüsse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268629003;Kartoffel Chips Gesalzen;Clarky's;200 g;Snacks / Nüsse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268491549;Kartoffel-Chips Paprika;Clarky's;200 g;Snacks / Nüsse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268554138;Riffel Chips, gesalzen;Clarky's;200 g;Snacks / Nüsse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268597975;Pinienkerne;Clarky's;50 g;Snacks / Nüsse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+35626817;Mandeln geröstet;Clarky's;250 g;Snacks / Nüsse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268460590;Erdnüsse;Clarky's;200 g;Snacks / Nüsse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268701686;Parmigiano Reggiano;Mondo Italiano;;Käse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268717755;Tortellini;Mondo Italiano;;Nudeln / Reis;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268488808;Gnocchi;Mondo Italiano;;Nudeln / Reis;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268455626;Pesto alla Genovese;Mondo Italiano;190 g;Saucen / Gewürze;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268601948;Spaghetti;Mondo Italiano;500 g;Nudeln / Reis;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268658638;Tomaten geschält und gehackt;Mondo Italiano;400 g;Konserven;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268679183;Tortelloni Tomate & Mozzarella;Mondo Italiano;400 g;Nudeln / Reis;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268614139;Mineralwasser;Netto;;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+42287964;Naturalis Classic;Naturalis;0,5 l;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+42287995;Mineralwasser Classic;Naturalis;1,5 l;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+42287988;Mineralwasser Medium;Naturalis;1,5 l;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268668644;Wasser mit Apfelgeschmack;Naturalis;1,5 l;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+03770474;Natürliches Mineralwasser mit Kohlensäure versetzt;Naturalis;0,5 l;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268684729;Schoko Müsli 30% weniger Zucker;Korn Mühle;750 g;Frühstück / Müsli;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268505390;Früchte Müsli;Korn Mühle;750 g;Frühstück / Müsli;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268405928;Zwieback;Korn Mühle;450 g;Brot / Backwaren;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268606752;Eiweiß Brot;Korn Mühle;500 g;Brot / Backwaren;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268463522;Schinkenwurst;Hofmaier;200 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268466851;Schinkenwürstchen;Hofmaier;380 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268462846;Kochschinken hauchfein;Hofmaier;150 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268679824;Gourmet Schinkenwürfel;Hofmaier;150 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268615273;Lachsschinken;Hofmaier;150 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268464352;Kochhinterschinken;Hofmaier;200 g;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268659703;Direktsaft Mandarine;Lieblings;1 l;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268609784;Apfel-Direktsaft, naturtrüb;Lieblings;1 l;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268625609;Premium Direktsaft Orange;Lieblings;1 l;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268654203;Premium-Direktsaft Traube;Lieblings;1 l;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268641265;Erdbeeren (gefroren);Lieblings;300 g;Tiefkühl;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268664998;Direktsaft;Frucht Stern;1 l;Getränke;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268679268;Bio-Wattestäbchen Nachfüllpackung;Netto Marken-Discount;160 Stück;Drogerie;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Beauty Facts;2026-09-24
+42415084;Heimisches Suppengemüse;Netto Marken-Discount;500 g;Obst / Gemüse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4311532219027;Datteln;Markttag;300 g;Obst / Gemüse;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4003875949630;Hähnchengeschnetzeltes;Gut Ponholz;;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4052485441669;Hähnchen-Flügel;Gut Ponholz;;;"öffentlich belegter Netto-Artikel; Pflicht-/Dauerstatus nicht intern verifiziert";Open Food Facts;2026-09-24
+4316268481496;Kondensmilch 10% Fett;Gutes Land;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268435550;Hugo Rosé;Vinetti;;Getränke / Alkohol;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268439152;Meerwasser Schnupfen Spray;Medicazin;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268396080;10 Frische Eier;Netto;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42206941;Schloss Bier;Schloss;;Getränke / Alkohol;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268153928;Speisequark;Netto;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268354387;Pudding;Gradiso;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268384780;Orangensaft;Netto;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42151678;Aqua Medium Wasser;Netto;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268347716;Erdnüsse;Netto;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268329811;Käse-Aufschnitt Leicht;Netto;;Käse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268393478;Natives Olivenöl Extra;Netto;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268389242;Sticks;Sancho;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268329712;Café Gold;Maxima;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268489058;Hygiene Handgel mit Aloe Vera;Pure & Basic;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268136112;Ceylon Assam;Captains Tea;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42206880;Premium Teegetränk Erdbeer-Kiwi;Netto;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268353359;Teegetränk;Netto;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268398633;Lachsfilet;Netto;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42151777;Medium;Vitalitasia;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268466622;Basilikum aus Deutschland;Netto;;Obst / Gemüse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268174657;Grüner Tee;Captains Tea;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268381130;45 Sicherheits-Zündhölzer 10er;Netto;;Haushalt;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268411943;38 Sicherheits-Zündhölzer 10 Schachteln;Netto;;Haushalt;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268329675;Edel Mocca;Netto;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268424622;Café Latina;Netto;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268424745;Remoulade;Delique;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42287957;Naturalis Medium;Naturalis;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42287940;Naturalis Still;Naturalis;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42300663;Würze;Carat;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42151852;Zitrone;Stardrink;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42173519;Bitter Lemon;Stardrink;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42186830;Premium Pils;Schloss;;Getränke / Alkohol;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268478212;Stapel-Chips Paprika;Clarky's;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268430357;Sandwich Scheiben Weizen;American Style;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268359498;Gefrierbeutel 3L;Priva;;Haushalt;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268147361;Bayerischer Hausmachersenf;Delique;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268444217;Hafer-Drink;BioBio;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268447386;Früchtetee;BioBio;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268372015;Knoblauch;BioBio;;Obst / Gemüse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268447362;Kräutertee;BioBio;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268329484;Bergsalami geräuchert;BioBio;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268440837;Erdnüsse;BioBio;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268415958;Delikatess Wiener Würstchen;Gut Ponholz;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268365710;Fleischrotwurst;Gut Ponholz;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268327732;Paprika-Salami;Gut Ponholz;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268359511;Leberwurst;Gut Ponholz;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268383073;Hähnchen-Brustfilet;Gut Ponholz;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268462082;Frikadellenbällchen;Gut Ponholz;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268485548;Erdbeer Fruchtaufstrich;Symphonie;;Brotaufstrich;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42186786;Edel Bier;Schloss;;Getränke / Alkohol;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268178044;Sambal Oelek;Satori;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268166966;Trigger;Sugar Kiss;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268402392;Feine Kaffee-Kränze;Biscoteria;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42262060;Hofdammer Schnittkäse in Scheiben;BioBio;;Käse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268470308;Balsam Taschentücher;Feeling;;Drogerie / Papier;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268360364;Erdnüsse im Teigmantel Paprika;Clarky's;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268418713;Mini Brotchips;Clarky's;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268455718;Kesselchips Salt & Vinegar;Clarky's;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268423960;Cashew-Erdnuss-Mix Hot-Chili;Clarky's;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268418706;Mini Brotchips Zwiebel;Clarky's;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268455725;Kesselchips Sweet Chili;Clarky's;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42255949;Dip Sauce;Clarky's;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268382007;Hähnchen-Kasseler;Viva Vital;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268341073;Hähnchenbrust;Viva Vital;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268476409;Tomaten- & Gemüse Mix;Viva Vital;;Obst / Gemüse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268338233;Pumpernickel;Viva Vital;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268470155;Wellness-Flakes mit roten Früchten;Viva Vital;;Frühstück / Müsli;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268427609;Ganze Cranberries;Viva Vital;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42157168;Joghurt mild Bircher Müsli;Viva Vital;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268452915;Spaghetti mit Tomatensoße;Mondo Italiano;;Konserven;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268461450;Tortelloni;Mondo Italiano;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268453332;Pizza Margherita;Mondo Italiano;;Tiefkühl;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268436823;Löffelbiskuits;Mondo Italiano;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268461436;Tortellini Mortadella-Prosciutto;Mondo Italiano;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268452038;Grana Padano;Mondo Italiano;;Käse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268473620;Hafertaler;Netto;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268411639;Kinder Croissants;Karli;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268360920;Suppenwelt;Carat;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268407069;Hafercookies;BioBio;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268385992;Pablo Trockenfutter;Netto;;Tiernahrung;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268292917;Kerne-Mix;Viva Vital;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268491020;Saure Bänder;Netto;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268411844;Zitronensaft;Netto;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268474917;Hähnchenbrustfilet Roulade;Hofmaier;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268469289;Wiener Würstchen;Hofmaier;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268462662;Paprika-Salami;Hofmaier;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268464581;Teewurst;Hofmaier;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268463508;Paprika Lyoner;Hofmaier;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268469661;Lachsschinken;Hofmaier;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268429658;Joghurt mild aus Magermilch;Leichter Genuss;500 g;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268330190;Mozzarella leicht 8,5%;Leichter Genuss;;Käse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268388245;Schwarze Johannisbeere Konfitüre Extra;Leichter Genuss;;Brotaufstrich;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268417099;Entrahmte H-Milch;Leichter Genuss;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268354950;Frischkäsezubereitung 4%;Leicht und Fit;;Käse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268188012;Delikatess Putenbrust gegrillt;Leicht und Fit;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268189941;Schokodrink;Leicht und Fit;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268360746;Mehrkorn-Brötchen 3 Stück;Korn Mühle;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268441100;Rosinenstuten;Korn Mühle;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268499682;Getreidekissen nussig;Korn Mühle;;Frühstück / Müsli;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268499583;Schokochips;Korn Mühle;;Frühstück / Müsli;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268486743;Knusper Müsli Nuss;Korn Mühle;;Frühstück / Müsli;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268488099;5 Pita;Korn Mühle;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268473507;Müsliriegel Cranberry;Korn Mühle;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268468138;Reiswaffeln;Korn Mühle;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268387224;4-Kornschnitte;Korn Mühle;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268362443;Jodsalz mit Fluorid;Carat;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268449953;Spaghetti in Käse-Sahne-Sauce;Carat;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268352956;Klare Gemüsebrühe;Carat;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268225564;Fix Spaghetti Bolognese;Carat;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268225571;Fix Broccoli Gratin;Carat;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268353519;Pasta con Spinaci;Mamma Gina;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268387668;Penne Rigate;Mamma Gina;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268415118;Prosciutto di Parma;Mamma Gina;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268136839;Maccheroncini alla Parmigiana;Mamma Gina;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268001571;Natives Olivenöl;Mamma Gina;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268336871;Pizza Edelsalami;Mamma Gina;;Tiefkühl;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268362092;Gnocchi;Mamma Gina;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42299332;Kaffeeweißer;Gutes Land;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268475181;Tilsiter in Scheiben 45%;Gutes Land;;Käse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42306047;Milch Drink Typ Vanille;Gutes Land;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268395366;Gouda Holland alt in Scheiben;Gutes Land;;Käse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268470223;Obatzter;Gutes Land;;Käse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268487252;Schoko Haselnuss Dessert;Gutes Land;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268476096;Gouda jung;Gutes Land;;Käse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268501835;Fruchtmolke;Gutes Land;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268466202;6 Bunte Eier;Vom Land;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268335911;Pommes Frites;Vom Land;;Tiefkühl;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268382342;18 Frische Eier;Vom Land;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268316880;Land-Kaffee;Vom Land;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268339513;Schoko Waffelröllchen;Biscoteria;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268384292;Stracciatella Kuchen;Biscoteria;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268418928;Kuchenriegel Karamell;Biscoteria;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268418812;Streuselkuchen;Biscoteria;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268369855;Tortilla Chips Käse;Las Cuarenta;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268369848;Tortilla Chips Chili;Las Cuarenta;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268421898;Serrano Schinken;Las Cuarenta;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268326261;Original Serrano-Schinken;Las Cuarenta;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42132851;Kapern;Las Cuarenta;;Konserven;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268417914;Spanische Ringsalami;Las Cuarenta;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268322126;Kapern mild-würzig;Las Cuarenta;;Konserven;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268340410;Haarschaum Volumen;Hairwell;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268358804;Pflege Shampoo Frucht & Vitamin;Hairwell;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268358781;Pflege Shampoo Kräuter & Vitamin;Hairwell;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268434362;Haarkur Color;Hairwell;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268359412;Color Haarkur;Hairwell;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268335126;Wet Gel;Hairwell;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268408431;Med Duschgel sensitiv;Pure & Basic;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268431668;Duschgel;Pure & Basic;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268358194;Melkfett Vitamin E;Pure & Basic;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268431569;Duschcreme;Pure & Basic;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268406963;Gesichtspflege;Pure & Basic;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268355278;Body & Massage Öl;Pure & Basic;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268357449;Duschgel Flower;Pure & Basic;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268002196;Pflegedusche;Pure & Basic;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268407625;Seifenpads;Priva;;Haushalt;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268394765;WC Gel Ocean;Priva;;Haushalt;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268473422;Einmal-Handschuhe;Priva;;Haushalt;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268475976;Alpen Vollmilch Schokolade;Goutier;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42150411;White Chocolate;Goutier;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268337113;Trauben-Nussschokolade;Goutier;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268338325;Feine Weiße Crisp Schokolade;Goutier;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268167840;Zartbitter Schokolade;Goutier;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268338387;Edelrahm-Schokolade;Goutier;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268485388;Erfrischungsstäbchen;Goutier;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268385954;Weinbrandbohnen;Goutier;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268358552;Schoko-Brötchen;Jean Luc;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268330787;Milchbrötchen;Jean Luc;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268368599;Briochette;Jean Luc;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268468053;Salami Sticks;Jean Luc;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268418997;Salami luftgetrocknet französische Art;Jean Luc;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268323598;Salami-Sticks pikant;Jean Luc;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268052917;Salami-Sticks classic;Jean Luc;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268432443;Mini Croissant;Jean Luc;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268136051;Kamille;Captains Tea;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268136068;Pfefferminze;Captains Tea;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268336215;Hagebutte;Captains Tea;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268194976;Heidelbeere Vanille;Captains Tea;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268217019;Fenchel Anis Kümmel;Captains Tea;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268174787;Tee Kirsche-Joghurt;Captains Tea;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268496032;Bio Roggenmischbrötchen;Netto;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268463126;Paprika-Salami;Hofmaier;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268497138;Fassbrause;Netto;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268499897;Soft Datteln entsteint;BioBio;;Obst / Gemüse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268462488;Bratwurst;Hofmaier;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268444941;Bücklingsfilets;Dreimaster;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42261902;Thunfisch-Filets;Dreimaster;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268328951;Makrelenfilets in Tomatensauce;Dreimaster;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268339131;Sardinen in Sonnenblumenöl;Dreimaster;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268423540;Sardinen mit Chili;Dreimaster;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268339100;Sardinenfilets;Dreimaster;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268423557;Sardinen mit Zitrone;Dreimaster;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268371858;Blockschokolade;Backfee;;Backzutaten;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268091633;Mandeln gemahlen;Backfee;;Backzutaten;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268339377;Zartbitter Kuvertüre;Backfee;;Backzutaten;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268365888;Feiner Schokokuchen;Backfee;;Backzutaten;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42200864;Zitronenlimonade;Stardrink;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42151616;Orange;Stardrink;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42173564;Apfelschorle;Stardrink;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268370615;Eiskaffee;Maxima;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268491792;Family Cappuccino Karamell;Maxima;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268438742;Typ Cappuccino weniger süß;Maxima;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268476706;Sweet Chili Sauce;Satori;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268368841;Basmati-Reis;Satori;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268476720;Hot Chili Sauce;Satori;;Saucen / Gewürze;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268456524;Gebratene Nudeln Ente;Satori;;Tiefkühl;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268467629;4 Frühlingsrollen;Satori;;Tiefkühl;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268429597;Thunfisch Thai Curry;Satori;;Konserven;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268476195;Pfannengemüse;Satori;;Tiefkühl;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268473767;Bami Goreng;Satori;;Tiefkühl;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268418263;Heimische Früchte;Fruchtstern;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268361040;Ananas-Banane-Kokos;Fruchtstern;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268322775;Schwarzer Johannisbeer Nektar;Fruchtstern;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268363310;Zitrone;Fruchtstern;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268500166;Bananennektar;Fruchtstern;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268404037;Premium Ananassaft;Fruchtstern;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268415248;Johannisbeere;Fruchtstern;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268370431;Smoothie;Fruchtstern;;Getränke;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268448895;Vitamin C Brausetabletten;ProLife;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268448857;Calcium Brausetabletten Pfirsich-Maracuja;ProLife;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268438391;Omega-3 Kapseln;ProLife;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268383981;Heißgetränk Salbei Honig;ProLife;;Kaffee / Tee;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268332996;Magnesium plus Calcium;ProLife;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268383929;Multivitamin;ProLife;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268383868;Calcium & Magnesium Direkt-Sticks;ProLife;;Drogerie;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268436618;Frische Schupfnudeln;Albhof;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268328524;Buchstabennudeln;Albhof;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268339414;Spaghetti;Albhof;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268328500;Bandnudeln;Albhof;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268386364;Frischei-Nudeln;Albhof;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268429238;Buchstabennudeln;Albhof;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268429290;Maccaronelli;Albhof;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268395533;Gewalzte Bandnudeln schmal;Albhof;;Nudeln / Reis;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268479714;Knabber Snack;Karli Kugelblitz;;Snacks / Nüsse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268370486;Kinderäpfel Red Prince;Karli Kugelblitz;;Obst / Gemüse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268335560;Toilettenpapier 3-lagig;Favora;;Drogerie / Papier;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268304788;Feuchtes Toilettenpapier;Favora;;Drogerie / Papier;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268326841;Recycling-Toilettenpapier;Favora;;Drogerie / Papier;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268459280;Hugo Holunderblüte Minze;Cavelli;;Getränke / Alkohol;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268324588;Lieblich Rotwein;Cavelli;;Getränke / Alkohol;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268411257;Spätburgunder halbtrocken;Cavelli;;Getränke / Alkohol;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268459457;Dornfelder;Cavelli;;Getränke / Alkohol;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268366441;Chardonnay delle Venezie;Cavelli;;Getränke / Alkohol;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268500883;Agaven Dicksaft;BioBio;;Brotaufstrich;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42297406;Streichcreme Paprika-Zucchini-Tomate;BioBio;;Brotaufstrich;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268497220;Knusper Dinkel Müsli;BioBio;;Frühstück / Müsli;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268374729;Speisekartoffeln;BioBio;;Obst / Gemüse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268370653;Handkäse;BioBio;;Käse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268461931;Schwarze Johannisbeerkonfitüre extra;Netto;;Brotaufstrich;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268358590;Butter Brioche;Netto;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268416122;Junger Spinat gehackt;Beste Ernte;;Tiefkühl;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268478366;H-Schmand;Netto;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268345620;Mandarinen-Quark Schnitten;Sweet Delight;;Brot / Backwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268481373;Kartoffelsalat Essig & Öl;Fürstenkrone;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268140980;Bunter Rohkostsalat;Fürstenkrone;;Obst / Gemüse;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268002318;Gurkensalat;Fürstenkrone;;Konserven;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268358842;Traubenzucker;Day Plus;;Süßwaren;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268181464;Joghurt Drink;Day Plus;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268388122;Hühnerfrikassee;Dinner Gold;;Konserven;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268332408;Mozzarella Sticks;Dinner Gold;;Tiefkühl;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+42128823;Heringsfilet in Tomaten-Creme;Sealuxe;;;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
+4316268454988;White Tiger Garnelen;Sealuxe;;Tiefkühl;Buycott-Eintrag, nicht verifiziert;Buycott;2026-09-24
