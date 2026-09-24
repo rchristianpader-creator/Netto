@@ -1,7 +1,7 @@
 /*
  * Lädt das Sortiment aus einer CSV-Datei (data/netto-sortiment.csv).
  * Erwartete Spalten (Reihenfolge egal, weitere Spalten werden ignoriert):
- *   ean; produktname; marke; inhalt; kategorie; …; datenstand
+ *   ean; produktname; marke; inhalt; kategorie; …; datenstand (optional: warengruppe)
  * Trennzeichen Semikolon, Komma oder Tab; Felder dürfen in "Anführungszeichen" stehen.
  */
 (function (root, factory) {
@@ -16,13 +16,14 @@
     name: ['produktname', 'name', 'artikel', 'bezeichnung'],
     marke: ['marke', 'brand'],
     inhalt: ['inhalt', 'menge', 'größe', 'groesse'],
-    kategorie: ['kategorie', 'warengruppe'],
+    kategorie: ['kategorie'],
+    warengruppe: ['warengruppe', 'abteilung'],
     datenstand: ['datenstand', 'stand'],
   };
 
   /** Zerlegt CSV-Text in Zeilen und Felder (RFC-4180-artig, mit wählbarem Trennzeichen). */
   function parseRows(text, delimiter) {
-    const s = String(text || '').replace(/^﻿/, '');
+    const s = String(text || '').replace(/^\uFEFF/, '');
     const rows = [];
     let row = [];
     let field = '';
@@ -56,13 +57,13 @@
   }
 
   function detectDelimiter(text) {
-    const first = String(text || '').replace(/^﻿/, '').split(/\r?\n/, 1)[0];
+    const first = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/, 1)[0];
     const count = (d) => first.split(d).length;
     return [';', '\t', ','].reduce((best, d) => (count(d) > count(best) ? d : best), ';');
   }
 
   /**
-   * Liefert { items: [{code, type, valid, note, name, marke, inhalt, kategorie}], errors: [{row, text}], datenstand }.
+   * Liefert { items: [{code, type, valid, note, name, marke, inhalt, kategorie, warengruppe}], errors: [{row, text}], datenstand }.
    * Doppelte EANs werden nur einmal übernommen.
    */
   function parse(text) {
@@ -89,7 +90,13 @@
       if (seen.has(norm.code)) return;
       seen.add(norm.code);
       items.push(
-        Object.assign(norm, { name: get(col.name), marke: get(col.marke), inhalt: get(col.inhalt), kategorie: get(col.kategorie) })
+        Object.assign(norm, {
+          name: get(col.name),
+          marke: get(col.marke),
+          inhalt: get(col.inhalt),
+          kategorie: get(col.kategorie),
+          warengruppe: get(col.warengruppe),
+        })
       );
       const stand = get(col.datenstand);
       if (stand > datenstand) datenstand = stand;

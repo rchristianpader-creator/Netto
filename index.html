@@ -47,6 +47,7 @@
         <div class="item-head">
           <span class="pos" id="pos"></span>
           <div class="item-title">
+            <p class="item-group" id="item-group"></p>
             <h1 class="item-name" id="item-name"></h1>
             <p class="item-meta" id="item-meta"></p>
           </div>
@@ -141,6 +142,16 @@
         </section>
 
         <section class="group">
+          <h3>Laufweg durch den Laden</h3>
+          <p class="hint">Die Warengruppen kommen in dieser Reihenfolge, die Artikel innerhalb einer Gruppe zufällig gemischt.
+            Mit ↑ ↓ an die eigene Filiale anpassen.</p>
+          <ol class="laufweg" id="laufweg"></ol>
+          <div class="row">
+            <button type="button" class="btn ghost" id="btn-laufweg-reset">Standard-Reihenfolge</button>
+          </div>
+        </section>
+
+        <section class="group">
           <h3>Scanner am selben Gerät (USB/Bluetooth)</h3>
           <label class="switch"><input type="checkbox" id="set-keyboard"><span>Eingabe des Scanners erkennen</span></label>
           <p class="hint">Ist der Scanner mit diesem Gerät verbunden, „tippt“ er den gelesenen Code. Das wird auch ohne Mikrofon erkannt.</p>
@@ -157,7 +168,8 @@
 
         <section class="group">
           <h3>Fortschritt</h3>
-          <button type="button" class="btn danger" id="btn-reset-progress">Zurück zum ersten Artikel</button>
+          <p class="hint">Setzt alle Markierungen zurück und mischt die Artikel innerhalb der Warengruppen neu.</p>
+          <button type="button" class="btn danger" id="btn-reset-progress">Neu starten (neu gemischt)</button>
         </section>
 
         <p class="hint">Solange dieses Fenster offen ist, wird nicht weitergeschaltet – ein erkannter Ton lässt nur den Punkt an der Anzeige grün aufleuchten.</p>
@@ -167,6 +179,7 @@
 
   <script src="js/ean.js"></script>
   <script src="js/sortiment.js"></script>
+  <script src="js/warengruppen.js"></script>
   <script src="js/tone-detector.js"></script>
   <script src="js/keyboard-scanner.js"></script>
   <script src="js/app.js"></script>
