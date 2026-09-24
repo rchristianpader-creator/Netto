@@ -60,32 +60,6 @@ test('toSVG: Balkenbreiten ergeben die Modulfolge, Ruhezonen vorhanden', () => {
   assert.equal(bars.slice(-7), '0'.repeat(7));
 });
 
-test('parseList: verschiedene Formate', () => {
-  const text = [
-    '﻿# Kommentar',
-    '4006381333931;Textmarker gelb',
-    'Milch 1,5% 1L\t4006381333931',
-    '"96385074","Kleiner Artikel"',
-    '4 006381 333931',
-    '036000291452',
-    '',
-    'keine EAN hier',
-    '4,00638E+12',
-  ].join('\r\n');
-  const { items, errors } = EAN.parseList(text);
-  assert.deepEqual(
-    items.map((i) => [i.code, i.name]),
-    [
-      ['4006381333931', 'Textmarker gelb'],
-      ['4006381333931', 'Milch 1,5% 1L'],
-      ['96385074', 'Kleiner Artikel'],
-      ['4006381333931', ''],
-      ['0036000291452', ''],
-    ]
-  );
-  assert.deepEqual(errors.map((e) => e.line), [8, 9]);
-});
-
 test('sameCode: tolerant bei Präfixen, führenden Nullen und fehlender Prüfziffer', () => {
   assert.ok(EAN.sameCode('4006381333931', '4006381333931'));
   assert.ok(EAN.sameCode(']E04006381333931', '4006381333931'));

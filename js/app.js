@@ -1,8 +1,10 @@
-/* EAN Scan-Liste – Bedienoberfläche. Benötigt ean.js, tone-detector.js, keyboard-scanner.js, off-import.js. */
+/* EAN Scan-Liste – Bedienoberfläche. Benötigt ean.js, sortiment.js, tone-detector.js, keyboard-scanner.js. */
 (function () {
   'use strict';
 
-  const STORE_KEY = 'ean-scan-liste.v1';
+  const DATA_URL = 'data/netto-sortiment.csv';
+  const STORE_KEY = 'ean-scan-liste.v2';
+  const OLD_STORE_KEY = 'ean-scan-liste.v1'; // frühere Version: Einstellungen (z. B. angelernter Ton) übernehmen
   const BASE_WIDTH = 520; // maximale Barcode-Breite in CSS-Pixeln bei Größe 100 %
   const MIN_BAR_HEIGHT = 22; // Module
   const MAX_BAR_HEIGHT = 70; // Module (GS1-Nennmaß EAN-13: ca. 69)
@@ -20,11 +22,15 @@
   const $ = (sel) => document.querySelector(sel);
   const el = {
     summary: $('#list-summary'),
-    viewEmpty: $('#view-empty'),
+    viewLoading: $('#view-loading'),
+    loadingTitle: $('#loading-title'),
+    loadingText: $('#loading-text'),
+    loadingActions: $('#loading-actions'),
     viewCode: $('#view-code'),
     viewDone: $('#view-done'),
     pos: $('#pos'),
     name: $('#item-name'),
+    meta: $('#item-meta'),
     area: $('#barcode-area'),
     card: $('#barcode-card'),
     barcode: $('#barcode'),
@@ -40,16 +46,10 @@
     fullscreen: $('#btn-fullscreen'),
     dlgList: $('#dlg-list'),
     dlgSettings: $('#dlg-settings'),
-    listText: $('#list-text'),
-    listCheck: $('#list-check'),
-    listFile: $('#list-file'),
     overview: $('#overview'),
     overviewStats: $('#overview-stats'),
-    offBox: $('#off-box'),
-    offCount: $('#off-count'),
-    offStatus: $('#off-status'),
-    offReplace: $('#btn-off-replace'),
-    offAppend: $('#btn-off-append'),
+    search: $('#overview-search'),
+    dataInfo: $('#data-info'),
     setMic: $('#set-mic'),
     setKeyboard: $('#set-keyboard'),
     setLevel: $('#set-level'),
@@ -74,67 +74,105 @@
 
   // ---------- Zustand & Speicher ----------
 
-  const saved = load();
-  const state = {
-    text: typeof saved.text === 'string' ? saved.text : '',
-    items: [],
-    index: Number.isInteger(saved.index) ? saved.index : 0,
-    marks: Array.isArray(saved.marks) ? saved.marks : [],
-    settings: Object.assign({}, DEFAULT_SETTINGS, saved.settings),
-  };
-  state.items = EAN.parseList(state.text).items;
-  if (state.marks.length > state.items.length) state.marks = [];
-  state.index = Math.max(0, Math.min(state.index, state.items.length));
-
-  function load() {
+  function load(key) {
     try {
-      return JSON.parse(localStorage.getItem(STORE_KEY)) || {};
+      const value = JSON.parse(localStorage.getItem(key));
+      return value && typeof value === 'object' ? value : {};
     } catch (e) {
       return {};
     }
   }
 
+  const saved = load(STORE_KEY);
+  const legacy = saved.settings ? {} : load(OLD_STORE_KEY);
+  const state = {
+    items: [],
+    index: 0,
+    // Fortschritt je EAN ('ok' | 'mismatch' | 'skip'), damit er auch nach einer geänderten Liste passt
+    marks: saved.marks && typeof saved.marks === 'object' && !Array.isArray(saved.marks) ? saved.marks : {},
+    settings: Object.assign({}, DEFAULT_SETTINGS, legacy.settings, saved.settings),
+    datenstand: '',
+    loading: true,
+    loadError: '',
+  };
+
   function save() {
+    const item = state.items[state.index];
     try {
       localStorage.setItem(
         STORE_KEY,
-        JSON.stringify({ text: state.text, index: state.index, marks: state.marks, settings: state.settings })
+        JSON.stringify({ code: item ? item.code : null, index: state.index, marks: state.marks, settings: state.settings })
       );
     } catch (e) {
       /* privater Modus o. ä. – dann eben ohne Speichern */
     }
   }
 
-  const countMarks = (kind) => state.marks.filter((m) => m === kind).length;
+  const markOf = (item) => (MARKS[state.marks[item.code]] ? state.marks[item.code] : '');
+
+  function counts() {
+    const c = { ok: 0, mismatch: 0, skip: 0, open: 0 };
+    state.items.forEach((it) => c[markOf(it) || 'open']++);
+    return c;
+  }
+
+  async function loadData() {
+    state.loading = true;
+    state.loadError = '';
+    render();
+    try {
+      const data = await Sortiment.load(DATA_URL);
+      state.items = data.items;
+      state.datenstand = data.datenstand;
+      if (!state.items.length) state.loadError = 'Die Sortimentsliste enthält keine gültigen EAN-Codes.';
+      const byCode = saved.code ? state.items.findIndex((it) => it.code === saved.code) : -1;
+      const byIndex = Number.isInteger(saved.index) ? saved.index : 0;
+      state.index = byCode >= 0 ? byCode : Math.max(0, Math.min(byIndex, state.items.length));
+    } catch (err) {
+      state.loadError = 'Das Sortiment konnte nicht geladen werden (' + ((err && err.message) || 'unbekannter Fehler') + ').';
+    }
+    state.loading = false;
+    render();
+  }
 
   // ---------- Anzeige ----------
 
   function render() {
     const n = state.items.length;
     const i = state.index;
-    const done = n > 0 && i >= n;
-    const scanned = countMarks('ok') + countMarks('mismatch');
+    const ready = !state.loading && !state.loadError && n > 0;
+    const done = ready && i >= n;
+    const c = counts();
 
-    el.viewEmpty.hidden = n > 0;
-    el.viewCode.hidden = !n || done;
+    el.viewLoading.hidden = ready;
+    el.viewCode.hidden = !ready || done;
     el.viewDone.hidden = !done;
-    el.prev.disabled = !n || i === 0;
-    el.next.disabled = !n || done;
-    el.summary.textContent = n ? n + ' Codes · ' + scanned + ' gescannt' : 'keine Liste';
+    el.prev.disabled = !ready || i === 0;
+    el.next.disabled = !ready || done;
 
-    if (done) {
-      const skipped = countMarks('skip');
-      el.doneText.textContent =
-        'Alle ' + n + ' Codes durchlaufen – ' + scanned + ' per Scan' + (skipped ? ', ' + skipped + ' übersprungen.' : '.');
+    if (!ready) {
+      el.summary.textContent = state.loading ? 'Sortiment wird geladen …' : 'Sortiment nicht verfügbar';
+      el.loadingTitle.textContent = state.loading ? 'Sortiment wird geladen …' : 'Fehler beim Laden';
+      el.loadingText.textContent = state.loadError;
+      el.loadingActions.hidden = state.loading;
       return;
     }
-    if (!n) return;
+    el.summary.textContent = n + ' Artikel · ' + (c.ok + c.mismatch) + ' gescannt';
+
+    if (done) {
+      el.doneText.textContent =
+        'Alle ' + n + ' Artikel durchlaufen – ' + (c.ok + c.mismatch) + ' per Scan' + (c.skip ? ', ' + c.skip + ' übersprungen.' : '.');
+      return;
+    }
 
     const item = state.items[i];
     el.pos.textContent = i + 1 + ' / ' + n;
     el.name.textContent = item.name || 'Artikel ' + (i + 1);
+    el.meta.textContent = [item.marke, item.inhalt, item.kategorie].filter(Boolean).join(' · ');
     el.code.textContent = item.type + ' ' + item.code;
-    el.note.textContent = item.valid ? item.note : item.note + ' – der Scanner wird diesen Code nicht lesen';
+    if (!item.valid) el.note.textContent = item.note + ' – der Scanner wird diesen Code nicht lesen';
+    else if (markOf(item) === 'ok') el.note.textContent = '✓ bereits gescannt';
+    else el.note.textContent = item.note;
     el.note.classList.toggle('bad', !item.valid);
     el.progress.style.width = (i / n) * 100 + '%';
     drawBarcode();
@@ -213,8 +251,9 @@
   }
 
   function next() {
-    if (state.index >= state.items.length) return;
-    if (!state.marks[state.index]) state.marks[state.index] = 'skip';
+    const item = state.items[state.index];
+    if (!item) return;
+    if (!state.marks[item.code]) state.marks[item.code] = 'skip';
     goTo(state.index + 1);
   }
 
@@ -223,7 +262,7 @@
   }
 
   function restart() {
-    state.marks = [];
+    state.marks = {};
     goTo(0);
   }
 
@@ -233,22 +272,21 @@
   let lastScanAt = -Infinity;
   function onScan(source, scanned) {
     pulseMeters();
-    if (dialogOpen()) return;
-    const n = state.items.length;
-    if (!n) return;
-    if (state.index >= n) {
-      toast('Die Liste ist fertig.');
+    if (dialogOpen() || !state.items.length) return;
+    const item = state.items[state.index];
+    if (!item) {
+      toast('Alle Artikel sind durch.');
       return;
     }
     const now = performance.now();
     if (now - lastScanAt < state.settings.cooldownMs) return; // z. B. Piepton + Tastatur vom selben Scan
     lastScanAt = now;
 
-    const match = source !== 'keyboard' || EAN.sameCode(scanned, state.items[state.index].code);
-    state.marks[state.index] = match ? 'ok' : 'mismatch';
+    const match = source !== 'keyboard' || EAN.sameCode(scanned, item.code);
+    state.marks[item.code] = match ? 'ok' : 'mismatch';
     goTo(state.index + 1);
     flash(match ? 'ok' : 'warn');
-    if (!match) toast('Gescannt: ' + scanned + ' – passt nicht zum angezeigten Code', 'warn', 3500);
+    if (!match) toast('Gescannt: ' + scanned + ' – passt nicht zum angezeigten Artikel', 'warn', 3500);
   }
 
   el.prev.addEventListener('click', () => {
@@ -451,87 +489,64 @@
     true
   );
 
-  // ---------- Liste ----------
-
-  let draftDirty = false;
+  // ---------- Sortiment-Übersicht ----------
 
   function openList() {
-    if (!draftDirty) el.listText.value = state.text;
-    checkDraft();
+    if (!state.items.length) return;
+    el.search.value = '';
     renderOverview();
     el.dlgList.showModal();
     const cur = el.overview.querySelector('.is-current');
     if (cur) cur.scrollIntoView({ block: 'center' });
   }
 
-  function checkDraft() {
-    const parsed = EAN.parseList(el.listText.value);
-    const invalid = parsed.items.filter((it) => !it.valid).length;
-    let html = '<strong>' + parsed.items.length + '</strong> Codes erkannt';
-    if (invalid) html += ' · <span class="bad">' + invalid + ' mit falscher Prüfziffer</span>';
-    if (parsed.errors.length) {
-      const lines = parsed.errors.slice(0, 6).map((e) => e.line).join(', ');
-      html += ' · <span class="bad">ohne gültige EAN: Zeile ' + lines + (parsed.errors.length > 6 ? ' …' : '') + '</span>';
-    }
-    if (draftDirty) html += ' · <em>noch nicht übernommen</em>';
-    el.listCheck.innerHTML = html;
-  }
-
-  let checkTimer = null;
-  el.listText.addEventListener('input', () => {
-    draftDirty = el.listText.value !== state.text;
-    clearTimeout(checkTimer);
-    checkTimer = setTimeout(checkDraft, 200);
-  });
-
-  // Übernimmt eine neue Liste. Der Fortschritt bleibt erhalten, wenn die bisherigen Codes unverändert am Anfang stehen.
-  function applyText(raw) {
-    const text = String(raw).replace(/\r\n?/g, '\n');
-    const items = EAN.parseList(text).items;
-    const keep = state.items.length <= items.length && state.items.every((it, k) => it.code === items[k].code);
-    state.text = text;
-    state.items = items;
-    if (!keep) {
-      state.index = 0;
-      state.marks = [];
-    }
-    state.index = Math.min(state.index, items.length);
-    draftDirty = false;
-    el.listText.value = text;
-    save();
-    render();
-    if (el.dlgList.open) {
-      checkDraft();
-      renderOverview();
-    }
-    return items.length;
+  function matches(item, q) {
+    return !q || item.code.includes(q) || (item.name + ' ' + item.marke + ' ' + item.kategorie).toLowerCase().includes(q);
   }
 
   function renderOverview() {
+    const q = el.search.value.trim().toLowerCase();
     const frag = document.createDocumentFragment();
     state.items.forEach((it, k) => {
-      const mark = MARKS[state.marks[k]] ? state.marks[k] : '';
+      if (!matches(it, q)) return;
+      const mark = markOf(it);
       const li = document.createElement('li');
       li.className = [k === state.index ? 'is-current' : '', it.valid ? '' : 'invalid'].join(' ').trim();
       const b = document.createElement('button');
       b.type = 'button';
       b.dataset.index = String(k);
       b.innerHTML =
-        '<span class="n">' + (k + 1) + '</span><span class="mark ' + mark + '">' + (MARKS[mark] || '') +
-        '</span><span class="name"></span><span class="code">' + it.code + '</span>';
-      b.querySelector('.name').textContent = it.name || it.type;
+        '<span class="n">' + (k + 1) + '</span><span class="mark ' + mark + '">' + (MARKS[mark] || '') + '</span>' +
+        '<span class="name"><span class="title"></span><span class="sub"></span></span><span class="code">' + it.code + '</span>';
+      b.querySelector('.title').textContent = it.name || it.type;
+      b.querySelector('.sub').textContent = [it.marke, it.inhalt].filter(Boolean).join(' · ');
       li.appendChild(b);
       frag.appendChild(li);
     });
+    if (!frag.childNodes.length) {
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = 'Keine Treffer';
+      frag.appendChild(li);
+    }
     el.overview.replaceChildren(frag);
-    const n = state.items.length;
-    const ok = countMarks('ok');
-    const mis = countMarks('mismatch');
-    const skip = countMarks('skip');
-    el.overviewStats.textContent = n
-      ? '(' + ok + ' ✓' + (mis ? ' · ' + mis + ' ⚠' : '') + (skip ? ' · ' + skip + ' ↷' : '') + ' · ' + (n - ok - mis - skip) + ' offen)'
-      : '(leer)';
+
+    const c = counts();
+    el.overviewStats.textContent =
+      state.items.length + ' Artikel: ' + c.ok + ' ✓ gescannt' + (c.mismatch ? ' · ' + c.mismatch + ' ⚠ abweichend' : '') +
+      (c.skip ? ' · ' + c.skip + ' ↷ übersprungen' : '') + ' · ' + c.open + ' offen';
+    el.dataInfo.textContent =
+      'Netto Marken-Discount (Deutschland), Eigenmarken-Lebensmittel' +
+      (state.datenstand ? ', Datenstand ' + state.datenstand : '') + '. Angaben ohne Gewähr.';
   }
+
+  el.search.addEventListener('input', renderOverview);
+  el.search.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault(); // sonst schließt das Formular den Dialog
+    const first = el.overview.querySelector('button[data-index]');
+    if (first) first.click();
+  });
 
   el.overview.addEventListener('click', (e) => {
     const b = e.target.closest('button[data-index]');
@@ -539,69 +554,6 @@
     el.dlgList.close();
     goTo(Number(b.dataset.index));
   });
-
-  $('#btn-apply-list').addEventListener('click', () => {
-    const n = applyText(el.listText.value);
-    el.dlgList.close();
-    toast(n + ' Codes übernommen', 'ok');
-  });
-
-  el.listFile.addEventListener('change', async () => {
-    const file = el.listFile.files[0];
-    el.listFile.value = '';
-    if (!file) return;
-    const buf = await file.arrayBuffer();
-    let text;
-    try {
-      text = new TextDecoder('utf-8', { fatal: true }).decode(buf);
-    } catch (e) {
-      text = new TextDecoder('windows-1252').decode(buf); // Excel-CSV unter Windows
-    }
-    const n = applyText(text);
-    toast(n + ' Codes aus „' + file.name + '“ übernommen', 'ok', 2500);
-  });
-
-  function demoText() {
-    const lines = ['# Testcodes (keine echten Produkte) – zum Ausprobieren von Scanner und Ton-Erkennung'];
-    for (let i = 1; i <= 8; i++) {
-      const body = '200000000' + String(i).padStart(3, '0');
-      lines.push(body + EAN.checkDigit(body) + ';Testcode ' + i);
-    }
-    lines.push('2000009' + EAN.checkDigit('2000009') + ';Testcode 9 (EAN-8)');
-    return lines.join('\n');
-  }
-
-  async function loadOff(mode) {
-    const count = Number(el.offCount.value) || 50;
-    el.offReplace.disabled = el.offAppend.disabled = true;
-    el.offStatus.textContent = 'Lade Produkte von Open Food Facts …';
-    try {
-      const entries = await OffImport.loadNettoProducts(count, EAN, (n) => {
-        el.offStatus.textContent = 'Lade … ' + n + ' Produkte';
-      });
-      if (!entries.length) {
-        el.offStatus.textContent = 'Keine Produkte gefunden.';
-        return;
-      }
-      const lines = entries.map((e) => e.code + ';' + e.name).join('\n');
-      const base = el.listText.value.replace(/\s+$/, '');
-      const header = '# Netto Marken-Discount – Daten: Open Food Facts (ODbL), Stand ' + new Date().toLocaleDateString('de-DE');
-      applyText(mode === 'append' && base ? base + '\n' + lines : header + '\n' + lines);
-      el.offStatus.textContent = '✓ ' + entries.length + ' Produkte geladen.';
-    } catch (err) {
-      const msg = String((err && err.message) || '');
-      let reason = 'Open Food Facts nicht erreichbar (Internetverbindung?).';
-      if (err && err.name === 'AbortError') reason = 'Zeitüberschreitung – bitte nochmal versuchen.';
-      else if (msg === 'HTTP 429') reason = 'Zu viele Anfragen – bitte eine Minute warten.';
-      else if (/^HTTP \d+/.test(msg)) reason = 'Server-Fehler (' + msg + ') – später nochmal versuchen.';
-      el.offStatus.textContent = 'Laden fehlgeschlagen: ' + reason;
-    } finally {
-      el.offReplace.disabled = el.offAppend.disabled = false;
-    }
-  }
-
-  el.offReplace.addEventListener('click', () => loadOff('replace'));
-  el.offAppend.addEventListener('click', () => loadOff('append'));
 
   // ---------- Einstellungen ----------
 
@@ -721,17 +673,12 @@
     if (!b) return;
     const action = b.dataset.action;
     if (action === 'open-list') openList();
-    else if (action === 'open-off') {
-      openList();
-      el.offBox.open = true;
-    } else if (action === 'load-demo') {
-      const n = applyText(demoText());
-      toast(n + ' Testcodes geladen', 'ok');
-    } else if (action === 'restart') restart();
+    else if (action === 'restart') restart();
+    else if (action === 'reload-data') loadData();
   });
 
   // ---------- Start ----------
 
-  render();
   updateListenUI();
+  loadData();
 })();
