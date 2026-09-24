@@ -8,6 +8,7 @@ Seite automatisch zum nächsten Artikel.** Dafür hört die Seite über das Mikr
 
 - 245 Netto-Eigenmarken-Lebensmittel (BioBio, Gutes Land, Gut Ponholz, Lieblings, Mondo Italiano, Clarky's, …)
   aus [`data/netto-sortiment.csv`](data/netto-sortiment.csv), alle EANs geprüft
+- **Jeden Tag eine neue Liste:** 50 bis 80 zufällig ausgewählte Artikel, auch die Anzahl ist zufällig
 - Reihenfolge wie beim Gang durch den Laden: Warengruppe für Warengruppe, innerhalb jeder Gruppe zufällig gemischt
 - Barcodes pixelgenau gerendert (EAN-13 und EAN-8), auch im Dunkelmodus schwarz auf weiß
 - Scan-Ton-Erkennung mit Anlern-Funktion und Pegelanzeige, robust gegen Sprache, Musik und Klappern
@@ -16,32 +17,44 @@ Seite automatisch zum nächsten Artikel.** Dafür hört die Seite über das Mikr
 
 ## So geht's
 
-1. Seite öffnen (Handy/Tablet, Adresse oben). Der erste Artikel wird sofort angezeigt.
+1. Seite öffnen (Handy/Tablet, Adresse oben). Der erste Artikel der heutigen Liste wird sofort angezeigt.
 2. **Scan-Ton-Erkennung starten** antippen und das Mikrofon erlauben.
 3. Barcode mit dem Scanner vom Bildschirm scannen, piep, nächster Artikel, und so weiter.
    Mit ‹ › geht es auch von Hand vor und zurück (übersprungene Artikel werden mit ↷ markiert).
 
+### Tagesliste: jeden Tag 50 bis 80 zufällige Artikel
+
+Jeden Tag wird aus dem Sortiment eine neue Liste ausgelost: 50 bis 80 Artikel, auch die Anzahl ist jeden Tag
+zufällig. Jeder Artikel hat jeden Tag dieselbe Chance, dranzukommen. Die Auslosung hängt nur vom Datum ab: Die Liste
+bleibt den ganzen Tag gleich (auch nach dem Neuladen und auf jedem Gerät), um Mitternacht kommt die nächste. Bleibt
+die Seite über Nacht offen, wechselt sie zur neuen Liste, sobald zehn Minuten lang nichts gescannt wurde. Die
+Häkchen (✓, ↷) gelten jeweils für den Tag.
+
+- **Anzahl ändern:** Einstellungen → *Tagesliste* → *Artikel pro Tag* von … bis … (Standard 50 bis 80). Die heutige
+  Liste wird sofort angepasst, schon gescannte Artikel behalten ihr ✓.
+- **Von vorne beginnen:** setzt die Häkchen der heutigen Liste zurück, gleiche Artikel in gleicher Reihenfolge.
+- **Neue Liste auslosen:** ersetzt die heutige Liste sofort durch eine andere Zufallsauswahl (neue Anzahl, neue Artikel).
+
 ### Reihenfolge: Laufweg durch den Laden
 
-Die Artikel kommen nach Warengruppen sortiert, in der Reihenfolge eines Rundgangs durch die Filiale:
+Die Artikel der Tagesliste kommen nach Warengruppen sortiert, in der Reihenfolge eines Rundgangs durch die Filiale:
 
 Milch & Milchgetränke → Joghurt → Quark & Desserts → Butter, Sahne & Margarine → Käse → Wurst & Aufschnitt →
 Feinkost & Salate → Fleisch & Geflügel → H-Milch & Kondensmilch → Konserven & Fertiggerichte →
 Nudeln, Reis & Backzutaten → Saucen, Fonds & Gewürze → Frühstück & Brotaufstrich → Snacks & Nüsse → Getränke → Tiefkühl
 
-Innerhalb jeder Warengruppe ist die Reihenfolge zufällig. Die Warengruppe steht über dem Produktnamen; beim Wechsel
-in die nächste Gruppe kommt ein kurzer Hinweis („Weiter mit: Käse“).
+Innerhalb jeder Warengruppe ist die Reihenfolge zufällig (gehört zur Tagesliste, bleibt also beim Neuladen gleich).
+Die Warengruppe steht über dem Produktnamen; beim Wechsel in die nächste Gruppe kommt ein kurzer Hinweis
+(„Weiter mit: Käse“).
 
 - **Laufweg anpassen:** Einstellungen → *Laufweg durch den Laden* → Gruppen mit ↑ ↓ verschieben (z. B. passend zur
   eigenen Filiale). „Standard-Reihenfolge“ stellt den Ausgangszustand wieder her.
-- **Neu mischen:** „Von vorne beginnen“ (am Ende) bzw. Einstellungen → *Neu starten (neu gemischt)* setzt den
-  Fortschritt zurück und mischt die Artikel innerhalb der Gruppen neu. Beim Neuladen der Seite bleibt die Mischung gleich.
 
 Die Warengruppe wird aus Kategorie, Produktname und Marke bestimmt (z. B. „Feiner Leberkäse“ → Wurst & Aufschnitt,
 „Butterkäse“ → Käse). Soll ein Artikel woanders einsortiert werden, in der CSV eine Spalte `warengruppe` mit dem
 Gruppennamen ergänzen – sie hat Vorrang.
 
-Über **Sortiment** oben rechts: Übersicht aller Artikel mit Stand (✓ gescannt, ↷ übersprungen, offen) und
+Über **Tagesliste** oben rechts: Übersicht der heutigen Artikel mit Stand (✓ gescannt, ↷ übersprungen, offen) und
 Suche nach Name, Marke oder EAN. Antippen springt direkt zu diesem Artikel.
 
 ### Scan-Ton anlernen (empfohlen)
@@ -55,7 +68,7 @@ genau diese Tonhöhe, ungefähr in dieser Lautstärke. Andere Pieptöne (Kasse, 
   durch fremde Geräusche weiter, die Linie nach rechts schieben; reagiert es nicht, nach links.
 - **Sperrzeit nach einem Scan** (Standard 0,4 s): verhindert, dass ein Doppelpiep zweimal weiterschaltet.
 
-Solange ein Einstellungs- oder Sortimentsfenster offen ist, wird nicht weitergeschaltet.
+Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschaltet.
 
 ### Tipps zum Scannen vom Bildschirm
 
@@ -76,7 +89,8 @@ ean;produktname;marke;inhalt;kategorie;status;quelle;datenstand
 
 Pflicht ist nur die Spalte `ean`; `produktname`, `marke` und `inhalt` werden angezeigt, `kategorie` bzw. `warengruppe`
 bestimmen die Einsortierung, weitere Spalten werden ignoriert. Zum Aktualisieren die Datei auf GitHub ersetzen (im Ordner `data` → *Add file → Upload files*, gleicher
-Dateiname). Ein bis zwei Minuten später zeigt die Seite die neue Liste; der Fortschritt bleibt je EAN erhalten.
+Dateiname). Ein bis zwei Minuten später wird aus dem neuen Sortiment ausgelost; die heutige Liste bleibt dabei weitgehend
+gleich, der Fortschritt bleibt je EAN erhalten.
 
 Datenstand der mitgelieferten Liste: 24.09.2026, eigene Recherche (Open Food Facts, identitaetskennzeichen.de,
 Netto-Produktseiten). Angaben ohne Gewähr.
@@ -100,6 +114,7 @@ oder verschickt. Fortschritt und Einstellungen liegen im `localStorage` des Brow
 | `data/netto-sortiment.csv` | Sortiment (EAN, Name, Marke, Inhalt, Kategorie) |
 | `js/sortiment.js` | Liest die CSV-Datei |
 | `js/warengruppen.js` | Warengruppen, Laufweg und Mischen innerhalb der Gruppen |
+| `js/tagesliste.js` | Tagesliste: Auslosung von Anzahl und Artikeln je Tag |
 | `js/ean.js` | Prüfziffer, EAN-8/EAN-13-Codierung und SVG-Rendering |
 | `js/tone-detector.js` | Mikrofon-Analyse: Pieptöne erkennen, Scan-Ton anlernen |
 | `js/keyboard-scanner.js` | Erkennt Scanner, die als Tastatur „tippen“ (USB/Bluetooth) |

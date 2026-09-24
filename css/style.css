@@ -464,6 +464,20 @@ dialog.sheet::backdrop { background: rgba(2, 6, 23, 0.55); }
 .laufweg .icon-btn { font-size: 18px; justify-content: center; }
 .laufweg .icon-btn:disabled { opacity: 0.25; cursor: default; }
 
+.tages-info { margin: 8px 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.per-day { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 0; font-size: 14px; }
+.per-day label { display: inline-flex; align-items: center; gap: 6px; }
+.per-day input {
+  width: 5.5em;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-variant-numeric: tabular-nums;
+}
+
 .group { padding: 4px 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 .group h3 { margin: 8px 0; font-size: 16px; }
 
