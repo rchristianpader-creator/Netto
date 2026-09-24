@@ -29,6 +29,7 @@
     viewCode: $('#view-code'),
     viewDone: $('#view-done'),
     pos: $('#pos'),
+    group: $('#item-group'),
     name: $('#item-name'),
     meta: $('#item-meta'),
     area: $('#barcode-area'),
@@ -64,6 +65,8 @@
     calibBar: $('#calib-bar'),
     calibrate: $('#btn-calibrate'),
     calibReset: $('#btn-calib-reset'),
+    laufweg: $('#laufweg'),
+    laufwegReset: $('#btn-laufweg-reset'),
   };
   const meters = Array.from(document.querySelectorAll('[data-meter]')).map((root) => ({
     root,
@@ -83,25 +86,36 @@
     }
   }
 
+  const newSeed = () => Math.floor(Math.random() * 0x100000000);
+
   const saved = load(STORE_KEY);
   const legacy = saved.settings ? {} : load(OLD_STORE_KEY);
   const state = {
-    items: [],
+    all: [], // Sortiment wie in der CSV
+    items: [], // nach Laufweg sortiert, innerhalb der Warengruppen gemischt
     index: 0,
     // Fortschritt je EAN ('ok' | 'mismatch' | 'skip'), damit er auch nach einer geänderten Liste passt
     marks: saved.marks && typeof saved.marks === 'object' && !Array.isArray(saved.marks) ? saved.marks : {},
+    seed: Number.isInteger(saved.seed) ? saved.seed : newSeed(),
     settings: Object.assign({}, DEFAULT_SETTINGS, legacy.settings, saved.settings),
     datenstand: '',
     loading: true,
     loadError: '',
   };
+  state.settings.laufweg = Warengruppen.normalizeOrder(state.settings.laufweg);
 
   function save() {
     const item = state.items[state.index];
     try {
       localStorage.setItem(
         STORE_KEY,
-        JSON.stringify({ code: item ? item.code : null, index: state.index, marks: state.marks, settings: state.settings })
+        JSON.stringify({
+          code: item ? item.code : null,
+          index: state.index,
+          marks: state.marks,
+          seed: state.seed,
+          settings: state.settings,
+        })
       );
     } catch (e) {
       /* privater Modus o. ä. – dann eben ohne Speichern */
@@ -122,16 +136,29 @@
     render();
     try {
       const data = await Sortiment.load(DATA_URL);
-      state.items = data.items;
+      data.items.forEach((it) => (it.gruppe = Warengruppen.classify(it)));
+      state.all = data.items;
+      state.items = Warengruppen.arrange(state.all, state.settings.laufweg, state.seed);
       state.datenstand = data.datenstand;
       if (!state.items.length) state.loadError = 'Die Sortimentsliste enthält keine gültigen EAN-Codes.';
       const byCode = saved.code ? state.items.findIndex((it) => it.code === saved.code) : -1;
       const byIndex = Number.isInteger(saved.index) ? saved.index : 0;
       state.index = byCode >= 0 ? byCode : Math.max(0, Math.min(byIndex, state.items.length));
+      save();
     } catch (err) {
       state.loadError = 'Das Sortiment konnte nicht geladen werden (' + ((err && err.message) || 'unbekannter Fehler') + ').';
     }
     state.loading = false;
+    render();
+  }
+
+  // Neu sortieren (Laufweg geändert oder neu gemischt); der aktuelle Artikel bleibt der aktuelle.
+  function rearrange() {
+    const current = state.items[state.index];
+    const done = state.items.length > 0 && state.index >= state.items.length;
+    state.items = Warengruppen.arrange(state.all, state.settings.laufweg, state.seed);
+    state.index = current ? state.items.indexOf(current) : done ? state.items.length : 0;
+    save();
     render();
   }
 
@@ -167,8 +194,9 @@
 
     const item = state.items[i];
     el.pos.textContent = i + 1 + ' / ' + n;
+    el.group.textContent = Warengruppen.nameOf(item.gruppe);
     el.name.textContent = item.name || 'Artikel ' + (i + 1);
-    el.meta.textContent = [item.marke, item.inhalt, item.kategorie].filter(Boolean).join(' · ');
+    el.meta.textContent = [item.marke, item.inhalt].filter(Boolean).join(' · ');
     el.code.textContent = item.type + ' ' + item.code;
     if (!item.valid) el.note.textContent = item.note + ' – der Scanner wird diesen Code nicht lesen';
     else if (markOf(item) === 'ok') el.note.textContent = '✓ bereits gescannt';
@@ -250,19 +278,32 @@
     render();
   }
 
+  // Einen Artikel weiter; beim Wechsel in die nächste Warengruppe kurz Bescheid geben.
+  function advance() {
+    const before = state.items[state.index];
+    goTo(state.index + 1);
+    const after = state.items[state.index];
+    const changed = before && after && after !== before && after.gruppe !== before.gruppe;
+    if (changed) toast('Weiter mit: ' + Warengruppen.nameOf(after.gruppe), 'ok', 2200);
+    return changed;
+  }
+
   function next() {
     const item = state.items[state.index];
     if (!item) return;
     if (!state.marks[item.code]) state.marks[item.code] = 'skip';
-    goTo(state.index + 1);
+    advance();
   }
 
   function prev() {
     goTo(Math.min(state.index, state.items.length) - 1);
   }
 
+  // Neuer Durchgang: Markierungen zurücksetzen und innerhalb der Warengruppen neu mischen.
   function restart() {
     state.marks = {};
+    state.seed = newSeed();
+    state.items = Warengruppen.arrange(state.all, state.settings.laufweg, state.seed);
     goTo(0);
   }
 
@@ -284,7 +325,7 @@
 
     const match = source !== 'keyboard' || EAN.sameCode(scanned, item.code);
     state.marks[item.code] = match ? 'ok' : 'mismatch';
-    goTo(state.index + 1);
+    advance();
     flash(match ? 'ok' : 'warn');
     if (!match) toast('Gescannt: ' + scanned + ' – passt nicht zum angezeigten Artikel', 'warn', 3500);
   }
@@ -501,14 +542,37 @@
   }
 
   function matches(item, q) {
-    return !q || item.code.includes(q) || (item.name + ' ' + item.marke + ' ' + item.kategorie).toLowerCase().includes(q);
+    const text = item.name + ' ' + item.marke + ' ' + Warengruppen.nameOf(item.gruppe);
+    return !q || item.code.includes(q) || text.toLowerCase().includes(q);
+  }
+
+  // Stand je Warengruppe: { gruppe: { total, done } }
+  function groupStats() {
+    const stats = {};
+    state.items.forEach((it) => {
+      const s = stats[it.gruppe] || (stats[it.gruppe] = { total: 0, done: 0 });
+      s.total++;
+      if (markOf(it) === 'ok' || markOf(it) === 'mismatch') s.done++;
+    });
+    return stats;
   }
 
   function renderOverview() {
     const q = el.search.value.trim().toLowerCase();
     const frag = document.createDocumentFragment();
+    const stats = groupStats();
+    let lastGroup = null;
     state.items.forEach((it, k) => {
       if (!matches(it, q)) return;
+      if (it.gruppe !== lastGroup) {
+        lastGroup = it.gruppe;
+        const head = document.createElement('li');
+        head.className = 'group-head';
+        head.innerHTML = '<span class="gname"></span><span class="gcount"></span>';
+        head.querySelector('.gname').textContent = Warengruppen.nameOf(it.gruppe);
+        head.querySelector('.gcount').textContent = stats[it.gruppe].done + ' / ' + stats[it.gruppe].total + ' ✓';
+        frag.appendChild(head);
+      }
       const mark = markOf(it);
       const li = document.createElement('li');
       li.className = [k === state.index ? 'is-current' : '', it.valid ? '' : 'invalid'].join(' ').trim();
@@ -523,7 +587,7 @@
       li.appendChild(b);
       frag.appendChild(li);
     });
-    if (!frag.childNodes.length) {
+    if (!frag.querySelector('button')) {
       const li = document.createElement('li');
       li.className = 'empty';
       li.textContent = 'Keine Treffer';
@@ -560,8 +624,62 @@
   function openSettings() {
     fillSettings();
     renderCalibState();
+    renderLaufweg();
     el.dlgSettings.showModal();
   }
+
+  // Laufweg: nur Warengruppen anzeigen, die im Sortiment vorkommen.
+  function visibleGroups() {
+    const stats = groupStats();
+    return state.settings.laufweg.filter((id) => stats[id]);
+  }
+
+  function renderLaufweg() {
+    const stats = groupStats();
+    const visible = visibleGroups();
+    el.laufweg.replaceChildren(
+      ...visible.map((id, i) => {
+        const li = document.createElement('li');
+        li.dataset.id = id;
+        li.innerHTML =
+          '<span class="lw-name"></span><span class="lw-count"></span>' +
+          '<button type="button" class="icon-btn" data-move="-1" aria-label="Nach oben">↑</button>' +
+          '<button type="button" class="icon-btn" data-move="1" aria-label="Nach unten">↓</button>';
+        li.querySelector('.lw-name').textContent = Warengruppen.nameOf(id);
+        li.querySelector('.lw-count').textContent = stats[id].total;
+        li.querySelector('[data-move="-1"]').disabled = i === 0;
+        li.querySelector('[data-move="1"]').disabled = i === visible.length - 1;
+        return li;
+      })
+    );
+    const isDefault = state.settings.laufweg.join() === Warengruppen.normalizeOrder(Warengruppen.DEFAULT_ORDER).join();
+    el.laufwegReset.hidden = isDefault;
+  }
+
+  el.laufweg.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-move]');
+    if (!btn) return;
+    const id = btn.closest('li').dataset.id;
+    const dir = Number(btn.dataset.move);
+    const visible = visibleGroups();
+    const other = visible[visible.indexOf(id) + dir];
+    if (!other) return;
+    const order = state.settings.laufweg.slice();
+    const a = order.indexOf(id);
+    const b = order.indexOf(other);
+    [order[a], order[b]] = [order[b], order[a]];
+    changeSettings({ laufweg: order });
+    rearrange();
+    renderLaufweg();
+    const again = el.laufweg.querySelector('li[data-id="' + id + '"] [data-move="' + dir + '"]');
+    if (again && !again.disabled) again.focus();
+  });
+
+  el.laufwegReset.addEventListener('click', () => {
+    changeSettings({ laufweg: Warengruppen.normalizeOrder(Warengruppen.DEFAULT_ORDER) });
+    rearrange();
+    renderLaufweg();
+  });
 
   function fillSettings() {
     const s = state.settings;
@@ -652,7 +770,8 @@
   $('#btn-reset-progress').addEventListener('click', () => {
     restart();
     el.dlgSettings.close();
-    toast('Zurück auf Anfang');
+    const first = state.items[0];
+    toast('Neu gemischt – los geht’s mit ' + (first ? Warengruppen.nameOf(first.gruppe) : 'dem ersten Artikel'));
   });
 
   // ---------- Kopfzeile & Aktionen ----------

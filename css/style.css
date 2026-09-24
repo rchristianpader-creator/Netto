@@ -125,6 +125,14 @@ button, input, select { font: inherit; color: inherit; }
 
 .item-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .item-title { min-width: 0; }
+.item-group {
+  margin: 0 0 2px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 .item-meta {
   margin: 2px 0 0;
   color: var(--muted);
@@ -392,7 +400,7 @@ dialog.sheet::backdrop { background: rgba(2, 6, 23, 0.55); }
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: clip; /* nicht hidden: sonst kleben die Gruppenüberschriften nicht */
 }
 .overview li + li { border-top: 1px solid var(--border); }
 .overview button {
@@ -413,12 +421,48 @@ dialog.sheet::backdrop { background: rgba(2, 6, 23, 0.55); }
 .overview .title, .overview .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .overview .sub { color: var(--muted); font-size: 13px; }
 .overview li.empty { padding: 12px; color: var(--muted); text-align: center; }
+.overview li.group-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--surface-2);
+  font-weight: 700;
+  font-size: 14px;
+}
+.overview li.group-head .gcount { color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
 .overview .code { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 .overview .mark.ok { color: var(--ok); font-weight: 700; }
 .overview .mark.mismatch { color: var(--warn); font-weight: 700; }
 .overview .mark.skip { color: var(--muted); }
 .overview li.is-current button { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .overview li.invalid .code { color: var(--danger); }
+
+.laufweg {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  counter-reset: lw;
+}
+.laufweg li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 12px;
+  counter-increment: lw;
+}
+.laufweg li + li { border-top: 1px solid var(--border); }
+.laufweg .lw-name::before { content: counter(lw) ". "; color: var(--muted); }
+.laufweg .lw-count { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; padding-right: 6px; }
+.laufweg .icon-btn { font-size: 18px; justify-content: center; }
+.laufweg .icon-btn:disabled { opacity: 0.25; cursor: default; }
 
 .group { padding: 4px 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 .group h3 { margin: 8px 0; font-size: 16px; }

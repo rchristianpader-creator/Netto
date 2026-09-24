@@ -6,7 +6,7 @@ const Sortiment = require('../js/sortiment.js');
 
 test('CSV: Semikolon, Anführungszeichen mit ; darin, BOM, CRLF, Spalten per Kopfzeile', () => {
   const csv = [
-    '﻿ean;produktname;marke;inhalt;kategorie;status;datenstand',
+    '\uFEFFean;produktname;marke;inhalt;kategorie;status;datenstand',
     '4006381333931;Textmarker;Stabilo;1 Stück;;"belegt; nicht verifiziert";2026-09',
     '96385074;"Artikel ""Spezial""";Marke;200 g;Snacks;x;2026-09-24',
     'keine-ean;Kaputt;;;;;',

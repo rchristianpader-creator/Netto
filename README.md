@@ -8,6 +8,7 @@ Seite automatisch zum nächsten Artikel.** Dafür hört die Seite über das Mikr
 
 - 245 Netto-Eigenmarken-Lebensmittel (BioBio, Gutes Land, Gut Ponholz, Lieblings, Mondo Italiano, Clarky's, …)
   aus [`data/netto-sortiment.csv`](data/netto-sortiment.csv), alle EANs geprüft
+- Reihenfolge wie beim Gang durch den Laden: Warengruppe für Warengruppe, innerhalb jeder Gruppe zufällig gemischt
 - Barcodes pixelgenau gerendert (EAN-13 und EAN-8), auch im Dunkelmodus schwarz auf weiß
 - Scan-Ton-Erkennung mit Anlern-Funktion und Pegelanzeige, robust gegen Sprache, Musik und Klappern
 - Hängt der Scanner per USB/Bluetooth am selben Gerät, geht es auch ohne Mikrofon (Tastatureingabe wird erkannt)
@@ -19,6 +20,26 @@ Seite automatisch zum nächsten Artikel.** Dafür hört die Seite über das Mikr
 2. **Scan-Ton-Erkennung starten** antippen und das Mikrofon erlauben.
 3. Barcode mit dem Scanner vom Bildschirm scannen, piep, nächster Artikel, und so weiter.
    Mit ‹ › geht es auch von Hand vor und zurück (übersprungene Artikel werden mit ↷ markiert).
+
+### Reihenfolge: Laufweg durch den Laden
+
+Die Artikel kommen nach Warengruppen sortiert, in der Reihenfolge eines Rundgangs durch die Filiale:
+
+Milch & Milchgetränke → Joghurt → Quark & Desserts → Butter, Sahne & Margarine → Käse → Wurst & Aufschnitt →
+Feinkost & Salate → Fleisch & Geflügel → H-Milch & Kondensmilch → Konserven & Fertiggerichte →
+Nudeln, Reis & Backzutaten → Saucen, Fonds & Gewürze → Frühstück & Brotaufstrich → Snacks & Nüsse → Getränke → Tiefkühl
+
+Innerhalb jeder Warengruppe ist die Reihenfolge zufällig. Die Warengruppe steht über dem Produktnamen; beim Wechsel
+in die nächste Gruppe kommt ein kurzer Hinweis („Weiter mit: Käse“).
+
+- **Laufweg anpassen:** Einstellungen → *Laufweg durch den Laden* → Gruppen mit ↑ ↓ verschieben (z. B. passend zur
+  eigenen Filiale). „Standard-Reihenfolge“ stellt den Ausgangszustand wieder her.
+- **Neu mischen:** „Von vorne beginnen“ (am Ende) bzw. Einstellungen → *Neu starten (neu gemischt)* setzt den
+  Fortschritt zurück und mischt die Artikel innerhalb der Gruppen neu. Beim Neuladen der Seite bleibt die Mischung gleich.
+
+Die Warengruppe wird aus Kategorie, Produktname und Marke bestimmt (z. B. „Feiner Leberkäse“ → Wurst & Aufschnitt,
+„Butterkäse“ → Käse). Soll ein Artikel woanders einsortiert werden, in der CSV eine Spalte `warengruppe` mit dem
+Gruppennamen ergänzen – sie hat Vorrang.
 
 Über **Sortiment** oben rechts: Übersicht aller Artikel mit Stand (✓ gescannt, ↷ übersprungen, offen) und
 Suche nach Name, Marke oder EAN. Antippen springt direkt zu diesem Artikel.
@@ -53,8 +74,8 @@ ean;produktname;marke;inhalt;kategorie;status;quelle;datenstand
 4316268687140;Bergkäse Kräuter italienische Art;BioBio;200 g;;…;…;2026-09
 ```
 
-Pflicht ist nur die Spalte `ean`; `produktname`, `marke`, `inhalt` und `kategorie` werden angezeigt, weitere Spalten
-ignoriert. Zum Aktualisieren die Datei auf GitHub ersetzen (im Ordner `data` → *Add file → Upload files*, gleicher
+Pflicht ist nur die Spalte `ean`; `produktname`, `marke` und `inhalt` werden angezeigt, `kategorie` bzw. `warengruppe`
+bestimmen die Einsortierung, weitere Spalten werden ignoriert. Zum Aktualisieren die Datei auf GitHub ersetzen (im Ordner `data` → *Add file → Upload files*, gleicher
 Dateiname). Ein bis zwei Minuten später zeigt die Seite die neue Liste; der Fortschritt bleibt je EAN erhalten.
 
 Datenstand der mitgelieferten Liste: 24.09.2026, eigene Recherche (Open Food Facts, identitaetskennzeichen.de,
@@ -78,6 +99,7 @@ oder verschickt. Fortschritt und Einstellungen liegen im `localStorage` des Brow
 | `index.html`, `css/style.css` | Oberfläche |
 | `data/netto-sortiment.csv` | Sortiment (EAN, Name, Marke, Inhalt, Kategorie) |
 | `js/sortiment.js` | Liest die CSV-Datei |
+| `js/warengruppen.js` | Warengruppen, Laufweg und Mischen innerhalb der Gruppen |
 | `js/ean.js` | Prüfziffer, EAN-8/EAN-13-Codierung und SVG-Rendering |
 | `js/tone-detector.js` | Mikrofon-Analyse: Pieptöne erkennen, Scan-Ton anlernen |
 | `js/keyboard-scanner.js` | Erkennt Scanner, die als Tastatur „tippen“ (USB/Bluetooth) |
