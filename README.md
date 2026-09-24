@@ -1,44 +1,27 @@
 # EAN Scan-Liste
 
-Eine Website, die EAN-Codes (z. B. von Netto-Marken-Discount-Artikeln) nacheinander groß als Barcode anzeigt.
-Man scannt den Barcode mit dem Honeywell-Scanner vom Bildschirm ab. **Sobald der Scanner piept, schaltet die
-Seite automatisch zum nächsten Code.** Dafür hört die Seite über das Mikrofon auf den Scan-Ton.
+Eine Website, die das **Sortiment von Netto Marken-Discount (Deutschland)** Artikel für Artikel groß als Barcode
+anzeigt. Man scannt den Barcode mit dem Honeywell-Scanner vom Bildschirm ab. **Sobald der Scanner piept, schaltet die
+Seite automatisch zum nächsten Artikel.** Dafür hört die Seite über das Mikrofon auf den Scan-Ton.
 
-- Läuft komplett im Browser (Handy, Tablet oder PC), keine Installation, keine Bibliotheken von außen
-- Barcodes pixelgenau gerendert (EAN-13, EAN-8, UPC-A), auch im Dunkelmodus schwarz auf weiß
+**Online:** <https://rchristianpader-creator.github.io/Netto/>
+
+- 245 Netto-Eigenmarken-Lebensmittel (BioBio, Gutes Land, Gut Ponholz, Lieblings, Mondo Italiano, Clarky's, …)
+  aus [`data/netto-sortiment.csv`](data/netto-sortiment.csv), alle EANs geprüft
+- Barcodes pixelgenau gerendert (EAN-13 und EAN-8), auch im Dunkelmodus schwarz auf weiß
 - Scan-Ton-Erkennung mit Anlern-Funktion und Pegelanzeige, robust gegen Sprache, Musik und Klappern
 - Hängt der Scanner per USB/Bluetooth am selben Gerät, geht es auch ohne Mikrofon (Tastatureingabe wird erkannt)
-- Liste einfügen (z. B. aus Excel), als CSV/TXT importieren oder Netto-Produkte aus Open Food Facts laden
-- Fortschritt mit ✓ je gescanntem Code, bleibt beim Neuladen erhalten; Bildschirm bleibt beim Scannen an
-
-## Öffnen
-
-Das Mikrofon funktioniert im Browser nur über **https://** (oder `localhost`). Am einfachsten über GitHub Pages:
-
-1. Im Repository auf GitHub **Settings → Pages** öffnen.
-2. Unter *Build and deployment* bei *Source* **Deploy from a branch** wählen, dann den Branch
-   (z. B. `main`) und den Ordner **/ (root)** auswählen und speichern.
-3. Nach ein bis zwei Minuten ist die Seite unter `https://rchristianpader-creator.github.io/Netto/` erreichbar.
-   Die Adresse auf dem Handy öffnen und ggf. „Zum Startbildschirm hinzufügen“.
-
-Die Seite selbst ist dann öffentlich, die EAN-Listen aber nicht: Sie werden nur lokal im Browser des jeweiligen Geräts gespeichert.
-
-Lokal am PC: `npm start` und dann <http://localhost:8080> öffnen.
+- Fortschritt mit ✓ je gescanntem Artikel, bleibt beim Neuladen erhalten; Bildschirm bleibt beim Scannen an
 
 ## So geht's
 
-1. **Liste** öffnen und EAN-Codes einfügen – ein Code pro Zeile, optional mit Artikelname:
-   ```
-   4006381333931;Textmarker gelb
-   96385074	Kleiner Artikel        ← direkt aus Excel kopiert (Tab-getrennt)
-   Milch 1,5% 1L;4012345678901      ← Name vor dem Code geht auch
-   ```
-   Zeilen mit `#` werden ignoriert. Fehlende Prüfziffern werden ergänzt, falsche werden rot markiert
-   (solche Codes liest kein Scanner). Alternativ: CSV/TXT-Datei importieren oder
-   **Netto-Produkte laden** (siehe unten).
+1. Seite öffnen (Handy/Tablet, Adresse oben). Der erste Artikel wird sofort angezeigt.
 2. **Scan-Ton-Erkennung starten** antippen und das Mikrofon erlauben.
-3. Barcode mit dem Scanner vom Bildschirm scannen, piep, nächster Code, und so weiter.
-   Mit ‹ › (oder den Pfeiltasten) geht es auch von Hand vor und zurück.
+3. Barcode mit dem Scanner vom Bildschirm scannen, piep, nächster Artikel, und so weiter.
+   Mit ‹ › geht es auch von Hand vor und zurück (übersprungene Artikel werden mit ↷ markiert).
+
+Über **Sortiment** oben rechts: Übersicht aller Artikel mit Stand (✓ gescannt, ↷ übersprungen, offen) und
+Suche nach Name, Marke oder EAN. Antippen springt direkt zu diesem Artikel.
 
 ### Scan-Ton anlernen (empfohlen)
 
@@ -51,7 +34,7 @@ genau diese Tonhöhe, ungefähr in dieser Lautstärke. Andere Pieptöne (Kasse, 
   durch fremde Geräusche weiter, die Linie nach rechts schieben; reagiert es nicht, nach links.
 - **Sperrzeit nach einem Scan** (Standard 0,4 s): verhindert, dass ein Doppelpiep zweimal weiterschaltet.
 
-Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschaltet.
+Solange ein Einstellungs- oder Sortimentsfenster offen ist, wird nicht weitergeschaltet.
 
 ### Tipps zum Scannen vom Bildschirm
 
@@ -61,28 +44,43 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
 - Ist der Barcode zu groß oder zu klein für den Leseabstand: **Einstellungen → Barcode-Größe**.
 - Der Scanner muss hörbar piepen (Piep-Lautstärke am Scanner nicht auf „aus“).
 
-### Netto-Produkte aus Open Food Facts
+## Sortiment ändern
 
-In der Liste unter *Netto-Produkte aus Open Food Facts laden* holt die Seite EAN-Codes von Produkten, die in der
-freien Produktdatenbank [Open Food Facts](https://world.openfoodfacts.org/store/netto-marken-discount) dem Händler
-„Netto Marken-Discount“ zugeordnet sind (nach Beliebtheit sortiert, 25–200 Stück). Das sind Community-Daten ohne
-Gewähr auf Vollständigkeit oder Aktualität; es gilt die Open Database License (ODbL). Dafür wird eine Internetverbindung benötigt.
+Die Artikel stehen in [`data/netto-sortiment.csv`](data/netto-sortiment.csv) (Semikolon-getrennt, UTF-8):
+
+```
+ean;produktname;marke;inhalt;kategorie;status;quelle;datenstand
+4316268687140;Bergkäse Kräuter italienische Art;BioBio;200 g;;…;…;2026-09
+```
+
+Pflicht ist nur die Spalte `ean`; `produktname`, `marke`, `inhalt` und `kategorie` werden angezeigt, weitere Spalten
+ignoriert. Zum Aktualisieren die Datei auf GitHub ersetzen (im Ordner `data` → *Add file → Upload files*, gleicher
+Dateiname). Ein bis zwei Minuten später zeigt die Seite die neue Liste; der Fortschritt bleibt je EAN erhalten.
+
+Datenstand der mitgelieferten Liste: 24.09.2026, eigene Recherche (Open Food Facts, identitaetskennzeichen.de,
+Netto-Produktseiten). Angaben ohne Gewähr.
+
+## Veröffentlichung
+
+Die Seite läuft über GitHub Pages (Settings → Pages → *Deploy from a branch*, `main`, `/ (root)`); jede Änderung
+an `main` ist nach ein bis zwei Minuten online. Das Mikrofon funktioniert im Browser nur über **https://**
+(oder `localhost`). Lokal am PC: `npm start` und dann <http://localhost:8080> öffnen.
 
 ## Datenschutz
 
 Das Mikrofonsignal wird nur im Browser analysiert (Frequenzspektrum), nichts wird aufgenommen, gespeichert
-oder verschickt. Liste, Fortschritt und Einstellungen liegen im `localStorage` des Browsers. Nur der optionale
-Open-Food-Facts-Import stellt eine Anfrage ins Internet.
+oder verschickt. Fortschritt und Einstellungen liegen im `localStorage` des Browsers.
 
 ## Technik
 
 | Datei | Inhalt |
 | --- | --- |
 | `index.html`, `css/style.css` | Oberfläche |
-| `js/ean.js` | Prüfziffer, Listen-Parser, EAN-8/EAN-13-Codierung und SVG-Rendering |
+| `data/netto-sortiment.csv` | Sortiment (EAN, Name, Marke, Inhalt, Kategorie) |
+| `js/sortiment.js` | Liest die CSV-Datei |
+| `js/ean.js` | Prüfziffer, EAN-8/EAN-13-Codierung und SVG-Rendering |
 | `js/tone-detector.js` | Mikrofon-Analyse: Pieptöne erkennen, Scan-Ton anlernen |
 | `js/keyboard-scanner.js` | Erkennt Scanner, die als Tastatur „tippen“ (USB/Bluetooth) |
-| `js/off-import.js` | Import aus Open Food Facts |
 | `js/app.js` | Ablauf, Speicherung, Dialoge |
 
 **Wie die Ton-Erkennung funktioniert:** Die Seite berechnet ca. 65-mal pro Sekunde das Frequenzspektrum des
@@ -91,4 +89,4 @@ vom Umgebungsrauschen abhebt. Sprache und Musik bestehen dagegen aus vielen ähn
 breitbandig. Die Spitze muss laut genug sein, in mindestens zwei Messungen hintereinander auf derselben Frequenz
 liegen und nach dem Auslösen erst wieder verstummen, bevor der nächste Piep zählt.
 
-Tests: `npm test` (Node.js ≥ 18, keine Abhängigkeiten).
+Tests: `npm test` (Node.js ≥ 18, keine Abhängigkeiten); prüft u. a., dass alle EANs im Sortiment gültig sind.

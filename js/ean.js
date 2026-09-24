@@ -1,5 +1,5 @@
 /*
- * EAN-8 / EAN-13 (inkl. UPC-A): Prüfziffer, Normalisierung, Listen-Parser und SVG-Rendering.
+ * EAN-8 / EAN-13 (inkl. UPC-A): Prüfziffer, Normalisierung und SVG-Rendering.
  * Keine Abhängigkeiten. Im Browser als window.EAN, in Node per require() nutzbar.
  */
 (function (root, factory) {
@@ -159,39 +159,5 @@
     );
   }
 
-  /**
-   * Liest eine Liste (eine EAN pro Zeile, optional mit Namen davor/dahinter,
-   * getrennt durch Tab, Semikolon, Komma oder Leerzeichen). Zeilen mit # sind Kommentare.
-   * Liefert { items: [{code, type, valid, note, name, line}], errors: [{line, text}] }.
-   */
-  function parseList(text) {
-    const items = [];
-    const errors = [];
-    String(text || '').replace(/^﻿/, '').split(/\r\n|\r|\n/).forEach((raw, idx) => {
-      const line = raw.trim();
-      if (!line || line[0] === '#') return;
-      let source = line;
-      let m = /(^|\D)(\d{7,14})(?!\d)/.exec(source);
-      if (!m) {
-        // z. B. "4 006381 333931" wie unter dem Barcode gedruckt
-        source = line.replace(/(\d)[ .-](?=\d)/g, '$1');
-        m = /(^|\D)(\d{7,14})(?!\d)/.exec(source);
-      }
-      const norm = m && normalize(m[2]);
-      if (!norm) {
-        errors.push({ line: idx + 1, text: line });
-        return;
-      }
-      const start = m.index + m[1].length;
-      const name = (source.slice(0, start) + ' ' + source.slice(start + m[2].length))
-        .replace(/"/g, '')
-        .replace(/[\t;|]+/g, ' · ')
-        .replace(/\s+/g, ' ')
-        .replace(/^[\s·,:–-]+|[\s·,:–-]+$/g, '');
-      items.push(Object.assign(norm, { name, line: idx + 1 }));
-    });
-    return { items, errors };
-  }
-
-  return { checkDigit, normalize, sameCode, encode, geometry, toSVG, parseList };
+  return { checkDigit, normalize, sameCode, encode, geometry, toSVG };
 });
