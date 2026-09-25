@@ -92,6 +92,10 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
 - Ein Code zählt erst, wenn er zweimal gleich gelesen wurde und die Prüfziffer stimmt. Das schützt vor Fehllesungen.
   Solange derselbe Barcode im Bild bleibt, wird er nur einmal gemeldet.
 - Ein per USB/Bluetooth verbundener Scanner erfasst in diesem Fenster genauso.
+- **Netto-Regaletiketten:** Der kleine Strichcode auf den elektronischen Preisschildern (Code 128) wird ebenfalls
+  gelesen. Er enthält eine ladeninterne 13-stellige Nummer mit Prüfziffer (z. B. `2707338130000` mit der
+  Artikelnummer 733813), die wie eine EAN-13 aufgenommen und angezeigt wird. Eine Bezeichnung gibt es dafür nicht,
+  Open Food Facts wird bei solchen Nummern (Präfix 2) nicht gefragt.
 
 Die Liste im Fenster ist nach Warengruppen in Laufweg-Reihenfolge gegliedert. Selbst erfasste Artikel liegen zunächst
 nur auf diesem Gerät (`localStorage`) und lassen sich einzeln (✕) oder alle entfernen.

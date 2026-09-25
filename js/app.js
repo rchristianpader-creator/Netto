@@ -827,6 +827,10 @@
   // Liefert ein Promise, das fertig ist, wenn die Abfrage durch ist. force = auch nach "nicht gefunden" nochmal fragen.
   function lookupName(code, force) {
     if (lookups.has(code)) return lookups.get(code);
+    if (Erfassung.isInStore(code)) {
+      lookupState.set(code, 'instore'); // Netto-interne Nummer: keine Datenbank kennt sie
+      return Promise.resolve();
+    }
     if (!force && lookupState.get(code) === 'notfound') return Promise.resolve();
     const job = Produktinfo.lookupDetailed(code, (url, init) => fetch(url, init)).then((r) => {
       lookups.delete(code);
@@ -861,6 +865,7 @@
   function lookupText(code) {
     if (lookups.has(code)) return 'Bezeichnung wird gesucht …';
     const st = lookupState.get(code);
+    if (st === 'instore' || Erfassung.isInStore(code)) return 'Netto-Regaletikett (interne Nummer, ohne Bezeichnung)';
     if (st === 'notfound') return 'Bei Open Food Facts unbekannt (antippen: nochmal suchen)';
     if (st) return 'Keine Bezeichnung: ' + st + ' (antippen: nochmal)';
     return 'Ohne Bezeichnung (antippen: suchen)';
@@ -897,7 +902,7 @@
       li.innerHTML = '<span class="name"><span class="title"></span><span class="sub"></span></span><span class="state"></span>' +
         (e.synced ? '<span></span>' : '<button type="button" class="del" aria-label="Entfernen">✕</button>');
       const title = e.name || lookupText(e.code);
-      if (!e.name && !e.synced) li.dataset.retry = e.code;
+      if (!e.name && !e.synced && !Erfassung.isInStore(e.code)) li.dataset.retry = e.code;
       li.querySelector('.title').textContent = title;
       li.querySelector('.title').classList.toggle('unknown', !e.name);
       li.querySelector('.sub').textContent = [e.code, e.marke, e.inhalt, formatWhen(e.at)].filter(Boolean).join(' · ');
@@ -962,7 +967,7 @@
     // Erst die Bezeichnungen abwarten, dann mit Namen übernehmen; nach einem Fehler einmal nachfragen.
     await Promise.all(
       state.eigene
-        .filter((e) => !e.synced && !e.name && lookupState.get(e.code) !== 'notfound')
+        .filter((e) => !e.synced && !e.name && lookupState.get(e.code) !== 'notfound' && !Erfassung.isInStore(e.code))
         .map((e) => lookupName(e.code, true))
     );
     const pending = pendingSync();

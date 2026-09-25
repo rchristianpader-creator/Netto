@@ -49,6 +49,12 @@
     return { status: 'added', code: norm.code, list: list.concat({ code: norm.code, at: now }) };
   }
 
+  /**
+   * Ladeninterne Nummer (GS1-Präfix 20–29 bei EAN-13, 2 bei EAN-8), z. B. vom Netto-Regaletikett
+   * (Code 128 mit 27…): gilt nur im Laden, Produktdatenbanken kennen sie nicht.
+   */
+  const isInStore = (code) => /^2\d{12}$|^2\d{7}$/.test(String(code));
+
   /** Nachgeschlagene Bezeichnung ({ name, marke, inhalt, quelle, tags }) bei einer EAN eintragen. */
   function describe(list, code, info) {
     if (!info || !info.name) return list;
@@ -167,5 +173,5 @@
     }
   }
 
-  return { NAME, normalizeList, capture, describe, toItems, toCSV, appendToCSV, ReadFilter };
+  return { NAME, normalizeList, capture, describe, isInStore, toItems, toCSV, appendToCSV, ReadFilter };
 });

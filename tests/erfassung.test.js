@@ -135,3 +135,45 @@ test('normalizeList behält die Markierung "synced"', () => {
     { code: '96385074', at: 2 },
   ]);
 });
+
+// Graustufenbild (PGM, gzip) aus tests/fixtures als RGBA laden
+function loadPGM(name) {
+  const zlib = require('node:zlib');
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const pgm = zlib.gunzipSync(fs.readFileSync(path.join(__dirname, 'fixtures', name)));
+  const [, w, h] = pgm.toString('latin1', 0, 20).match(/^P5\n(\d+) (\d+)\n255\n/).map(Number);
+  const gray = pgm.subarray(pgm.length - w * h);
+  const rgba = new Uint8ClampedArray(w * h * 4);
+  for (let i = 0; i < w * h; i++) rgba.set([gray[i], gray[i], gray[i], 255], i * 4);
+  return { rgba, w, h };
+}
+
+test('Netto-Regaletikett: Code 128 aus einem echten Foto wird gelesen, Nummer ist eine gültige ladeninterne EAN', () => {
+  const zlib = require('node:zlib');
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const { rgba, w, h } = loadPGM('regaletikett-code128.pgm.gz');
+  const reader = CameraScanner.createZXingReader(ZXing);
+  const code = CameraScanner.decodeRGBA(ZXing, reader, rgba, w, h);
+  assert.equal(code, '2707338130000'); // enthält die Netto-Artikelnummer 733813
+
+  assert.equal(Erfassung.isInStore(code), true);
+  assert.equal(Erfassung.isInStore('4002720002117'), false); // normale Hersteller-EAN
+  assert.equal(Erfassung.isInStore('96385074'), false);
+  const r = Erfassung.capture([], code, () => null, 1);
+  assert.equal(r.status, 'added');
+  assert.equal(r.list[0].code, '2707338130000');
+});
+
+test('Regaletikett im Kamerabild: Code liegt auf dunkelgrauem Grund dicht am Etikettrand, erst der Kontrast-Versuch liest ihn', () => {
+  const { rgba, w, h } = loadPGM('regaletikett-kamera.pgm.gz');
+  const reader = CameraScanner.createZXingReader(ZXing);
+  assert.equal(CameraScanner.decodeRGBA(ZXing, reader, rgba, w, h), null); // normaler Kontrast: Ruhezone reicht nicht
+  assert.equal(CameraScanner.decodeRGBAHard(ZXing, reader, rgba, w, h), '2707338130000');
+  // gewöhnliche EANs (hellgrauer Grund, verrauscht) liest die Funktion weiterhin
+  for (const code of ['4002720002117', '42470700']) {
+    const img = renderBarcode(code, 3, 80, 11);
+    assert.equal(CameraScanner.decodeRGBAHard(ZXing, reader, img.rgba, img.w, img.h), code);
+  }
+});
