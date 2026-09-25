@@ -3,7 +3,6 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const Sortiment = require('../js/sortiment.js');
-const Erfassung = require('../js/erfassung.js');
 
 test('CSV: Semikolon, Anführungszeichen mit ; darin, BOM, CRLF, Spalten per Kopfzeile', () => {
   const csv = [
@@ -39,8 +38,9 @@ test('Netto-Sortiment (data/netto-sortiment.csv): mindestens 571 Artikel, alle E
   assert.ok(items.length >= 571, String(items.length)); // per Kamera erfasste EANs kommen hinzu
   assert.deepEqual(items.filter((i) => !i.valid).map((i) => i.code), []);
   assert.equal(new Set(items.map((i) => i.code)).size, items.length);
-  // selbst per Kamera erfasste Artikel haben (noch) keine Marke
-  assert.ok(items.every((i) => i.name && (i.marke || i.name === Erfassung.NAME)), 'jeder Artikel hat Name und Marke');
+  // selbst per Kamera erfasste Artikel haben nicht immer eine Marke
+  const erfasst = (i) => /^Kamera-Scan/.test(i.quelle);
+  assert.ok(items.every((i) => i.name && (i.marke || erfasst(i))), 'jeder Artikel hat Name und Marke');
   assert.equal(items[0].code, '4316268687140');
   assert.equal(items[0].name, 'Bergkäse Kräuter italienische Art');
   assert.equal(datenstand, '2026-09-24');

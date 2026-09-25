@@ -19,6 +19,7 @@
     kategorie: ['kategorie'],
     warengruppe: ['warengruppe', 'abteilung'],
     datenstand: ['datenstand', 'stand'],
+    quelle: ['quelle', 'source'],
   };
 
   /** Zerlegt CSV-Text in Zeilen und Felder (RFC-4180-artig, mit wählbarem Trennzeichen). */
@@ -63,7 +64,7 @@
   }
 
   /**
-   * Liefert { items: [{code, type, valid, note, name, marke, inhalt, kategorie, warengruppe}], errors: [{row, text}], datenstand }.
+   * Liefert { items: [{code, type, valid, note, name, marke, inhalt, kategorie, warengruppe, quelle}], errors: [{row, text}], datenstand }.
    * Doppelte EANs werden nur einmal übernommen.
    */
   function parse(text) {
@@ -96,6 +97,7 @@
           inhalt: get(col.inhalt),
           kategorie: get(col.kategorie),
           warengruppe: get(col.warengruppe),
+          quelle: get(col.quelle),
         })
       );
       const stand = get(col.datenstand);

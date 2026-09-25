@@ -82,7 +82,10 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
 
 Über **Erfassen** oben rechts öffnet sich die Handy-Kamera. Barcode in den Rahmen halten, sonst nichts:
 
-- **Neue EAN:** kommt sofort ins Sortiment, ohne Nachfrage. Ein hoher Ton, auf Android zusätzlich eine kurze Vibration,
+- **Neue EAN:** kommt sofort ins Sortiment, ohne Nachfrage. Die Artikelbezeichnung (Name, Marke, Inhalt) wird im
+  Hintergrund bei [Open Food Facts](https://world.openfoodfacts.org) bzw. Open Beauty Facts nachgeschlagen und
+  direkt eingetragen. Daraus ergibt sich automatisch die Warengruppe, z. B. „Gouda jung“ → Käse. Nicht gefundene
+  Artikel heißen „Selbst gescannter Artikel“ und kommen unter „Sonstiges“. Ein hoher Ton, auf Android zusätzlich eine kurze Vibration,
   und die Meldung „✓ Neu aufgenommen“.
 - **EAN schon im Sortiment** (aus der CSV oder schon selbst erfasst): wird nicht nochmal aufgenommen. Ein tiefer Ton
   und die Meldung „Schon im Sortiment“ mit dem Produktnamen.
@@ -90,8 +93,13 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
   Solange derselbe Barcode im Bild bleibt, wird er nur einmal gemeldet.
 - Ein per USB/Bluetooth verbundener Scanner erfasst in diesem Fenster genauso.
 
-Selbst erfasste Artikel sind nur auf diesem Gerät gespeichert (`localStorage`). Sie kommen in die Tagesliste unter
-„Sonstiges“ und lassen sich im Fenster einzeln (✕) oder alle entfernen. **Als CSV speichern** liefert sie im Format
+Die Liste im Fenster ist nach Warengruppen in Laufweg-Reihenfolge gegliedert. Selbst erfasste Artikel liegen zunächst
+nur auf diesem Gerät (`localStorage`) und lassen sich einzeln (✕) oder alle entfernen.
+
+**Für alle Geräte übernehmen:** In den Einstellungen unter *Sortiment auf GitHub* einmalig einen GitHub-Schlüssel
+eintragen (Fine-grained token, nur Repository „Netto“, *Contents: Read and write*). Dann schreibt die Seite selbst
+erfasste Artikel direkt in `data/netto-sortiment.csv`, per Knopf *Ins Sortiment übernehmen* und automatisch beim
+Schließen des Fensters. Nach 1–2 Minuten sind sie auf allen Geräten da. Der Schlüssel bleibt nur im Browser. **Als CSV speichern** liefert sie im Format
 von `data/netto-sortiment.csv`, damit sie ins feste Sortiment übernommen werden können. Steht eine EAN später in der
 CSV, wird sie dort geführt und nicht mehr als selbst erfasst.
 
@@ -144,6 +152,8 @@ EANs liegen im `localStorage` des Browsers.
 | `js/keyboard-scanner.js` | Erkennt Scanner, die als Tastatur „tippen“ (USB/Bluetooth) |
 | `js/erfassung.js` | Erfassen: gescannte EANs aufnehmen, Dubletten erkennen, CSV-Export |
 | `js/camera-scanner.js` | Kamera-Scanner: BarcodeDetector oder ZXing (`js/vendor/zxing.min.js`) |
+| `js/produktinfo.js` | Artikelbezeichnung zur EAN bei Open Food Facts / Open Beauty Facts nachschlagen |
+| `js/github-sync.js` | Selbst erfasste Artikel über die GitHub-API in die Sortiment-Datei schreiben |
 | `js/app.js` | Ablauf, Speicherung, Dialoge |
 
 **Wie die Ton-Erkennung funktioniert:** Die Seite berechnet ca. 65-mal pro Sekunde das Frequenzspektrum des

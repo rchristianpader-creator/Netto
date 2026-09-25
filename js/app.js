@@ -1,7 +1,7 @@
 /*
  * EAN Scan-Liste – Bedienoberfläche.
  * Benötigt ean.js, sortiment.js, warengruppen.js, tagesliste.js, tone-detector.js, keyboard-scanner.js,
- * erfassung.js, camera-scanner.js, github-sync.js.
+ * erfassung.js, camera-scanner.js, github-sync.js, produktinfo.js.
  */
 (function () {
   'use strict';
@@ -793,8 +793,8 @@
     if (r.status === 'invalid') return; // Fehllesung: stillschweigend ignorieren
     if (r.status === 'known') {
       const it = r.item;
-      const what = it.eigen ? 'schon erfasst' : [it.name, it.marke].filter(Boolean).join(' · ');
-      showResult('known', 'Schon im Sortiment: ' + r.code + (what ? ' – ' + what : ''));
+      const what = it.name === Erfassung.NAME ? 'schon erfasst' : [it.name, it.marke].filter(Boolean).join(' · ');
+      showResult('known', 'Schon im Sortiment: ' + (what || r.code));
       beep(440, 90);
       return;
     }
@@ -806,7 +806,33 @@
     showResult('added', '✓ Neu aufgenommen: ' + r.code);
     beep(1320, 120);
     if (navigator.vibrate) navigator.vibrate(80);
+    lookupName(r.code);
     renderCaptured();
+  }
+
+  // Artikelbezeichnung im Hintergrund nachschlagen (Open Food Facts / Open Beauty Facts) und direkt eintragen.
+  // Aus dem Namen ergibt sich auch die Warengruppe, danach wird automatisch sortiert.
+  const lookups = new Map(); // EAN → laufende Abfrage
+  const lookedUp = new Set(); // in dieser Sitzung schon gesucht (nicht ständig neu fragen)
+
+  function lookupName(code) {
+    if (lookups.has(code) || lookedUp.has(code)) return;
+    lookedUp.add(code);
+    const job = Produktinfo.lookup(code, (url, init) => fetch(url, init)).then((info) => {
+      lookups.delete(code);
+      if (info && state.eigene.some((e) => e.code === code && !e.synced)) {
+        state.eigene = Erfassung.describe(state.eigene, code, info);
+        saveCaptured();
+        rebuildAll();
+        captureChanged = true;
+        const it = knownItem(code);
+        if (code === lastAddedCode && !el.camResult.hidden) {
+          showResult('added', '✓ ' + [info.name, info.marke].filter(Boolean).join(' · ') + ' → ' + Warengruppen.nameOf(it.gruppe));
+        }
+      }
+      if (el.dlgCapture.open) renderCaptured();
+    });
+    lookups.set(code, job);
   }
 
   function formatWhen(ms) {
@@ -816,25 +842,40 @@
     return d.toDateString() === new Date().toDateString() ? 'heute ' + time : pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '. ' + time;
   }
 
+  // Liste der selbst erfassten Artikel, nach Warengruppe (Laufweg-Reihenfolge), darin die neuesten zuerst.
   function renderCaptured() {
     const n = state.eigene.length;
     el.captureCount.textContent = n + ' Artikel';
-    const rows = state.eigene
-      .slice()
-      .reverse()
-      .map((e) => {
-        const li = document.createElement('li');
-        if (e.code === lastAddedCode) li.className = 'is-new';
-        li.innerHTML = '<span class="code"></span><span class="when"></span><span class="state"></span>' +
-          (e.synced ? '<span></span>' : '<button type="button" class="del" aria-label="Entfernen">✕</button>');
-        li.querySelector('.code').textContent = e.code;
-        li.querySelector('.when').textContent = formatWhen(e.at);
-        const st = li.querySelector('.state');
-        st.textContent = e.synced ? '✓ im Sortiment' : 'nur hier';
-        st.classList.toggle('synced', !!e.synced);
-        if (!e.synced) li.querySelector('.del').dataset.code = e.code;
-        return li;
-      });
+    const items = new Map(state.all.filter((it) => it.eigen).map((it) => [it.code, it]));
+    const rank = new Map(state.settings.laufweg.map((id, i) => [id, i]));
+    const groupOf = (e) => (items.get(e.code) || {}).gruppe || 'sonstiges';
+    const sorted = state.eigene.slice().sort((a, b) => rank.get(groupOf(a)) - rank.get(groupOf(b)) || b.at - a.at);
+    const rows = [];
+    let lastGroup = null;
+    sorted.forEach((e) => {
+      const g = groupOf(e);
+      if (g !== lastGroup) {
+        lastGroup = g;
+        const head = document.createElement('li');
+        head.className = 'group-head';
+        head.textContent = Warengruppen.nameOf(g);
+        rows.push(head);
+      }
+      const li = document.createElement('li');
+      if (e.code === lastAddedCode) li.className = 'is-new';
+      li.innerHTML = '<span class="name"><span class="title"></span><span class="sub"></span></span><span class="state"></span>' +
+        (e.synced ? '<span></span>' : '<button type="button" class="del" aria-label="Entfernen">✕</button>');
+      let title = e.name;
+      if (!title) title = lookups.has(e.code) ? 'Bezeichnung wird gesucht …' : 'Bezeichnung nicht gefunden';
+      li.querySelector('.title').textContent = title;
+      li.querySelector('.title').classList.toggle('unknown', !e.name);
+      li.querySelector('.sub').textContent = [e.code, e.marke, e.inhalt, formatWhen(e.at)].filter(Boolean).join(' · ');
+      const st = li.querySelector('.state');
+      st.textContent = e.synced ? '✓ im Sortiment' : 'nur hier';
+      st.classList.toggle('synced', !!e.synced);
+      if (!e.synced) li.querySelector('.del').dataset.code = e.code;
+      rows.push(li);
+    });
     if (!rows.length) {
       const li = document.createElement('li');
       li.className = 'empty';
@@ -887,6 +928,7 @@
   }
 
   async function syncCaptured(auto) {
+    await Promise.all(Array.from(lookups.values())); // erst die Bezeichnungen abwarten, dann mit Namen übernehmen
     const pending = pendingSync();
     const token = getToken();
     if (syncing || !pending.length) return;
@@ -965,6 +1007,8 @@
     }
     lastAddedCode = null;
     el.camResult.hidden = true;
+    // Bezeichnungen, die beim letzten Mal nicht nachgeschlagen werden konnten (z. B. offline), nochmal suchen
+    state.eigene.forEach((e) => !e.name && !e.synced && lookupName(e.code));
     renderCaptured();
     el.dlgCapture.showModal();
     showCamMessage('Kamera wird gestartet …');
