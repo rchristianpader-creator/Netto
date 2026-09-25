@@ -116,8 +116,11 @@ von `data/netto-sortiment.csv`, damit sie ins feste Sortiment übernommen werden
 CSV, wird sie dort geführt und nicht mehr als selbst erfasst.
 
 Die Kamera nutzt die eingebaute Barcode-Erkennung des Browsers (z. B. Chrome auf Android). Wo es die nicht gibt
-(Safari auf dem iPhone), wird [ZXing](https://github.com/zxing-js/library) (`js/vendor/zxing.min.js`, Apache-2.0)
-nachgeladen. Das Kamerabild wird nur im Browser ausgewertet.
+(Safari auf dem iPhone), wird [zxing-cpp als WebAssembly](https://github.com/Sec-ant/zxing-wasm)
+(`js/vendor/zxing-wasm/`, MIT) nachgeladen: 3- bis 10-mal schneller als ZXing in JavaScript und erkennt auch
+gedrehte Codes. Lädt WebAssembly nicht, dient [ZXing](https://github.com/zxing-js/library) (`js/vendor/zxing.min.js`,
+Apache-2.0) als Ersatz. Wo das Gerät es erlaubt, gibt es Dauer-Autofokus und einen Knopf *Licht* (Taschenlampe).
+Das Kamerabild wird nur im Browser ausgewertet.
 
 ## Sortiment ändern
 

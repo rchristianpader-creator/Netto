@@ -206,3 +206,10 @@ test('rename: Bezeichnung korrigieren; schon übernommene Einträge werden zum N
   assert.equal(r.text.split('\n')[1], '96385074;Kaffee;;;Kühlregal;"Kamera-Scan; Regaletikett"');
   assert.equal(r.text.split('\n')[2], '4006381333931;Andere;;;;');
 });
+
+test('barFromPosition: Lage aus den vier Ecken von zxing-cpp, mit Verschiebung des Suchbereichs', () => {
+  const pos = { topLeft: { x: 313, y: 800 }, topRight: { x: 851, y: 802 }, bottomRight: { x: 850, y: 850 }, bottomLeft: { x: 312, y: 848 } };
+  assert.deepEqual(CameraScanner.barFromPosition(pos, 0, 0), { left: 312, right: 851, y: 825 });
+  assert.deepEqual(CameraScanner.barFromPosition(pos, 100, 50), { left: 412, right: 951, y: 875 });
+  assert.equal(CameraScanner.barFromPosition(null, 0, 0), null);
+});
