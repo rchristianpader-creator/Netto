@@ -177,3 +177,17 @@ test('Regaletikett im Kamerabild: Code liegt auf dunkelgrauem Grund dicht am Eti
     assert.equal(CameraScanner.decodeRGBAHard(ZXing, reader, img.rgba, img.w, img.h), code);
   }
 });
+
+test('searchRect: sichtbarer Teil des Kamerabilds plus Rand, für Quer- und Hochformat', () => {
+  // Querformat-Kamera (16:9) im 4:3-Fenster: links/rechts abgeschnitten
+  assert.deepEqual(CameraScanner.searchRect(1920, 1080, 400, 300, 0), { x: 240, y: 0, w: 1440, h: 1080 });
+  // mit Rand: etwas breiter, aber nie größer als das Bild
+  assert.deepEqual(CameraScanner.searchRect(1920, 1080, 400, 300, 0.08), { x: 86, y: 0, w: 1747, h: 1080 });
+  // Hochformat-Kamera (iPhone hochkant, 1080×1920) im 4:3-Fenster: oben/unten abgeschnitten
+  const r = CameraScanner.searchRect(1080, 1920, 400, 300, 0.08);
+  assert.equal(r.w, 1080);
+  assert.equal(r.h, Math.round(810 + 2 * 0.08 * 1920));
+  assert.ok(Math.abs(r.y - (1920 - r.h) / 2) <= 1 && r.y + r.h <= 1920, JSON.stringify(r));
+  // Fenstergröße unbekannt: ganzes Bild
+  assert.deepEqual(CameraScanner.searchRect(1280, 720, 0, 0, 0.08), { x: 0, y: 0, w: 1280, h: 720 });
+});

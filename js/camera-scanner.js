@@ -13,8 +13,25 @@
 
   const ZXING_URL = 'js/vendor/zxing.min.js';
   const INTERVAL_MS = 100; // Pause zwischen zwei Erkennungsversuchen
-  const MAX_WIDTH = 1280; // Kamerabild für ZXing höchstens so breit (schneller, reicht für EAN)
-  const CROP = { w: 0.7, h: 0.45 }; // zweiter Versuch: Bildmitte in voller Auflösung (kleine Codes, z. B. Regaletiketten)
+  const MAX_SIDE = 1280; // Kamerabild für den schnellen Versuch auf höchstens diese Kantenlänge verkleinern
+  const MARGIN = 0.08; // Suchbereich: sichtbarer Ausschnitt plus so viel Rand (Anteil des Kamerabilds) rundherum
+
+  /**
+   * Welcher Teil des Kamerabilds (vw × vh) im Vorschaufenster (bw × bh, object-fit: cover) zu sehen ist,
+   * erweitert um `margin` – in Kamerabild-Pixeln { x, y, w, h }. Gilt für Quer- und Hochformat.
+   */
+  function searchRect(vw, vh, bw, bh, margin) {
+    let w = vw;
+    let h = vh;
+    if (bw > 0 && bh > 0) {
+      if (vw / vh > bw / bh) w = (vh * bw) / bh; // Bild breiter als das Fenster: links/rechts abgeschnitten
+      else h = (vw * bh) / bw; // Bild höher: oben/unten abgeschnitten
+    }
+    const m = margin || 0;
+    w = Math.min(vw, w + 2 * m * vw);
+    h = Math.min(vh, h + 2 * m * vh);
+    return { x: Math.round((vw - w) / 2), y: Math.round((vh - h) / 2), w: Math.round(w), h: Math.round(h) };
+  }
 
   /** Graustufen aus RGBA-Pixeln (wie ImageData.data). */
   function luminance(rgba, width, height) {
@@ -111,23 +128,39 @@
     const reader = createZXingReader(ZXing);
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    // Die Versuche wechseln sich Bild für Bild ab, damit jedes Bild schnell geht:
+    // 0) ganzes Bild verkleinert, 1) sichtbarer Bereich in voller Auflösung (kleine Codes, mit Kontrast-Versuch),
+    // 2) ganzes Bild um 90° gedreht (Strichcode hochkant gehalten).
+    let pass = 0;
+    const grab = (w, h, draw) => {
+      canvas.width = w;
+      canvas.height = h;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      draw();
+      return ctx.getImageData(0, 0, w, h).data;
+    };
     return async (video) => {
       const vw = video.videoWidth;
       const vh = video.videoHeight;
       if (!vw || !vh) return null;
-      const scale = Math.min(1, MAX_WIDTH / vw);
-      let w = (canvas.width = Math.round(vw * scale));
-      let h = (canvas.height = Math.round(vh * scale));
-      ctx.drawImage(video, 0, 0, w, h);
-      const code = decodeRGBA(ZXing, reader, ctx.getImageData(0, 0, w, h).data, w, h);
-      if (code) return code;
-      // Bildmitte ohne Verkleinerung: kleine Strichcodes haben dann genug Pixel pro Strich
-      const cw = Math.round(vw * CROP.w);
-      const ch = Math.round(vh * CROP.h);
-      w = canvas.width = cw;
-      h = canvas.height = ch;
-      ctx.drawImage(video, Math.round((vw - cw) / 2), Math.round((vh - ch) / 2), cw, ch, 0, 0, cw, ch);
-      return decodeRGBAHard(ZXing, reader, ctx.getImageData(0, 0, w, h).data, w, h);
+      const scale = Math.min(1, MAX_SIDE / Math.max(vw, vh));
+      const sw = Math.round(vw * scale);
+      const sh = Math.round(vh * scale);
+      pass = (pass + 1) % 3;
+      if (pass === 0) {
+        return decodeRGBA(ZXing, reader, grab(sw, sh, () => ctx.drawImage(video, 0, 0, sw, sh)), sw, sh);
+      }
+      if (pass === 1) {
+        const r = searchRect(vw, vh, video.clientWidth, video.clientHeight, MARGIN);
+        const data = grab(r.w, r.h, () => ctx.drawImage(video, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h));
+        return decodeRGBAHard(ZXing, reader, data, r.w, r.h);
+      }
+      const data = grab(sh, sw, () => {
+        ctx.translate(sh, 0);
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(video, 0, 0, sw, sh);
+      });
+      return decodeRGBA(ZXing, reader, data, sh, sw);
     };
   }
 
@@ -185,5 +218,5 @@
     }
   }
 
-  return { Scanner, luminance, createZXingReader, decodeRGBA, decodeRGBAHard, darkThresholds };
+  return { Scanner, luminance, createZXingReader, decodeRGBA, decodeRGBAHard, darkThresholds, searchRect };
 });

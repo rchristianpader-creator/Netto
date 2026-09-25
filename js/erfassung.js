@@ -147,7 +147,8 @@
    */
   class ReadFilter {
     constructor(opts) {
-      const o = Object.assign({ confirm: 2, gapMs: 800, holdMs: 1500 }, opts);
+      // gapMs großzügig: die Kamera wechselt zwischen mehreren Suchversuchen, nicht jedes Bild findet den Code
+      const o = Object.assign({ confirm: 2, gapMs: 1500, holdMs: 1500 }, opts);
       this.o = o;
       this.cand = null;
       this.count = 0;
