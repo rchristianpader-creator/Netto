@@ -6,11 +6,11 @@ Seite automatisch zum nächsten Artikel.** Dafür hört die Seite über das Mikr
 
 **Online:** <https://rchristianpader-creator.github.io/Netto/>
 
-- 571 Netto-Eigenmarken-Artikel (BioBio, Gutes Land, Gut Ponholz, Lieblings, Mondo Italiano, Clarky's, …), Lebensmittel
-  sowie Drogerie & Haushalt, aus [`data/netto-sortiment.csv`](data/netto-sortiment.csv), alle EANs mit gültiger Prüfziffer
+- Das Sortiment wird selbst per Kamera erfasst (anfangs leer): Barcode scannen, Bezeichnung und Warengruppe kommen
+  automatisch aus Open Food Facts, gespeichert in [`data/netto-sortiment.csv`](data/netto-sortiment.csv)
 - **Jeden Tag eine neue Liste:** 50 bis 80 zufällig ausgewählte Artikel, auch die Anzahl ist zufällig
 - Reihenfolge wie beim Gang durch den Laden: Warengruppe für Warengruppe, innerhalb jeder Gruppe zufällig gemischt
-- Barcodes pixelgenau gerendert (EAN-13 und EAN-8), auch im Dunkelmodus schwarz auf weiß
+- Immer schwarzes Design; Barcodes pixelgenau gerendert (EAN-13 und EAN-8), schwarz auf weiß
 - Scan-Ton-Erkennung mit Anlern-Funktion und Pegelanzeige, robust gegen Sprache, Musik und Klappern
 - Hängt der Scanner per USB/Bluetooth am selben Gerät, geht es auch ohne Mikrofon (Tastatureingabe wird erkannt)
 - Fortschritt mit ✓ je gescanntem Artikel, bleibt beim Neuladen erhalten; Bildschirm bleibt beim Scannen an
@@ -82,7 +82,10 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
 
 Über **Erfassen** oben rechts öffnet sich die Handy-Kamera. Barcode in den Rahmen halten, sonst nichts:
 
-- **Neue EAN:** kommt sofort ins Sortiment, ohne Nachfrage. Ein hoher Ton, auf Android zusätzlich eine kurze Vibration,
+- **Neue EAN:** kommt sofort ins Sortiment, ohne Nachfrage. Die Artikelbezeichnung (Name, Marke, Inhalt) wird im
+  Hintergrund bei [Open Food Facts](https://world.openfoodfacts.org) bzw. Open Beauty Facts nachgeschlagen und
+  direkt eingetragen. Daraus ergibt sich automatisch die Warengruppe, z. B. „Gouda jung“ → Käse. Nicht gefundene
+  Artikel heißen „Selbst gescannter Artikel“ und kommen unter „Sonstiges“. Ein hoher Ton, auf Android zusätzlich eine kurze Vibration,
   und die Meldung „✓ Neu aufgenommen“.
 - **EAN schon im Sortiment** (aus der CSV oder schon selbst erfasst): wird nicht nochmal aufgenommen. Ein tiefer Ton
   und die Meldung „Schon im Sortiment“ mit dem Produktnamen.
@@ -90,8 +93,13 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
   Solange derselbe Barcode im Bild bleibt, wird er nur einmal gemeldet.
 - Ein per USB/Bluetooth verbundener Scanner erfasst in diesem Fenster genauso.
 
-Selbst erfasste Artikel sind nur auf diesem Gerät gespeichert (`localStorage`). Sie kommen in die Tagesliste unter
-„Sonstiges“ und lassen sich im Fenster einzeln (✕) oder alle entfernen. **Als CSV speichern** liefert sie im Format
+Die Liste im Fenster ist nach Warengruppen in Laufweg-Reihenfolge gegliedert. Selbst erfasste Artikel liegen zunächst
+nur auf diesem Gerät (`localStorage`) und lassen sich einzeln (✕) oder alle entfernen.
+
+**Für alle Geräte übernehmen:** In den Einstellungen unter *Sortiment auf GitHub* einmalig einen GitHub-Schlüssel
+eintragen (Fine-grained token, nur Repository „Netto“, *Contents: Read and write*). Dann schreibt die Seite selbst
+erfasste Artikel direkt in `data/netto-sortiment.csv`, per Knopf *Ins Sortiment übernehmen* und automatisch beim
+Schließen des Fensters. Nach 1–2 Minuten sind sie auf allen Geräten da. Der Schlüssel bleibt nur im Browser. **Als CSV speichern** liefert sie im Format
 von `data/netto-sortiment.csv`, damit sie ins feste Sortiment übernommen werden können. Steht eine EAN später in der
 CSV, wird sie dort geführt und nicht mehr als selbst erfasst.
 
@@ -113,8 +121,8 @@ bestimmen die Einsortierung, weitere Spalten werden ignoriert. Zum Aktualisieren
 Dateiname). Ein bis zwei Minuten später wird aus dem neuen Sortiment ausgelost; die heutige Liste bleibt dabei weitgehend
 gleich, der Fortschritt bleibt je EAN erhalten.
 
-Datenstand der mitgelieferten Liste: 24.09.2026, eigene Recherche (Open Food Facts, identitaetskennzeichen.de,
-Netto-Produktseiten). Angaben ohne Gewähr.
+Die Liste ist anfangs leer und wird über **Erfassen** gefüllt (siehe oben). Die frühere, recherchierte Liste mit
+571 Artikeln liegt als Testdaten in `tests/fixtures/sortiment-beispiel.csv`. Angaben ohne Gewähr.
 
 ## Veröffentlichung
 
@@ -144,6 +152,8 @@ EANs liegen im `localStorage` des Browsers.
 | `js/keyboard-scanner.js` | Erkennt Scanner, die als Tastatur „tippen“ (USB/Bluetooth) |
 | `js/erfassung.js` | Erfassen: gescannte EANs aufnehmen, Dubletten erkennen, CSV-Export |
 | `js/camera-scanner.js` | Kamera-Scanner: BarcodeDetector oder ZXing (`js/vendor/zxing.min.js`) |
+| `js/produktinfo.js` | Artikelbezeichnung zur EAN bei Open Food Facts / Open Beauty Facts nachschlagen |
+| `js/github-sync.js` | Selbst erfasste Artikel über die GitHub-API in die Sortiment-Datei schreiben |
 | `js/app.js` | Ablauf, Speicherung, Dialoge |
 
 **Wie die Ton-Erkennung funktioniert:** Die Seite berechnet ca. 65-mal pro Sekunde das Frequenzspektrum des

@@ -6,7 +6,7 @@ const Sortiment = require('../js/sortiment.js');
 const W = require('../js/warengruppen.js');
 const T = require('../js/tagesliste.js');
 
-const items = Sortiment.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'netto-sortiment.csv'), 'utf8')).items;
+const items = Sortiment.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'sortiment-beispiel.csv'), 'utf8')).items;
 items.forEach((it) => (it.gruppe = W.classify(it)));
 const codes = (list) => list.map((it) => it.code);
 // n aufeinanderfolgende Tage ab dem 24.09.2026

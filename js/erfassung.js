@@ -1,7 +1,9 @@
 /*
  * Erfassen: per Kamera (oder Scanner) gescannte EANs ohne Rückfrage ins Sortiment aufnehmen.
  * Was schon im Sortiment ist (auch schon selbst erfasst), wird nicht nochmal aufgenommen.
- * Die eigene Liste ist ein Array aus { code, at } (at = Zeitpunkt in ms), gespeichert im Browser.
+ * Die eigene Liste ist ein Array aus { code, at, name?, marke?, inhalt?, quelle?, synced? }
+ * (at = Zeitpunkt in ms; name/marke/inhalt/quelle = nachgeschlagene Bezeichnung;
+ * synced = schon in die Sortiment-Datei auf GitHub übernommen), gespeichert im Browser.
  */
 (function (root, factory) {
   const api = factory(root.EAN || (typeof require === 'function' ? require('./ean.js') : null));
@@ -20,7 +22,12 @@
       const norm = e && EAN.normalize(String(e.code || ''));
       if (!norm || !norm.valid || seen.has(norm.code)) return;
       seen.add(norm.code);
-      out.push({ code: norm.code, at: Number.isFinite(e.at) ? e.at : 0 });
+      const entry = { code: norm.code, at: Number.isFinite(e.at) ? e.at : 0 };
+      ['name', 'marke', 'inhalt', 'quelle'].forEach((k) => {
+        if (typeof e[k] === 'string' && e[k].trim()) entry[k] = e[k].trim();
+      });
+      if (e.synced === true) entry.synced = true;
+      out.push(entry);
     });
     return out;
   }
@@ -38,13 +45,23 @@
     return { status: 'added', code: norm.code, list: list.concat({ code: norm.code, at: now }) };
   }
 
+  /** Nachgeschlagene Bezeichnung ({ name, marke, inhalt, quelle }) bei einer EAN eintragen. */
+  function describe(list, code, info) {
+    if (!info || !info.name) return list;
+    const found = {};
+    ['name', 'marke', 'inhalt', 'quelle'].forEach((k) => {
+      if (info[k]) found[k] = info[k];
+    });
+    return list.map((e) => (e.code === code ? Object.assign({}, e, found) : e));
+  }
+
   /** Artikel für das Sortiment (gleiche Felder wie aus der CSV). */
   function toItems(list) {
     return list.map((e) =>
       Object.assign(EAN.normalize(e.code), {
-        name: NAME,
-        marke: '',
-        inhalt: '',
+        name: e.name || NAME,
+        marke: e.marke || '',
+        inhalt: e.inhalt || '',
         kategorie: '',
         warengruppe: '',
         eigen: true,
@@ -55,11 +72,30 @@
 
   const isoDay = (ms) => new Date(ms).toISOString().slice(0, 10);
 
+  const HEADER = 'ean;produktname;marke;inhalt;kategorie;status;quelle;datenstand';
+  const cell = (v) => (/[;"\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v);
+  const quelleOf = (e) => (e.quelle ? 'Kamera-Scan; ' + e.quelle : 'Kamera-Scan');
+  const csvRow = (e) =>
+    [e.code, e.name || NAME, e.marke || '', e.inhalt || '', '', 'selbst gescannt', quelleOf(e), isoDay(e.at || 0)].map(cell).join(';');
+
   /** CSV im Format von data/netto-sortiment.csv, damit die Codes dort übernommen werden können. */
   function toCSV(list) {
-    const lines = ['ean;produktname;marke;inhalt;kategorie;status;quelle;datenstand'];
-    list.forEach((e) => lines.push([e.code, '', '', '', '', 'selbst gescannt', 'Kamera-Scan', isoDay(e.at || 0)].join(';')));
-    return '﻿' + lines.join('\n') + '\n';
+    return '﻿' + [HEADER].concat(list.map(csvRow)).join('\n') + '\n';
+  }
+
+  /**
+   * Selbst erfasste EANs an den Text der Sortiment-CSV anhängen, nur die, die dort noch fehlen.
+   * `existing` = Set der EANs, die schon in der Datei stehen. Ergebnis: { text, added: [codes] }.
+   */
+  function appendToCSV(text, list, existing) {
+    const added = [];
+    list.forEach((e) => {
+      if (!existing.has(e.code) && !added.includes(e.code)) added.push(e.code);
+    });
+    if (!added.length) return { text, added };
+    const rows = added.map((code) => csvRow(list.find((e) => e.code === code)));
+    const base = text.length && !text.endsWith('\n') ? text + '\n' : text;
+    return { text: base + rows.join('\n') + '\n', added };
   }
 
   /**
@@ -99,5 +135,5 @@
     }
   }
 
-  return { NAME, normalizeList, capture, toItems, toCSV, ReadFilter };
+  return { NAME, normalizeList, capture, describe, toItems, toCSV, appendToCSV, ReadFilter };
 });

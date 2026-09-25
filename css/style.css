@@ -1,42 +1,22 @@
 :root {
-  --bg: #eef1f5;
-  --surface: #ffffff;
-  --surface-2: #f6f7f9;
-  --text: #111827;
-  --muted: #5b6474;
-  --border: #d9dee6;
-  --accent: #1d4ed8;
+  /* Immer dunkel, mit echtem Schwarz als Hintergrund (unabhängig von der Einstellung des Geräts). */
+  --bg: #000000;
+  --surface: #000000;
+  --surface-2: #161616;
+  --text: #f2f2f2;
+  --muted: #9a9a9a;
+  --border: #2a2a2a;
+  --accent: #3b82f6;
   --accent-text: #ffffff;
-  --ok: #16a34a;
-  --warn: #b45309;
-  --danger: #b91c1c;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --danger: #f87171;
   --radius: 14px;
-  --shadow: 0 6px 24px rgba(15, 23, 42, 0.12);
-  --close-bg: #4b5563;
-  --close-bg-hover: #374151;
-  --close-fg: #f3f4f6;
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b1120;
-    --surface: #111a2e;
-    --surface-2: #17223a;
-    --text: #e5e9f0;
-    --muted: #9aa5b8;
-    --border: #25324d;
-    --accent: #3b82f6;
-    --accent-text: #ffffff;
-    --ok: #22c55e;
-    --warn: #f59e0b;
-    --danger: #f87171;
-    --shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
-    --close-bg: #374151;
-    --close-bg-hover: #4b5563;
-    --close-fg: #e5e7eb;
-    color-scheme: dark;
-  }
+  --shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+  --close-bg: #3a3a3c;
+  --close-bg-hover: #48484a;
+  --close-fg: #f2f2f2;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -340,7 +320,7 @@ button, input, select { font: inherit; color: inherit; }
   max-width: calc(100vw - 32px);
   padding: 10px 16px;
   border-radius: 12px;
-  background: #0f172a;
+  background: #1c1c1e;
   color: #fff;
   font-weight: 600;
   box-shadow: var(--shadow);
@@ -363,7 +343,7 @@ dialog.sheet {
   color: var(--text);
   box-shadow: var(--shadow);
 }
-dialog.sheet::backdrop { background: rgba(2, 6, 23, 0.55); }
+dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.7); }
 
 @media (max-width: 640px) {
   dialog.sheet {
@@ -528,16 +508,44 @@ dialog.sheet::backdrop { background: rgba(2, 6, 23, 0.55); }
 }
 .captured li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto 36px;
   align-items: center;
   gap: 8px;
+  min-height: 44px;
   padding: 4px 6px 4px 12px;
 }
 .captured li + li { border-top: 1px solid var(--border); }
-.captured .code { font-variant-numeric: tabular-nums; }
-.captured .when { color: var(--muted); font-size: 13px; }
+.captured .name { display: grid; min-width: 0; }
+.captured .title, .captured .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.captured .title.unknown { color: var(--muted); font-style: italic; }
+.captured .sub { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.captured li.group-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: block;
+  min-height: 0;
+  padding: 6px 12px;
+  background: var(--surface-2);
+  font-weight: 700;
+  font-size: 14px;
+}
 .captured li.empty { display: block; padding: 12px; color: var(--muted); text-align: center; }
 .captured li.is-new { background: color-mix(in srgb, var(--ok) 16%, transparent); }
+.captured .state { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.captured .state.synced { color: var(--ok); }
+.sync-state { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+.sync-state.bad { color: var(--danger); }
+.text-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
 .captured .del {
   min-width: 36px; min-height: 36px;
   border: 0; border-radius: 50%;
@@ -598,7 +606,8 @@ dialog.sheet::backdrop { background: rgba(2, 6, 23, 0.55); }
 
 .calib { margin: 6px 0 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
 .calib p { margin: 0 0 6px; }
-.calib .ok { color: var(--ok); font-weight: 600; }
+.calib .ok, #gh-state .ok { color: var(--ok); font-weight: 600; }
+#gh-state .bad { color: var(--danger); font-weight: 600; }
 .calib .bad { color: var(--danger); font-weight: 600; }
 .calib-progress { height: 6px; border-radius: 999px; background: var(--border); overflow: hidden; margin: 6px 0; }
 .calib-progress div { height: 100%; width: 0; background: var(--accent); }

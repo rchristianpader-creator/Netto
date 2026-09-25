@@ -1,7 +1,7 @@
 /*
  * EAN Scan-Liste – Bedienoberfläche.
  * Benötigt ean.js, sortiment.js, warengruppen.js, tagesliste.js, tone-detector.js, keyboard-scanner.js,
- * erfassung.js, camera-scanner.js.
+ * erfassung.js, camera-scanner.js, github-sync.js, produktinfo.js.
  */
 (function () {
   'use strict';
@@ -9,6 +9,7 @@
   const DATA_URL = 'data/netto-sortiment.csv';
   const STORE_KEY = 'ean-scan-liste.v2';
   const CAPTURE_KEY = 'ean-scan-liste.erfasst'; // selbst per Kamera erfasste EANs
+  const TOKEN_KEY = 'ean-scan-liste.github-token'; // Schlüssel zum Schreiben der Sortiment-Datei auf GitHub
   const OLD_STORE_KEY = 'ean-scan-liste.v1'; // frühere Version: Einstellungen (z. B. angelernter Ton) übernehmen
   const BASE_WIDTH = 520; // maximale Barcode-Breite in CSS-Pixeln bei Größe 100 %
   const MIN_BAR_HEIGHT = 22; // Module
@@ -33,6 +34,8 @@
     loadingTitle: $('#loading-title'),
     loadingText: $('#loading-text'),
     loadingActions: $('#loading-actions'),
+    reloadBtn: $('#loading-actions [data-action="reload-data"]'),
+    emptyCapture: $('#loading-actions [data-action="open-capture"]'),
     viewCode: $('#view-code'),
     viewDone: $('#view-done'),
     pos: $('#pos'),
@@ -61,6 +64,10 @@
     camResult: $('#cam-result'),
     captured: $('#captured'),
     captureCount: $('#capture-count'),
+    syncState: $('#sync-state'),
+    syncBtn: $('#btn-capture-sync'),
+    ghToken: $('#set-gh-token'),
+    ghState: $('#gh-state'),
     overview: $('#overview'),
     overviewStats: $('#overview-stats'),
     search: $('#overview-search'),
@@ -176,7 +183,6 @@
       rebuildAll();
       state.items = arrangeDay();
       state.datenstand = data.datenstand;
-      if (!state.items.length) state.loadError = 'Die Sortimentsliste enthält keine gültigen EAN-Codes.';
       const byCode = resume && resume.code ? state.items.findIndex((it) => it.code === resume.code) : -1;
       const byIndex = resume && Number.isInteger(resume.index) ? resume.index : 0;
       state.index = byCode >= 0 ? byCode : Math.max(0, Math.min(byIndex, state.items.length));
@@ -242,10 +248,16 @@
     el.next.disabled = !ready || done;
 
     if (!ready) {
-      el.summary.textContent = state.loading ? 'Sortiment wird geladen …' : 'Sortiment nicht verfügbar';
-      el.loadingTitle.textContent = state.loading ? 'Sortiment wird geladen …' : 'Fehler beim Laden';
-      el.loadingText.textContent = state.loadError;
+      // Leeres Sortiment ist kein Fehler: Es wird per Kamera-Scan gefüllt.
+      const empty = !state.loading && !state.loadError;
+      el.summary.textContent = state.loading ? 'Sortiment wird geladen …' : empty ? 'Sortiment ist leer' : 'Sortiment nicht verfügbar';
+      el.loadingTitle.textContent = state.loading ? 'Sortiment wird geladen …' : empty ? 'Sortiment ist leer' : 'Fehler beim Laden';
+      el.loadingText.textContent = empty
+        ? 'Oben auf „Erfassen“ tippen und Artikel scannen. Sie kommen sofort ins Sortiment, mit Bezeichnung und Warengruppe.'
+        : state.loadError;
       el.loadingActions.hidden = state.loading;
+      el.reloadBtn.hidden = empty;
+      el.emptyCapture.hidden = !empty;
       return;
     }
     el.summary.textContent = 'Heute ' + n + ' Artikel · ' + (c.ok + c.mismatch) + ' gescannt';
@@ -691,9 +703,9 @@
       (c.skip ? ' · ' + c.skip + ' ↷ übersprungen' : '') + ' · ' + c.open + ' offen';
     el.dataInfo.textContent =
       'Tagesliste vom ' + formatDay(state.day) + ': ' + state.items.length + ' von ' + state.all.length +
-      ' Artikeln aus dem Sortiment von Netto Marken-Discount (Deutschland), Eigenmarken' +
-      (state.datenstand ? ', Datenstand ' + state.datenstand : '') +
-      (state.eigene.length ? ', dazu ' + state.eigene.length + ' selbst erfasste' : '') + '. Angaben ohne Gewähr.';
+      ' Artikeln aus dem per Kamera erfassten Sortiment' +
+      (state.eigene.length ? ', davon ' + state.eigene.length + ' nur auf diesem Gerät' : '') +
+      '. Bezeichnungen von Open Food Facts, ohne Gewähr.';
   }
 
   el.search.addEventListener('input', renderOverview);
@@ -788,8 +800,8 @@
     if (r.status === 'invalid') return; // Fehllesung: stillschweigend ignorieren
     if (r.status === 'known') {
       const it = r.item;
-      const what = it.eigen ? 'schon erfasst' : [it.name, it.marke].filter(Boolean).join(' · ');
-      showResult('known', 'Schon im Sortiment: ' + r.code + (what ? ' – ' + what : ''));
+      const what = it.name === Erfassung.NAME ? 'schon erfasst' : [it.name, it.marke].filter(Boolean).join(' · ');
+      showResult('known', 'Schon im Sortiment: ' + (what || r.code));
       beep(440, 90);
       return;
     }
@@ -801,7 +813,33 @@
     showResult('added', '✓ Neu aufgenommen: ' + r.code);
     beep(1320, 120);
     if (navigator.vibrate) navigator.vibrate(80);
+    lookupName(r.code);
     renderCaptured();
+  }
+
+  // Artikelbezeichnung im Hintergrund nachschlagen (Open Food Facts / Open Beauty Facts) und direkt eintragen.
+  // Aus dem Namen ergibt sich auch die Warengruppe, danach wird automatisch sortiert.
+  const lookups = new Map(); // EAN → laufende Abfrage
+  const lookedUp = new Set(); // in dieser Sitzung schon gesucht (nicht ständig neu fragen)
+
+  function lookupName(code) {
+    if (lookups.has(code) || lookedUp.has(code)) return;
+    lookedUp.add(code);
+    const job = Produktinfo.lookup(code, (url, init) => fetch(url, init)).then((info) => {
+      lookups.delete(code);
+      if (info && state.eigene.some((e) => e.code === code && !e.synced)) {
+        state.eigene = Erfassung.describe(state.eigene, code, info);
+        saveCaptured();
+        rebuildAll();
+        captureChanged = true;
+        const it = knownItem(code);
+        if (code === lastAddedCode && !el.camResult.hidden) {
+          showResult('added', '✓ ' + [info.name, info.marke].filter(Boolean).join(' · ') + ' → ' + Warengruppen.nameOf(it.gruppe));
+        }
+      }
+      if (el.dlgCapture.open) renderCaptured();
+    });
+    lookups.set(code, job);
   }
 
   function formatWhen(ms) {
@@ -811,22 +849,40 @@
     return d.toDateString() === new Date().toDateString() ? 'heute ' + time : pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '. ' + time;
   }
 
+  // Liste der selbst erfassten Artikel, nach Warengruppe (Laufweg-Reihenfolge), darin die neuesten zuerst.
   function renderCaptured() {
     const n = state.eigene.length;
     el.captureCount.textContent = n + ' Artikel';
-    const rows = state.eigene
-      .slice()
-      .reverse()
-      .map((e) => {
-        const li = document.createElement('li');
-        if (e.code === lastAddedCode) li.className = 'is-new';
-        li.innerHTML = '<span class="code"></span><span class="when"></span>' +
-          '<button type="button" class="del" aria-label="Entfernen">✕</button>';
-        li.querySelector('.code').textContent = e.code;
-        li.querySelector('.when').textContent = formatWhen(e.at);
-        li.querySelector('.del').dataset.code = e.code;
-        return li;
-      });
+    const items = new Map(state.all.filter((it) => it.eigen).map((it) => [it.code, it]));
+    const rank = new Map(state.settings.laufweg.map((id, i) => [id, i]));
+    const groupOf = (e) => (items.get(e.code) || {}).gruppe || 'sonstiges';
+    const sorted = state.eigene.slice().sort((a, b) => rank.get(groupOf(a)) - rank.get(groupOf(b)) || b.at - a.at);
+    const rows = [];
+    let lastGroup = null;
+    sorted.forEach((e) => {
+      const g = groupOf(e);
+      if (g !== lastGroup) {
+        lastGroup = g;
+        const head = document.createElement('li');
+        head.className = 'group-head';
+        head.textContent = Warengruppen.nameOf(g);
+        rows.push(head);
+      }
+      const li = document.createElement('li');
+      if (e.code === lastAddedCode) li.className = 'is-new';
+      li.innerHTML = '<span class="name"><span class="title"></span><span class="sub"></span></span><span class="state"></span>' +
+        (e.synced ? '<span></span>' : '<button type="button" class="del" aria-label="Entfernen">✕</button>');
+      let title = e.name;
+      if (!title) title = lookups.has(e.code) ? 'Bezeichnung wird gesucht …' : 'Bezeichnung nicht gefunden';
+      li.querySelector('.title').textContent = title;
+      li.querySelector('.title').classList.toggle('unknown', !e.name);
+      li.querySelector('.sub').textContent = [e.code, e.marke, e.inhalt, formatWhen(e.at)].filter(Boolean).join(' · ');
+      const st = li.querySelector('.state');
+      st.textContent = e.synced ? '✓ im Sortiment' : 'nur hier';
+      st.classList.toggle('synced', !!e.synced);
+      if (!e.synced) li.querySelector('.del').dataset.code = e.code;
+      rows.push(li);
+    });
     if (!rows.length) {
       const li = document.createElement('li');
       li.className = 'empty';
@@ -835,8 +891,114 @@
     }
     el.captured.replaceChildren(...rows);
     $('#btn-capture-export').disabled = !n;
-    $('#btn-capture-clear').disabled = !n;
+    $('#btn-capture-clear').disabled = !state.eigene.some((e) => !e.synced);
+    renderSyncState();
   }
+
+  // ---------- Selbst erfasste Artikel ins feste Sortiment auf GitHub übernehmen ----------
+
+  function getToken() {
+    try {
+      return localStorage.getItem(TOKEN_KEY) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function setToken(token) {
+    try {
+      if (token) localStorage.setItem(TOKEN_KEY, token);
+      else localStorage.removeItem(TOKEN_KEY);
+    } catch (e) {
+      /* privater Modus o. ä. */
+    }
+  }
+
+  const pendingSync = () => state.eigene.filter((e) => !e.synced);
+  let syncing = false;
+  let syncError = '';
+
+  function renderSyncState() {
+    const pending = pendingSync().length;
+    let text;
+    if (syncing) text = 'Wird ins Sortiment übernommen …';
+    else if (syncError) text = syncError;
+    else if (!getToken())
+      text = pending ? 'Nur auf diesem Gerät. Für alle Geräte: in den Einstellungen einen GitHub-Schlüssel eintragen.' : '';
+    else if (pending) text = pending + ' noch nicht im festen Sortiment. Wird beim Schließen automatisch übernommen.';
+    else if (state.eigene.length) text = 'Alles übernommen. Andere Geräte sehen die Artikel nach 1–2 Minuten.';
+    else text = '';
+    el.syncState.textContent = text;
+    el.syncState.classList.toggle('bad', !!syncError && !syncing);
+    el.syncBtn.disabled = syncing || !pending;
+    el.syncBtn.hidden = !getToken();
+  }
+
+  async function syncCaptured(auto) {
+    await Promise.all(Array.from(lookups.values())); // erst die Bezeichnungen abwarten, dann mit Namen übernehmen
+    const pending = pendingSync();
+    const token = getToken();
+    if (syncing || !pending.length) return;
+    if (!token) {
+      if (!auto) toast('Erst in den Einstellungen einen GitHub-Schlüssel eintragen.', 'warn', 4000);
+      return;
+    }
+    syncing = true;
+    syncError = '';
+    renderSyncState();
+    try {
+      const r = await GitHubSync.push(token, pending, (url, init) => fetch(url, init));
+      const done = new Set(r.added.concat(r.present));
+      state.eigene = state.eigene.map((e) => (done.has(e.code) ? Object.assign({}, e, { synced: true }) : e));
+      saveCaptured();
+      const n = r.added.length;
+      toast(
+        n ? '✓ ' + n + ' Artikel ins Sortiment übernommen, in 1–2 Minuten auf allen Geräten'
+          : 'Schon alles im Sortiment',
+        'ok',
+        4000
+      );
+    } catch (err) {
+      syncError = 'Nicht übernommen: ' + ((err && err.message) || 'unbekannter Fehler');
+      toast(syncError, 'warn', 6000);
+    }
+    syncing = false;
+    if (el.dlgCapture.open) renderCaptured();
+  }
+
+  el.syncBtn.addEventListener('click', () => syncCaptured(false));
+
+  function renderGhState(html) {
+    const token = getToken();
+    el.ghToken.value = token;
+    el.ghState.innerHTML =
+      html || (token ? 'Schlüssel gespeichert.' : 'Kein Schlüssel: selbst erfasste Artikel bleiben auf diesem Gerät.');
+  }
+
+  $('#btn-gh-save').addEventListener('click', async () => {
+    const token = el.ghToken.value.trim();
+    if (!token) {
+      renderGhState('<span class="bad">Bitte zuerst den Schlüssel einfügen.</span>');
+      return;
+    }
+    el.ghState.textContent = 'Wird geprüft …';
+    try {
+      await GitHubSync.check(token, (url, init) => fetch(url, init));
+      setToken(token);
+      syncError = '';
+      renderGhState('<span class="ok">✓ Schlüssel funktioniert und ist gespeichert.</span>');
+      syncCaptured(true);
+    } catch (err) {
+      renderGhState('<span class="bad"></span>');
+      el.ghState.firstChild.textContent = 'Nicht gespeichert: ' + ((err && err.message) || 'unbekannter Fehler');
+      el.ghToken.value = token;
+    }
+  });
+
+  $('#btn-gh-remove').addEventListener('click', () => {
+    setToken('');
+    renderGhState();
+  });
 
   function openCapture() {
     if (state.loading || state.loadError) {
@@ -852,6 +1014,8 @@
     }
     lastAddedCode = null;
     el.camResult.hidden = true;
+    // Bezeichnungen, die beim letzten Mal nicht nachgeschlagen werden konnten (z. B. offline), nochmal suchen
+    state.eigene.forEach((e) => !e.name && !e.synced && lookupName(e.code));
     renderCaptured();
     el.dlgCapture.showModal();
     showCamMessage('Kamera wird gestartet …');
@@ -862,6 +1026,7 @@
 
   el.dlgCapture.addEventListener('close', () => {
     camera.stop();
+    syncCaptured(true);
     if (captureChanged) {
       captureChanged = false;
       rearrange();
@@ -885,9 +1050,9 @@
   });
 
   $('#btn-capture-clear').addEventListener('click', () => {
-    const n = state.eigene.length;
-    if (!n || !confirm('Alle ' + n + ' selbst erfassten Artikel aus dem Sortiment entfernen?')) return;
-    state.eigene = [];
+    const n = pendingSync().length;
+    if (!n || !confirm('Alle ' + n + ' noch nicht übernommenen Artikel entfernen?')) return;
+    state.eigene = state.eigene.filter((e) => e.synced);
     saveCaptured();
     rebuildAll();
     captureChanged = true;
@@ -909,6 +1074,7 @@
 
   function openSettings() {
     fillSettings();
+    renderGhState();
     renderCalibState();
     renderTagesInfo();
     renderLaufweg();
@@ -1128,6 +1294,7 @@
     if (action === 'open-list') openList();
     else if (action === 'restart') restart();
     else if (action === 'reload-data') loadData();
+    else if (action === 'open-capture') openCapture();
   });
 
   // ---------- Start ----------

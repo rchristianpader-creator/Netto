@@ -55,7 +55,7 @@ test('toItems und toCSV: gleiche Felder bzw. gleiches Format wie das Sortiment',
   assert.equal(
     csv,
     '﻿ean;produktname;marke;inhalt;kategorie;status;quelle;datenstand\n' +
-      '4006381333931;;;;;selbst gescannt;Kamera-Scan;2026-09-25\n'
+      '4006381333931;' + Erfassung.NAME + ';;;;selbst gescannt;Kamera-Scan;2026-09-25\n'
   );
   const Sortiment = require('../js/sortiment.js');
   assert.deepEqual(Sortiment.parse(csv).items.map((i) => i.code), ['4006381333931']);
@@ -112,4 +112,22 @@ test('ZXing liest EAN-13 und EAN-8 aus einem Kamerabild', () => {
   // leeres Bild: kein Code, kein Fehler
   const empty = new Uint8ClampedArray(200 * 100 * 4).fill(200);
   assert.equal(CameraScanner.decodeRGBA(ZXing, reader, empty, 200, 100), null);
+});
+
+test('appendToCSV: hängt nur fehlende EANs an, Rest der Datei bleibt unverändert', () => {
+  const text = '﻿ean;produktname\n4316268604710;Blütenhonig\n';
+  const list = [{ code: '4316268604710', at: 0 }, { code: '4006381333931', at: Date.UTC(2026, 8, 25) }];
+  const r = Erfassung.appendToCSV(text, list, new Set(['4316268604710']));
+  assert.deepEqual(r.added, ['4006381333931']);
+  assert.equal(r.text, text + '4006381333931;' + Erfassung.NAME + ';;;;selbst gescannt;Kamera-Scan;2026-09-25\n');
+  assert.deepEqual(Erfassung.appendToCSV(text, list.slice(0, 1), new Set(['4316268604710'])), { text, added: [] });
+  // Datei ohne Zeilenumbruch am Ende
+  assert.equal(Erfassung.appendToCSV('ean', list.slice(1), new Set()).text.split('\n')[1].split(';')[0], '4006381333931');
+});
+
+test('normalizeList behält die Markierung "synced"', () => {
+  assert.deepEqual(Erfassung.normalizeList([{ code: '4006381333931', at: 1, synced: true }, { code: '96385074', at: 2, synced: 'x' }]), [
+    { code: '4006381333931', at: 1, synced: true },
+    { code: '96385074', at: 2 },
+  ]);
 });
