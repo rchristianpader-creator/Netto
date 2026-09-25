@@ -119,7 +119,9 @@ Netto-Produktseiten). Angaben ohne Gewähr.
 ## Veröffentlichung
 
 Die Seite läuft über GitHub Pages (Settings → Pages → *Deploy from a branch*, `main`, `/ (root)`); jede Änderung
-an `main` ist nach ein bis zwei Minuten online. Das Mikrofon funktioniert im Browser nur über **https://**
+an `main` ist nach ein bis zwei Minuten online. Nach Änderungen an CSS oder JavaScript in `index.html` die
+Versionsnummer `?v=…` hinter allen Dateien hochsetzen (überall dieselbe), sonst mischt der Browser eventuell neue und
+alte Dateien aus seinem Zwischenspeicher. Das Mikrofon funktioniert im Browser nur über **https://**
 (oder `localhost`). Lokal am PC: `npm start` und dann <http://localhost:8080> öffnen.
 
 ## Datenschutz

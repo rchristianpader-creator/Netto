@@ -1104,7 +1104,13 @@
   // ---------- Kopfzeile & Aktionen ----------
 
   $('#btn-list').addEventListener('click', openList);
-  $('#btn-capture').addEventListener('click', openCapture);
+  $('#btn-capture').addEventListener('click', () => {
+    try {
+      openCapture();
+    } catch (err) {
+      toast('Erfassen konnte nicht geöffnet werden: ' + ((err && err.message) || err), 'warn', 6000);
+    }
+  });
   $('#btn-settings').addEventListener('click', openSettings);
 
   if (document.fullscreenEnabled) {
