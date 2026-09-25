@@ -1,0 +1,115 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const EAN = require('../js/ean.js');
+const Erfassung = require('../js/erfassung.js');
+const CameraScanner = require('../js/camera-scanner.js');
+const ZXing = require('../js/vendor/zxing.min.js');
+
+test('capture: neue EAN wird ohne Rückfrage aufgenommen, doppelte nicht nochmal', () => {
+  const sortiment = new Map([['4316268604710', { code: '4316268604710', name: 'Blütenhonig' }]]);
+  let list = [];
+  const known = (code) => sortiment.get(code) || (list.some((e) => e.code === code) ? { code } : null);
+
+  let r = Erfassung.capture(list, '4006381333931', known, 1000);
+  assert.equal(r.status, 'added');
+  assert.deepEqual(r.list, [{ code: '4006381333931', at: 1000 }]);
+  list = r.list;
+
+  r = Erfassung.capture(list, '4006381333931', known, 2000); // selbst schon erfasst
+  assert.equal(r.status, 'known');
+  assert.equal(r.list, list);
+
+  r = Erfassung.capture(list, '4316268604710', known, 3000); // im Sortiment aus der CSV
+  assert.equal(r.status, 'known');
+  assert.equal(r.item.name, 'Blütenhonig');
+  assert.equal(r.list.length, 1);
+
+  r = Erfassung.capture(list, '4006381333932', known, 4000); // falsche Prüfziffer
+  assert.equal(r.status, 'invalid');
+  assert.equal(r.list.length, 1);
+
+  r = Erfassung.capture(list, '96385074', known, 5000); // EAN-8
+  assert.equal(r.status, 'added');
+  assert.deepEqual(r.list.map((e) => e.code), ['4006381333931', '96385074']);
+});
+
+test('normalizeList: ungültige, doppelte und schon im Sortiment enthaltene EANs fliegen raus', () => {
+  const list = Erfassung.normalizeList(
+    [{ code: '4006381333931', at: 1 }, { code: '4006381333931', at: 2 }, { code: 'x' }, null, { code: '4006381333932' },
+      { code: '4316268604710', at: 3 }, { code: '96385074' }],
+    new Set(['4316268604710'])
+  );
+  assert.deepEqual(list, [{ code: '4006381333931', at: 1 }, { code: '96385074', at: 0 }]);
+  assert.deepEqual(Erfassung.normalizeList('kaputt'), []);
+});
+
+test('toItems und toCSV: gleiche Felder bzw. gleiches Format wie das Sortiment', () => {
+  const list = [{ code: '4006381333931', at: Date.UTC(2026, 8, 25, 10) }];
+  const [item] = Erfassung.toItems(list);
+  assert.equal(item.code, '4006381333931');
+  assert.equal(item.type, 'EAN-13');
+  assert.equal(item.valid, true);
+  assert.equal(item.name, Erfassung.NAME);
+  assert.equal(item.eigen, true);
+  const csv = Erfassung.toCSV(list);
+  assert.equal(
+    csv,
+    '﻿ean;produktname;marke;inhalt;kategorie;status;quelle;datenstand\n' +
+      '4006381333931;;;;;selbst gescannt;Kamera-Scan;2026-09-25\n'
+  );
+  const Sortiment = require('../js/sortiment.js');
+  assert.deepEqual(Sortiment.parse(csv).items.map((i) => i.code), ['4006381333931']);
+});
+
+test('ReadFilter: erst nach zwei gleichen Lesungen, danach nicht erneut solange der Code im Bild bleibt', () => {
+  const f = new Erfassung.ReadFilter();
+  assert.equal(f.push('4006381333931', 0), null);
+  assert.equal(f.push('4006381333931', 100), '4006381333931');
+  for (let t = 200; t < 5000; t += 100) assert.equal(f.push('4006381333931', t), null); // bleibt im Bild
+  assert.equal(f.push(null, 5100), null);
+  // weg aus dem Bild (länger als holdMs), dann wieder davor: zählt wieder
+  assert.equal(f.push('4006381333931', 7000), null);
+  assert.equal(f.push('4006381333931', 7100), '4006381333931');
+  // ein anderer Code zählt sofort (nach Bestätigung), auch wenn der vorige noch "gehalten" wird
+  assert.equal(f.push('96385074', 7200), null);
+  assert.equal(f.push('96385074', 7300), '96385074');
+  // eine einzelne Fehllesung dazwischen zählt nicht
+  assert.equal(f.push('4316268604710', 9000), null);
+  assert.equal(f.push('4316268604711', 9100), null);
+});
+
+// Barcode als RGBA-Bild zeichnen, wie es die Kamera liefern würde (mit Rauschen und etwas Unschärfe im Kontrast).
+function renderBarcode(code, moduleWidth, height, seed) {
+  const g = EAN.geometry(code);
+  const bits = '0'.repeat(g.quietLeft) + EAN.encode(code) + '0'.repeat(g.quietRight);
+  const pad = 40;
+  const w = bits.length * moduleWidth + 2 * pad;
+  const h = height + 2 * pad;
+  const rgba = new Uint8ClampedArray(w * h * 4);
+  let s = seed;
+  const rnd = () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const bx = Math.floor((x - pad) / moduleWidth);
+      const bar = y >= pad && y < pad + height && bx >= 0 && bx < bits.length && bits[bx] === '1';
+      const v = (bar ? 40 : 215) + (rnd() - 0.5) * 60;
+      const p = (y * w + x) * 4;
+      rgba[p] = v;
+      rgba[p + 1] = v;
+      rgba[p + 2] = v * 0.95;
+      rgba[p + 3] = 255;
+    }
+  }
+  return { rgba, w, h };
+}
+
+test('ZXing liest EAN-13 und EAN-8 aus einem Kamerabild', () => {
+  const reader = CameraScanner.createZXingReader(ZXing);
+  for (const [code, mw] of [['4316268604710', 3], ['4006381333931', 2], ['42470700', 3], ['03770474', 4]]) {
+    const { rgba, w, h } = renderBarcode(code, mw, 80, 7);
+    assert.equal(CameraScanner.decodeRGBA(ZXing, reader, rgba, w, h), code);
+  }
+  // leeres Bild: kein Code, kein Fehler
+  const empty = new Uint8ClampedArray(200 * 100 * 4).fill(200);
+  assert.equal(CameraScanner.decodeRGBA(ZXing, reader, empty, 200, 100), null);
+});
