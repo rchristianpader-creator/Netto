@@ -68,7 +68,9 @@ test('describe: Bezeichnung eintragen, daraus automatisch die Warengruppe; CSV-Z
 
 test('Warengruppe aus den Kategorien von Open Food Facts (vor dem Namen)', () => {
   const faelle = [
-    [['en:beverages', 'en:hot-beverages', 'en:coffees', 'en:ground-coffees'], 'fruehstueck'],
+    [['en:beverages', 'en:hot-beverages', 'en:coffees', 'en:ground-coffees'], 'kaffee'],
+    [['en:beverages', 'en:hot-beverages', 'en:teas', 'en:green-teas'], 'kaffee'],
+    [['en:spreads', 'en:sweet-spreads', 'en:honeys'], 'fruehstueck'],
     [['en:dairies', 'en:fermented-milk-products', 'en:cheeses', 'en:goudas'], 'kaese'],
     [['en:dairies', 'en:fermented-milk-products', 'en:desserts', 'en:dairy-desserts', 'en:yogurts'], 'joghurt'],
     [['en:dairies', 'en:fermented-milk-products', 'en:cheeses', 'en:fresh-cheeses', 'en:quarks'], 'dessert'],
@@ -86,9 +88,12 @@ test('Warengruppe aus den Kategorien von Open Food Facts (vor dem Namen)', () =>
   ];
   for (const [tags, gruppe] of faelle) assert.equal(W.classify({ name: 'egal', tags }), gruppe, tags.join(','));
   // Kategorie schlägt einen irreführenden Namen
-  assert.equal(W.classify({ name: 'Milchkaffee Klassisch', tags: ['en:coffees'] }), 'fruehstueck');
+  assert.equal(W.classify({ name: 'Milchkaffee Klassisch', tags: ['en:coffees'] }), 'kaffee');
   // ohne Kategorien: Name; "Klassisch" enthält "lassi", ist aber kein Lassi
-  assert.equal(W.classify({ name: 'Kaffee Auslese Klassisch-Mild' }), 'fruehstueck');
+  assert.equal(W.classify({ name: 'Kaffee Auslese Klassisch-Mild' }), 'kaffee');
+  assert.equal(W.classify({ name: 'Café Gold' }), 'kaffee');
+  assert.equal(W.classify({ name: 'Kräutertee' }), 'kaffee');
+  assert.equal(W.classify({ name: 'Erdbeer Fruchtaufstrich' }), 'fruehstueck');
   assert.equal(W.classify({ name: 'Mango Lassi' }), 'milch');
   // Open Beauty Facts → Drogerie
   assert.equal(W.classify({ name: 'Pflege Shampoo', quelle: 'Kamera-Scan; Open Beauty Facts' }), 'drogerie');

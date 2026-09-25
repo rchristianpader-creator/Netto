@@ -27,6 +27,7 @@
     { id: 'nudeln', name: 'Nudeln, Reis & Backzutaten' },
     { id: 'saucen', name: 'Saucen, Fonds & Gewürze' },
     { id: 'fruehstueck', name: 'Frühstück & Brotaufstrich' },
+    { id: 'kaffee', name: 'Kaffee & Tee' },
     { id: 'snacks', name: 'Snacks & Nüsse' },
     { id: 'drogerie', name: 'Drogerie & Haushalt' },
     { id: 'getraenke', name: 'Getränke' },
@@ -44,7 +45,8 @@
     ['konserven', /konserve|fertiggericht|eintopf/],
     ['saucen', /sauce|soße|ketchup|würz|fond|suppe|feinkost/],
     ['nudeln', /nudel|pasta|reis\b|backzutat|zucker|mehl|trockensortiment/],
-    ['fruehstueck', /aufstrich|frühstück|müsli|kaffee|\btee\b/],
+    ['kaffee', /kaffee|\btee\b/],
+    ['fruehstueck', /aufstrich|frühstück|müsli/],
     ['snacks', /snack|chips|nüsse|nuss|riegel|süßwaren|gebäck/],
     ['obst', /obst|gemüse/],
     ['brot', /\bbrot\b|backwaren|brötchen/],
@@ -76,7 +78,8 @@
     ['milch', /milch|kefir|\blassi\b|drink|kakao|molke|\beier\b/],
     ['butter', /butter|margarine|sahne|schmand|crème|creme/],
     ['nudeln', /nudel|spaghetti|lasagne|tortiglioni|fusilli|farfalle|linguine|maccheroni|penne|\breis\b|mehl|zucker|backkakao/],
-    ['fruehstueck', /aufstrich|marmelade|konfitüre|honig|müsli|cornflakes|kaffee|\btee\b|nougat/],
+    ['kaffee', /kaffee|café|\bcafe\b|mocca|mokka|tee\b|teebeutel|kaffeepads|kaffeekapseln/],
+    ['fruehstueck', /aufstrich|marmelade|konfitüre|honig|müsli|cornflakes|nougat/],
     ['snacks', /chips|knabber|nüsse|erdnuss|mandeln|cashew|studentenfutter|riegel|gebäck|salzstangen|flips|keks|schokolade/],
     ['konserven', /mais\b|bohnen|erbsen|champignon|ananas|püree|fruchtmus|tomaten/],
   ];
@@ -85,7 +88,8 @@
   //    Die Tags sind hierarchisch (allgemein → speziell), deshalb zählt die Reihenfolge der Regeln.
   const TAG_REGELN = [
     ['tk', /frozen|ice-creams/],
-    ['fruehstueck', /coffee|^en:teas|tea-bags|herbal-teas|infusions|breakfast-cereals|muesli|spreads|jams|marmalades|honeys|cocoa-powders/],
+    ['kaffee', /coffee|^en:teas|tea-bags|herbal-teas|green-teas|black-teas|infusions/],
+    ['fruehstueck', /breakfast-cereals|muesli|spreads|jams|marmalades|honeys|cocoa-powders/],
     ['dessert', /quarks|fromages-blancs|puddings|rice-puddings|semolina-puddings/],
     ['joghurt', /yogurts|yoghurts|skyr/],
     ['kaese', /cheese/],
@@ -146,11 +150,20 @@
     );
   }
 
-  /** Gespeicherte Reihenfolge bereinigen: unbekannte raus, fehlende ergänzen, "Sonstiges" immer zuletzt. */
+  /**
+   * Gespeicherte Reihenfolge bereinigen: unbekannte raus, fehlende ergänzen, "Sonstiges" immer zuletzt.
+   * Eine fehlende (z. B. neu eingeführte) Gruppe kommt hinter ihren Vorgänger aus der Standard-Reihenfolge,
+   * sonst ans Ende.
+   */
   function normalizeOrder(order) {
-    const known = (Array.isArray(order) ? order : []).filter((id, i, a) => BY_ID.has(id) && a.indexOf(id) === i);
-    const missing = DEFAULT_ORDER.filter((id) => !known.includes(id));
-    return known.concat(missing).filter((id) => id !== 'sonstiges').concat('sonstiges');
+    const result = (Array.isArray(order) ? order : []).filter((id, i, a) => BY_ID.has(id) && a.indexOf(id) === i);
+    DEFAULT_ORDER.forEach((id, i) => {
+      if (result.includes(id)) return;
+      const k = i > 0 ? result.indexOf(DEFAULT_ORDER[i - 1]) : -1;
+      if (k >= 0) result.splice(k + 1, 0, id);
+      else result.push(id);
+    });
+    return result.filter((id) => id !== 'sonstiges').concat('sonstiges');
   }
 
   // Stabiler Pseudozufall je (seed, EAN): gleiche Mischung nach Neuladen, neue Mischung bei neuem seed.
