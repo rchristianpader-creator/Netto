@@ -6,8 +6,8 @@ Seite automatisch zum nächsten Artikel.** Dafür hört die Seite über das Mikr
 
 **Online:** <https://rchristianpader-creator.github.io/Netto/>
 
-- Das Sortiment wird selbst per Kamera erfasst (anfangs leer): Barcode scannen, Bezeichnung und Warengruppe kommen
-  automatisch aus Open Food Facts, gespeichert in [`data/netto-sortiment.csv`](data/netto-sortiment.csv)
+- Das Sortiment wird selbst per Kamera erfasst (anfangs leer): Barcode scannen, die Bezeichnung kommt automatisch aus
+  Open Food Facts, die Warengruppe legst du selbst fest; gespeichert in [`data/netto-sortiment.csv`](data/netto-sortiment.csv)
 - **Jeden Tag eine neue Liste:** 50 bis 80 zufällig ausgewählte Artikel, auch die Anzahl ist zufällig
 - Reihenfolge wie beim Gang durch den Laden: Warengruppe für Warengruppe, innerhalb jeder Gruppe zufällig gemischt
 - Immer schwarzes Design; Barcodes pixelgenau gerendert (EAN-13 und EAN-8), schwarz auf weiß
@@ -37,22 +37,18 @@ Häkchen (✓, ↷) gelten jeweils für den Tag.
 
 ### Reihenfolge: Laufweg durch den Laden
 
-Die Artikel der Tagesliste kommen nach Warengruppen sortiert, in der Reihenfolge eines Rundgangs durch die Filiale:
-
-Milch & Milchgetränke → Joghurt → Quark & Desserts → Butter, Sahne & Margarine → Käse → Wurst & Aufschnitt →
-Feinkost & Salate → Fleisch & Geflügel → H-Milch & Kondensmilch → Konserven & Fertiggerichte →
-Nudeln, Reis & Backzutaten → Saucen, Fonds & Gewürze → Frühstück & Brotaufstrich → Kaffee & Tee → Snacks & Nüsse → Drogerie & Haushalt → Getränke → Tiefkühl
+Die Artikel der Tagesliste kommen nach Warengruppen sortiert, in der Reihenfolge eines Rundgangs durch die Filiale.
+Vorgegebene Warengruppen gibt es nicht: Du legst deine eigenen beim Erfassen an (siehe unten). Artikel ohne
+Warengruppe kommen zuletzt unter „Ohne Warengruppe“.
 
 Innerhalb jeder Warengruppe ist die Reihenfolge zufällig (gehört zur Tagesliste, bleibt also beim Neuladen gleich).
 Die Warengruppe steht über dem Produktnamen; beim Wechsel in die nächste Gruppe kommt ein kurzer Hinweis
-(„Weiter mit: Käse“).
+(„Weiter mit: Kühlregal“).
 
 - **Laufweg anpassen:** Einstellungen → *Laufweg durch den Laden* → Gruppen mit ↑ ↓ verschieben (z. B. passend zur
-  eigenen Filiale). „Standard-Reihenfolge“ stellt den Ausgangszustand wieder her.
+  eigenen Filiale). Neu angelegte Gruppen kommen ans Ende. „Standard-Reihenfolge“ sortiert nach Anlegedatum.
 
-Die Warengruppe wird aus Kategorie, Produktname und Marke bestimmt (z. B. „Feiner Leberkäse“ → Wurst & Aufschnitt,
-„Butterkäse“ → Käse). Soll ein Artikel woanders einsortiert werden, in der CSV eine Spalte `warengruppe` mit dem
-Gruppennamen ergänzen – sie hat Vorrang.
+Die Warengruppe eines Artikels steht in der Spalte `warengruppe` der Sortimentsliste.
 
 Über **Tagesliste** oben rechts: Übersicht der heutigen Artikel mit Stand (✓ gescannt, ↷ übersprungen, offen) und
 Suche nach Name, Marke oder EAN. Antippen springt direkt zu diesem Artikel.
@@ -84,14 +80,17 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
 
 - **Neue EAN:** kommt sofort ins Sortiment, ohne Nachfrage. Die Artikelbezeichnung (Name, Marke, Inhalt) wird im
   Hintergrund bei [Open Food Facts](https://world.openfoodfacts.org) bzw. Open Beauty Facts nachgeschlagen und
-  direkt eingetragen. Daraus ergibt sich automatisch die Warengruppe, z. B. „Gouda jung“ → Käse. Nicht gefundene
-  Artikel heißen „Selbst gescannter Artikel“ und kommen unter „Sonstiges“. Ein hoher Ton, auf Android zusätzlich eine kurze Vibration,
-  und die Meldung „✓ Neu aufgenommen“.
+  direkt eingetragen. Nicht gefundene Artikel heißen „Selbst gescannter Artikel“. Ein hoher Ton, auf Android
+  zusätzlich eine kurze Vibration, und die Meldung „✓ Neu aufgenommen“.
 - **EAN schon im Sortiment** (aus der CSV oder schon selbst erfasst): wird nicht nochmal aufgenommen. Ein tiefer Ton
   und die Meldung „Schon im Sortiment“ mit dem Produktnamen.
 - Ein Code zählt erst, wenn er zweimal gleich gelesen wurde und die Prüfziffer stimmt. Das schützt vor Fehllesungen.
   Solange derselbe Barcode im Bild bleibt, wird er nur einmal gemeldet.
 - Ein per USB/Bluetooth verbundener Scanner erfasst in diesem Fenster genauso.
+- **Warengruppe für neue Scans:** Oben im Fenster wählbar, nur eigene Warengruppen (keine vorgegebenen, keine
+  automatische Zuordnung). Mit *＋ Neue Warengruppe …* legst du eine an (z. B. „Kühlregal“ oder „Aktion“). Alles
+  danach Gescannte landet ohne Rückfrage in der gewählten Gruppe; ohne Wahl unter „Ohne Warengruppe“. Die Gruppe
+  kommt mit der Übernahme in die Spalte `warengruppe` der Sortimentsliste, so kennen sie auch andere Geräte.
 - **Netto-Regaletiketten:** Der kleine Strichcode auf den elektronischen Preisschildern (Code 128) wird ebenfalls
   gelesen. Er enthält eine ladeninterne 13-stellige Nummer mit Prüfziffer (z. B. `2707338130000` mit der
   Artikelnummer 733813), die wie eine EAN-13 aufgenommen und angezeigt wird. Eine Bezeichnung gibt es dafür nicht,

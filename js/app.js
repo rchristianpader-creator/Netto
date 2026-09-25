@@ -25,6 +25,8 @@
     size: 100,
     loop: false,
     perDay: Tagesliste.DEFAULT_RANGE, // Artikel pro Tag: zufällige Anzahl in diesem Bereich
+    captureGruppe: '', // Erfassen: feste Warengruppe (id) für neue Scans, '' = automatisch
+    eigeneGruppen: [], // selbst angelegte Warengruppen (Namen)
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -64,6 +66,8 @@
     camResult: $('#cam-result'),
     captured: $('#captured'),
     captureCount: $('#capture-count'),
+    captureGruppe: $('#capture-gruppe'),
+    captureGruppeHint: $('#capture-gruppe-hint'),
     syncState: $('#sync-state'),
     syncBtn: $('#btn-capture-sync'),
     ghToken: $('#set-gh-token'),
@@ -133,6 +137,8 @@
     loading: true,
     loadError: '',
   };
+  if (!Array.isArray(state.settings.eigeneGruppen)) state.settings.eigeneGruppen = [];
+  state.settings.eigeneGruppen.forEach((name) => Warengruppen.register(name));
   state.settings.laufweg = Warengruppen.normalizeOrder(state.settings.laufweg);
   state.settings.perDay = Tagesliste.normalizeRange(state.settings.perDay);
   let resume = sameDay ? { code: saved.code, index: saved.index } : null; // Stelle, an der es heute weitergeht
@@ -180,6 +186,11 @@
       // Was inzwischen im festen Sortiment steht, muss nicht mehr als eigener Artikel geführt werden.
       state.eigene = Erfassung.normalizeList(loadCaptured(), new Set(data.items.map((it) => it.code)));
       saveCaptured();
+      // Warengruppen, die auf einem anderen Gerät angelegt wurden (Spalte "warengruppe"), hier auch anlegen
+      data.items.concat(state.eigene.map((e) => ({ warengruppe: e.gruppe }))).forEach((it) => {
+        if (it.warengruppe && !Warengruppen.idOf(it.warengruppe)) Warengruppen.register(it.warengruppe);
+      });
+      state.settings.laufweg = Warengruppen.normalizeOrder(state.settings.laufweg);
       rebuildAll();
       state.items = arrangeDay();
       state.datenstand = data.datenstand;
@@ -253,7 +264,7 @@
       el.summary.textContent = state.loading ? 'Sortiment wird geladen …' : empty ? 'Sortiment ist leer' : 'Sortiment nicht verfügbar';
       el.loadingTitle.textContent = state.loading ? 'Sortiment wird geladen …' : empty ? 'Sortiment ist leer' : 'Fehler beim Laden';
       el.loadingText.textContent = empty
-        ? 'Oben auf „Erfassen“ tippen und Artikel scannen. Sie kommen sofort ins Sortiment, mit Bezeichnung und Warengruppe.'
+        ? 'Oben auf „Erfassen“ tippen und Artikel scannen. Vorher oben im Fenster eine eigene Warengruppe anlegen oder wählen.'
         : state.loadError;
       el.loadingActions.hidden = state.loading;
       el.reloadBtn.hidden = empty;
@@ -796,7 +807,8 @@
 
   // Gescannten Code ohne Rückfrage übernehmen; was schon im Sortiment ist, nicht nochmal.
   function captureCode(raw) {
-    const r = Erfassung.capture(state.eigene, raw, knownItem, Date.now());
+    const fest = captureGruppeId();
+    const r = Erfassung.capture(state.eigene, raw, knownItem, Date.now(), fest ? Warengruppen.nameOf(fest) : '');
     if (r.status === 'invalid') return; // Fehllesung: stillschweigend ignorieren
     if (r.status === 'known') {
       const it = r.item;
@@ -810,7 +822,7 @@
     rebuildAll();
     captureChanged = true;
     lastAddedCode = r.code;
-    showResult('added', '✓ Neu aufgenommen: ' + r.code);
+    showResult('added', '✓ Neu aufgenommen: ' + r.code + (fest ? ' → ' + Warengruppen.nameOf(fest) : ''));
     beep(1320, 120);
     if (navigator.vibrate) navigator.vibrate(80);
     lookupName(r.code);
@@ -844,7 +856,8 @@
           captureChanged = true;
           const it = knownItem(code);
           if (code === lastAddedCode && !el.camResult.hidden) {
-            showResult('added', '✓ ' + [r.info.name, r.info.marke].filter(Boolean).join(' · ') + ' → ' + Warengruppen.nameOf(it.gruppe));
+            const ziel = it.gruppe !== 'sonstiges' ? ' → ' + Warengruppen.nameOf(it.gruppe) : '';
+            showResult('added', '✓ ' + [r.info.name, r.info.marke].filter(Boolean).join(' · ') + ziel);
           }
         }
       } else {
@@ -984,7 +997,7 @@
       // Warengruppe mitschreiben, damit sie im Sortiment fest steht
       const withGroup = pending.map((e) => {
         const it = knownItem(e.code);
-        return Object.assign({}, e, { gruppe: it ? Warengruppen.nameOf(it.gruppe) : '' });
+        return Object.assign({}, e, { gruppe: it && it.gruppe !== 'sonstiges' ? Warengruppen.nameOf(it.gruppe) : '' });
       });
       const r = await GitHubSync.push(token, withGroup, (url, init) => fetch(url, init));
       const done = new Set(r.added.concat(r.present));
@@ -1039,6 +1052,43 @@
     renderGhState();
   });
 
+  // ---------- Warengruppe für neue Scans (automatisch, fest gewählt oder neu angelegt) ----------
+
+  const NEW_GROUP = '__neu__';
+
+  function captureGruppeId() {
+    const id = state.settings.captureGruppe;
+    return id && Warengruppen.idOf(id) ? id : '';
+  }
+
+  function renderGruppeSelect() {
+    const current = captureGruppeId();
+    const opts = [new Option('Ohne Warengruppe', '')];
+    Warengruppen.normalizeOrder(state.settings.laufweg)
+      .filter((id) => id !== 'sonstiges')
+      .forEach((id) => opts.push(new Option(Warengruppen.nameOf(id), id)));
+    opts.push(new Option('＋ Neue Warengruppe …', NEW_GROUP));
+    el.captureGruppe.replaceChildren(...opts);
+    el.captureGruppe.value = current;
+    el.captureGruppeHint.textContent = current
+      ? 'Alles, was du jetzt scannst, kommt nach „' + Warengruppen.nameOf(current) + '“.'
+      : 'Scans kommen nach „Ohne Warengruppe“. Eigene Warengruppe wählen oder mit „＋ Neue Warengruppe …“ anlegen.';
+  }
+
+  el.captureGruppe.addEventListener('change', () => {
+    let value = el.captureGruppe.value;
+    if (value === NEW_GROUP) {
+      const name = (window.prompt('Name der neuen Warengruppe (z. B. „Aktion“ oder „Gang 3“):') || '').trim();
+      value = name ? Warengruppen.register(name) : captureGruppeId();
+      if (name && value && !state.settings.eigeneGruppen.includes(Warengruppen.nameOf(value)) && value.startsWith('x-')) {
+        state.settings.eigeneGruppen = state.settings.eigeneGruppen.concat(Warengruppen.nameOf(value));
+      }
+      state.settings.laufweg = Warengruppen.normalizeOrder(state.settings.laufweg);
+    }
+    changeSettings({ captureGruppe: value || '' });
+    renderGruppeSelect();
+  });
+
   function openCapture() {
     if (state.loading || state.loadError) {
       toast('Erst muss das Sortiment geladen sein.', 'warn');
@@ -1053,6 +1103,7 @@
     }
     lastAddedCode = null;
     el.camResult.hidden = true;
+    renderGruppeSelect();
     // Bezeichnungen, die beim letzten Mal nicht nachgeschlagen werden konnten (z. B. offline), nochmal suchen
     state.eigene.forEach((e) => {
       if (e.name || e.synced) return;
