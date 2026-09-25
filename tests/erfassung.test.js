@@ -54,8 +54,8 @@ test('toItems und toCSV: gleiche Felder bzw. gleiches Format wie das Sortiment',
   const csv = Erfassung.toCSV(list);
   assert.equal(
     csv,
-    '﻿ean;produktname;marke;inhalt;kategorie;status;quelle;datenstand\n' +
-      '4006381333931;' + Erfassung.NAME + ';;;;selbst gescannt;Kamera-Scan;2026-09-25\n'
+    '﻿ean;produktname;marke;inhalt;kategorie;warengruppe;status;quelle;datenstand\n' +
+      '4006381333931;' + Erfassung.NAME + ';;;;;selbst gescannt;Kamera-Scan;2026-09-25\n'
   );
   const Sortiment = require('../js/sortiment.js');
   assert.deepEqual(Sortiment.parse(csv).items.map((i) => i.code), ['4006381333931']);
@@ -114,12 +114,16 @@ test('ZXing liest EAN-13 und EAN-8 aus einem Kamerabild', () => {
   assert.equal(CameraScanner.decodeRGBA(ZXing, reader, empty, 200, 100), null);
 });
 
-test('appendToCSV: hängt nur fehlende EANs an, Rest der Datei bleibt unverändert', () => {
-  const text = '﻿ean;produktname\n4316268604710;Blütenhonig\n';
-  const list = [{ code: '4316268604710', at: 0 }, { code: '4006381333931', at: Date.UTC(2026, 8, 25) }];
+test('appendToCSV: hängt nur fehlende EANs an, Spalten nach der Kopfzeile der Datei, Rest bleibt unverändert', () => {
+  const text = '﻿ean;produktname;warengruppe;quelle\n4316268604710;Blütenhonig;;\n';
+  const list = [{ code: '4316268604710', at: 0 }, { code: '4006381333931', at: Date.UTC(2026, 8, 25), name: 'Gouda', gruppe: 'Käse' }];
   const r = Erfassung.appendToCSV(text, list, new Set(['4316268604710']));
   assert.deepEqual(r.added, ['4006381333931']);
-  assert.equal(r.text, text + '4006381333931;' + Erfassung.NAME + ';;;;selbst gescannt;Kamera-Scan;2026-09-25\n');
+  assert.equal(r.text, text + '4006381333931;Gouda;Käse;Kamera-Scan\n');
+  // leere Datei: bekommt die Standard-Kopfzeile
+  const leer = Erfassung.appendToCSV('', list.slice(1), new Set()).text;
+  assert.equal(leer.split('\n')[0], '﻿ean;produktname;marke;inhalt;kategorie;warengruppe;status;quelle;datenstand');
+  assert.equal(leer.split('\n')[1].split(';')[5], 'Käse');
   assert.deepEqual(Erfassung.appendToCSV(text, list.slice(0, 1), new Set(['4316268604710'])), { text, added: [] });
   // Datei ohne Zeilenumbruch am Ende
   assert.equal(Erfassung.appendToCSV('ean', list.slice(1), new Set()).text.split('\n')[1].split(';')[0], '4006381333931');

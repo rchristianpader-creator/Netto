@@ -34,7 +34,7 @@ test('CSV: andere Spaltenreihenfolge, Komma als Trennzeichen', () => {
 test('Sortiment (data/netto-sortiment.csv): lesbar, alle EANs gültig und eindeutig, jeder Artikel mit Name', () => {
   // Das Sortiment wird per Kamera-Scan gefüllt (anfangs leer); die Kopfzeile muss zum Anhängen passen.
   const text = fs.readFileSync(path.join(__dirname, '..', 'data', 'netto-sortiment.csv'), 'utf8');
-  assert.equal(text.replace(/^\uFEFF/, '').split(/\r?\n/)[0], 'ean;produktname;marke;inhalt;kategorie;status;quelle;datenstand');
+  assert.equal(text.replace(/^\uFEFF/, '').split(/\r?\n/)[0], 'ean;produktname;marke;inhalt;kategorie;warengruppe;status;quelle;datenstand');
   const { items, errors } = Sortiment.parse(text);
   assert.equal(errors.length, 0);
   assert.deepEqual(items.filter((i) => !i.valid).map((i) => i.code), []);
