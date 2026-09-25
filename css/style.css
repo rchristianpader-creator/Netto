@@ -1,42 +1,22 @@
 :root {
-  --bg: #eef1f5;
-  --surface: #ffffff;
-  --surface-2: #f6f7f9;
-  --text: #111827;
-  --muted: #5b6474;
-  --border: #d9dee6;
-  --accent: #1d4ed8;
+  /* Immer dunkel, mit echtem Schwarz als Hintergrund (unabhängig von der Einstellung des Geräts). */
+  --bg: #000000;
+  --surface: #000000;
+  --surface-2: #161616;
+  --text: #f2f2f2;
+  --muted: #9a9a9a;
+  --border: #2a2a2a;
+  --accent: #3b82f6;
   --accent-text: #ffffff;
-  --ok: #16a34a;
-  --warn: #b45309;
-  --danger: #b91c1c;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --danger: #f87171;
   --radius: 14px;
-  --shadow: 0 6px 24px rgba(15, 23, 42, 0.12);
-  --close-bg: #4b5563;
-  --close-bg-hover: #374151;
-  --close-fg: #f3f4f6;
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b1120;
-    --surface: #111a2e;
-    --surface-2: #17223a;
-    --text: #e5e9f0;
-    --muted: #9aa5b8;
-    --border: #25324d;
-    --accent: #3b82f6;
-    --accent-text: #ffffff;
-    --ok: #22c55e;
-    --warn: #f59e0b;
-    --danger: #f87171;
-    --shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
-    --close-bg: #374151;
-    --close-bg-hover: #4b5563;
-    --close-fg: #e5e7eb;
-    color-scheme: dark;
-  }
+  --shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+  --close-bg: #3a3a3c;
+  --close-bg-hover: #48484a;
+  --close-fg: #f2f2f2;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -340,7 +320,7 @@ button, input, select { font: inherit; color: inherit; }
   max-width: calc(100vw - 32px);
   padding: 10px 16px;
   border-radius: 12px;
-  background: #0f172a;
+  background: #1c1c1e;
   color: #fff;
   font-weight: 600;
   box-shadow: var(--shadow);
@@ -363,7 +343,7 @@ dialog.sheet {
   color: var(--text);
   box-shadow: var(--shadow);
 }
-dialog.sheet::backdrop { background: rgba(2, 6, 23, 0.55); }
+dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.7); }
 
 @media (max-width: 640px) {
   dialog.sheet {

@@ -5,14 +5,12 @@ const path = require('node:path');
 const Sortiment = require('../js/sortiment.js');
 const W = require('../js/warengruppen.js');
 
-const items = Sortiment.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'netto-sortiment.csv'), 'utf8')).items;
+const items = Sortiment.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'sortiment-beispiel.csv'), 'utf8')).items;
 items.forEach((it) => (it.gruppe = W.classify(it)));
 const gruppeVon = (name) => W.classify({ name });
 
 test('jeder Artikel des Netto-Sortiments hat eine Warengruppe (nichts unter "Sonstiges")', () => {
-  // ausgenommen selbst per Kamera erfasste Artikel: ohne (passenden) Namen gibt es keine Zuordnung
-  const erfasst = (it) => /^Kamera-Scan/.test(it.quelle);
-  assert.deepEqual(items.filter((it) => it.gruppe === 'sonstiges' && !erfasst(it)).map((it) => it.name), []);
+  assert.deepEqual(items.filter((it) => it.gruppe === 'sonstiges').map((it) => it.name), []);
 });
 
 test('knifflige Zuordnungen', () => {

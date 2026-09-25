@@ -5,7 +5,7 @@ const path = require('node:path');
 const Sync = require('../js/github-sync.js');
 const Sortiment = require('../js/sortiment.js');
 
-const CSV = fs.readFileSync(path.join(__dirname, '..', 'data', 'netto-sortiment.csv'), 'utf8');
+const CSV = fs.readFileSync(path.join(__dirname, 'fixtures', 'sortiment-beispiel.csv'), 'utf8');
 
 // Nachgebautes GitHub: eine Datei mit sha, PUT nur mit passendem sha.
 function fakeGitHub(opts) {

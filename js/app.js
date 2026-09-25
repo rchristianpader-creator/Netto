@@ -34,6 +34,8 @@
     loadingTitle: $('#loading-title'),
     loadingText: $('#loading-text'),
     loadingActions: $('#loading-actions'),
+    reloadBtn: $('#loading-actions [data-action="reload-data"]'),
+    emptyCapture: $('#loading-actions [data-action="open-capture"]'),
     viewCode: $('#view-code'),
     viewDone: $('#view-done'),
     pos: $('#pos'),
@@ -181,7 +183,6 @@
       rebuildAll();
       state.items = arrangeDay();
       state.datenstand = data.datenstand;
-      if (!state.items.length) state.loadError = 'Die Sortimentsliste enthält keine gültigen EAN-Codes.';
       const byCode = resume && resume.code ? state.items.findIndex((it) => it.code === resume.code) : -1;
       const byIndex = resume && Number.isInteger(resume.index) ? resume.index : 0;
       state.index = byCode >= 0 ? byCode : Math.max(0, Math.min(byIndex, state.items.length));
@@ -247,10 +248,16 @@
     el.next.disabled = !ready || done;
 
     if (!ready) {
-      el.summary.textContent = state.loading ? 'Sortiment wird geladen …' : 'Sortiment nicht verfügbar';
-      el.loadingTitle.textContent = state.loading ? 'Sortiment wird geladen …' : 'Fehler beim Laden';
-      el.loadingText.textContent = state.loadError;
+      // Leeres Sortiment ist kein Fehler: Es wird per Kamera-Scan gefüllt.
+      const empty = !state.loading && !state.loadError;
+      el.summary.textContent = state.loading ? 'Sortiment wird geladen …' : empty ? 'Sortiment ist leer' : 'Sortiment nicht verfügbar';
+      el.loadingTitle.textContent = state.loading ? 'Sortiment wird geladen …' : empty ? 'Sortiment ist leer' : 'Fehler beim Laden';
+      el.loadingText.textContent = empty
+        ? 'Oben auf „Erfassen“ tippen und Artikel scannen. Sie kommen sofort ins Sortiment, mit Bezeichnung und Warengruppe.'
+        : state.loadError;
       el.loadingActions.hidden = state.loading;
+      el.reloadBtn.hidden = empty;
+      el.emptyCapture.hidden = !empty;
       return;
     }
     el.summary.textContent = 'Heute ' + n + ' Artikel · ' + (c.ok + c.mismatch) + ' gescannt';
@@ -696,9 +703,9 @@
       (c.skip ? ' · ' + c.skip + ' ↷ übersprungen' : '') + ' · ' + c.open + ' offen';
     el.dataInfo.textContent =
       'Tagesliste vom ' + formatDay(state.day) + ': ' + state.items.length + ' von ' + state.all.length +
-      ' Artikeln aus dem Sortiment von Netto Marken-Discount (Deutschland), Eigenmarken' +
-      (state.datenstand ? ', Datenstand ' + state.datenstand : '') +
-      (state.eigene.length ? ', dazu ' + state.eigene.length + ' selbst erfasste' : '') + '. Angaben ohne Gewähr.';
+      ' Artikeln aus dem per Kamera erfassten Sortiment' +
+      (state.eigene.length ? ', davon ' + state.eigene.length + ' nur auf diesem Gerät' : '') +
+      '. Bezeichnungen von Open Food Facts, ohne Gewähr.';
   }
 
   el.search.addEventListener('input', renderOverview);
@@ -1287,6 +1294,7 @@
     if (action === 'open-list') openList();
     else if (action === 'restart') restart();
     else if (action === 'reload-data') loadData();
+    else if (action === 'open-capture') openCapture();
   });
 
   // ---------- Start ----------

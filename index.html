@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
   <meta name="description" content="Zeigt jeden Tag 50 bis 80 zufällige Artikel aus dem Netto-Marken-Discount-Sortiment als Barcodes an und schaltet beim Piepton des Scanners automatisch zum nächsten Artikel.">
   <title>EAN Scan-Liste</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="css/style.css?v=2026-09-25.3">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-25.4">
 </head>
 <body>
   <div class="app">
@@ -44,6 +44,7 @@
         <p id="loading-text"></p>
         <div class="actions" id="loading-actions" hidden>
           <button type="button" class="btn primary" data-action="reload-data">Nochmal versuchen</button>
+          <button type="button" class="btn primary" data-action="open-capture" hidden>Erfassen</button>
         </div>
       </section>
 
@@ -243,16 +244,16 @@
     </form>
   </dialog>
 
-  <script src="js/ean.js?v=2026-09-25.3"></script>
-  <script src="js/sortiment.js?v=2026-09-25.3"></script>
-  <script src="js/warengruppen.js?v=2026-09-25.3"></script>
-  <script src="js/tagesliste.js?v=2026-09-25.3"></script>
-  <script src="js/tone-detector.js?v=2026-09-25.3"></script>
-  <script src="js/keyboard-scanner.js?v=2026-09-25.3"></script>
-  <script src="js/erfassung.js?v=2026-09-25.3"></script>
-  <script src="js/camera-scanner.js?v=2026-09-25.3"></script>
-  <script src="js/github-sync.js?v=2026-09-25.3"></script>
-  <script src="js/produktinfo.js?v=2026-09-25.3"></script>
-  <script src="js/app.js?v=2026-09-25.3"></script>
+  <script src="js/ean.js?v=2026-09-25.4"></script>
+  <script src="js/sortiment.js?v=2026-09-25.4"></script>
+  <script src="js/warengruppen.js?v=2026-09-25.4"></script>
+  <script src="js/tagesliste.js?v=2026-09-25.4"></script>
+  <script src="js/tone-detector.js?v=2026-09-25.4"></script>
+  <script src="js/keyboard-scanner.js?v=2026-09-25.4"></script>
+  <script src="js/erfassung.js?v=2026-09-25.4"></script>
+  <script src="js/camera-scanner.js?v=2026-09-25.4"></script>
+  <script src="js/github-sync.js?v=2026-09-25.4"></script>
+  <script src="js/produktinfo.js?v=2026-09-25.4"></script>
+  <script src="js/app.js?v=2026-09-25.4"></script>
 </body>
 </html>
