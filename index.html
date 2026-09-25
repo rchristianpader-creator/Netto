@@ -9,7 +9,7 @@
   <title>EAN Scan-Liste</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="css/style.css?v=2026-09-25.16">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-25.17">
 </head>
 <body>
   <div class="app">
@@ -132,8 +132,7 @@
           <button type="button" class="cam-torch" id="cam-torch" aria-pressed="false" hidden>Licht</button>
         </div>
         <p class="hint">Barcode in den Rahmen halten, fertig. Neue EANs kommen sofort ins Sortiment,
-          ohne Nachfrage, in die oben gewählte Warengruppe. Die Bezeichnung wird bei Open Food Facts nachgeschlagen.
-          Auch Netto-Regaletiketten: Strichcode wird gelesen, die Bezeichnung per Texterkennung vom Schild.
+          ohne Nachfrage, in die oben gewählte Warengruppe. Auch der Strichcode auf Netto-Regaletiketten wird gelesen.
           EANs, die schon im Sortiment sind, werden nicht nochmal aufgenommen.</p>
         <h3 class="capture-head"><span>Selbst erfasst</span> <span class="capture-count" id="capture-count"></span></h3>
         <ol class="captured" id="captured"></ol>
@@ -206,7 +205,8 @@
         <section class="group">
           <h3>Laufweg durch den Laden</h3>
           <p class="hint">Die Warengruppen kommen in dieser Reihenfolge, die Artikel innerhalb einer Gruppe zufällig gemischt.
-            Mit ↑ ↓ an die eigene Filiale anpassen. Die Zahl zeigt, wie viele Artikel der Gruppe heute dran sind.</p>
+            Mit ↑ ↓ an die eigene Filiale anpassen. Die Zahl zeigt, wie viele Artikel der Gruppe heute dran sind.
+            „selten“ / „oft“ legt fest, wie häufig eine Warengruppe in der Tagesliste vorkommt (z. B. Fix-Tüten selten).</p>
           <ol class="laufweg" id="laufweg"></ol>
           <div class="row">
             <button type="button" class="btn ghost" id="btn-laufweg-reset">Standard-Reihenfolge</button>
@@ -232,6 +232,13 @@
         </section>
 
         <section class="group">
+          <h3>Erfassen</h3>
+          <label class="switch"><input type="checkbox" id="set-bezeichnungen"><span>Bezeichnung nachschlagen</span></label>
+          <p class="hint">Aus: Es wird nur die EAN mit Warengruppe erfasst (schnell, ohne Internetabfrage). An: zusätzlich Name
+            und Marke bei Open Food Facts bzw. per Texterkennung vom Regaletikett (wird nicht angezeigt, nur gespeichert).</p>
+        </section>
+
+        <section class="group">
           <h3>Scanner am selben Gerät (USB/Bluetooth)</h3>
           <label class="switch"><input type="checkbox" id="set-keyboard"><span>Eingabe des Scanners erkennen</span></label>
           <p class="hint">Ist der Scanner mit diesem Gerät verbunden, „tippt“ er den gelesenen Code. Das wird auch ohne Mikrofon erkannt.</p>
@@ -251,17 +258,17 @@
     </form>
   </dialog>
 
-  <script src="js/ean.js?v=2026-09-25.16"></script>
-  <script src="js/sortiment.js?v=2026-09-25.16"></script>
-  <script src="js/warengruppen.js?v=2026-09-25.16"></script>
-  <script src="js/tagesliste.js?v=2026-09-25.16"></script>
-  <script src="js/tone-detector.js?v=2026-09-25.16"></script>
-  <script src="js/keyboard-scanner.js?v=2026-09-25.16"></script>
-  <script src="js/erfassung.js?v=2026-09-25.16"></script>
-  <script src="js/camera-scanner.js?v=2026-09-25.16"></script>
-  <script src="js/github-sync.js?v=2026-09-25.16"></script>
-  <script src="js/produktinfo.js?v=2026-09-25.16"></script>
-  <script src="js/etikett-ocr.js?v=2026-09-25.16"></script>
-  <script src="js/app.js?v=2026-09-25.16"></script>
+  <script src="js/ean.js?v=2026-09-25.17"></script>
+  <script src="js/sortiment.js?v=2026-09-25.17"></script>
+  <script src="js/warengruppen.js?v=2026-09-25.17"></script>
+  <script src="js/tagesliste.js?v=2026-09-25.17"></script>
+  <script src="js/tone-detector.js?v=2026-09-25.17"></script>
+  <script src="js/keyboard-scanner.js?v=2026-09-25.17"></script>
+  <script src="js/erfassung.js?v=2026-09-25.17"></script>
+  <script src="js/camera-scanner.js?v=2026-09-25.17"></script>
+  <script src="js/github-sync.js?v=2026-09-25.17"></script>
+  <script src="js/produktinfo.js?v=2026-09-25.17"></script>
+  <script src="js/etikett-ocr.js?v=2026-09-25.17"></script>
+  <script src="js/app.js?v=2026-09-25.17"></script>
 </body>
 </html>

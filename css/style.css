@@ -531,9 +531,6 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.7); }
 .captured li + li { border-top: 1px solid var(--border); }
 .captured .name { display: grid; min-width: 0; }
 .captured .title, .captured .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.captured .title.unknown { color: var(--muted); font-style: italic; }
-.captured li[data-edit] { cursor: pointer; }
-.captured li.unnamed .title { white-space: normal; font-size: 14px; }
 .captured .sub { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 .captured li.group-head {
   position: sticky;
@@ -583,7 +580,7 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.7); }
 }
 .laufweg li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
   align-items: center;
   gap: 4px;
   padding: 2px 4px 2px 12px;
@@ -593,6 +590,15 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.7); }
 .laufweg .lw-name::before { content: counter(lw) ". "; color: var(--muted); }
 .laufweg .lw-count { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; padding-right: 6px; }
 .laufweg .icon-btn { font-size: 18px; justify-content: center; }
+.laufweg .lw-freq {
+  min-height: 34px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+}
 .laufweg .icon-btn:disabled { opacity: 0.25; cursor: default; }
 
 .tages-info { margin: 8px 0; font-weight: 600; font-variant-numeric: tabular-nums; }

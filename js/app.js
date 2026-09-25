@@ -27,6 +27,8 @@
     perDay: Tagesliste.DEFAULT_RANGE, // Artikel pro Tag: zufällige Anzahl in diesem Bereich
     captureGruppe: '', // Erfassen: feste Warengruppe (id) für neue Scans, '' = automatisch
     eigeneGruppen: [], // selbst angelegte Warengruppen (Namen)
+    haeufigkeit: {}, // Warengruppe (id) → 'selten' | 'normal' | 'oft': wie oft sie in der Tagesliste vorkommt
+    bezeichnungen: false, // Erfassen: Bezeichnung nachschlagen (Open Food Facts, Schild-Texterkennung); angezeigt wird sie nicht
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -79,6 +81,7 @@
     dataInfo: $('#data-info'),
     setMic: $('#set-mic'),
     setKeyboard: $('#set-keyboard'),
+    setBezeichnungen: $('#set-bezeichnungen'),
     setLevel: $('#set-level'),
     setCooldown: $('#set-cooldown'),
     setSize: $('#set-size'),
@@ -141,6 +144,7 @@
   if (!Array.isArray(state.settings.eigeneGruppen)) state.settings.eigeneGruppen = [];
   state.settings.eigeneGruppen.forEach((name) => Warengruppen.register(name));
   state.settings.laufweg = Warengruppen.normalizeOrder(state.settings.laufweg);
+  if (!state.settings.haeufigkeit || typeof state.settings.haeufigkeit !== 'object') state.settings.haeufigkeit = {};
   state.settings.perDay = Tagesliste.normalizeRange(state.settings.perDay);
   let resume = sameDay ? { code: saved.code, index: saved.index } : null; // Stelle, an der es heute weitergeht
 
@@ -174,7 +178,8 @@
   // Heutige Liste: Zufallsauswahl aus dem Sortiment, nach Laufweg sortiert.
   function arrangeDay() {
     const s = state.settings;
-    return Warengruppen.arrange(Tagesliste.pick(state.all, state.seed, s.perDay), s.laufweg, state.seed);
+    const weightOf = (it) => Tagesliste.HAEUFIGKEIT[s.haeufigkeit[it.gruppe]] || 1;
+    return Warengruppen.arrange(Tagesliste.pick(state.all, state.seed, s.perDay, weightOf), s.laufweg, state.seed);
   }
 
   async function loadData() {
@@ -283,9 +288,10 @@
 
     const item = state.items[i];
     el.pos.textContent = i + 1 + ' / ' + n;
-    el.group.textContent = Warengruppen.nameOf(item.gruppe);
-    el.name.textContent = item.name || 'Artikel ' + (i + 1);
-    el.meta.textContent = [item.marke, item.inhalt].filter(Boolean).join(' · ');
+    // Angezeigt werden nur Warengruppe und EAN (Bezeichnung und Marke sind unzuverlässig und werden nicht gebraucht)
+    el.group.textContent = '';
+    el.name.textContent = Warengruppen.nameOf(item.gruppe);
+    el.meta.textContent = '';
     el.code.textContent = item.type + ' ' + item.code;
     if (!item.valid) el.note.textContent = item.note + ' – der Scanner wird diesen Code nicht lesen';
     else if (markOf(item) === 'ok') el.note.textContent = '✓ bereits gescannt';
@@ -696,8 +702,9 @@
       b.innerHTML =
         '<span class="n">' + (k + 1) + '</span><span class="mark ' + mark + '">' + (MARKS[mark] || '') + '</span>' +
         '<span class="name"><span class="title"></span><span class="sub"></span></span><span class="code">' + it.code + '</span>';
-      b.querySelector('.title').textContent = it.name || it.type;
-      b.querySelector('.sub').textContent = [it.marke, it.inhalt].filter(Boolean).join(' · ');
+      b.querySelector('.title').textContent = it.code; // nur EAN, die Warengruppe steht als Überschrift darüber
+      b.querySelector('.sub').textContent = '';
+      b.querySelector('.code').textContent = it.type;
       li.appendChild(b);
       frag.appendChild(li);
     });
@@ -813,9 +820,8 @@
     const r = Erfassung.capture(state.eigene, raw, knownItem, Date.now(), fest ? Warengruppen.nameOf(fest) : '');
     if (r.status === 'invalid') return; // Fehllesung: stillschweigend ignorieren
     if (r.status === 'known') {
-      const it = r.item;
-      const what = it.name === Erfassung.NAME ? 'schon erfasst' : [it.name, it.marke].filter(Boolean).join(' · ');
-      showResult('known', 'Schon im Sortiment: ' + (what || r.code));
+      const g = r.item.gruppe && r.item.gruppe !== 'sonstiges' ? ' (' + Warengruppen.nameOf(r.item.gruppe) + ')' : '';
+      showResult('known', 'Schon im Sortiment: ' + r.code + g);
       beep(440, 90);
       return;
     }
@@ -827,7 +833,7 @@
     showResult('added', '✓ Neu aufgenommen: ' + r.code + (fest ? ' → ' + Warengruppen.nameOf(fest) : ''));
     beep(1320, 120);
     if (navigator.vibrate) navigator.vibrate(80);
-    lookupName(r.code);
+    if (state.settings.bezeichnungen) lookupName(r.code);
     renderCaptured();
   }
 
@@ -884,6 +890,7 @@
   // Textausschnitt sichern, solange das Schild im Bild ist. Ein vollständiger Ausschnitt ersetzt einen am
   // Bildrand abgeschnittenen; war der Text schon einmal unlesbar, wird mit dem besseren Bild neu gelesen.
   function keepLabelShot(code, bar) {
+    if (!state.settings.bezeichnungen) return;
     if (!needsLabel(code)) return;
     const v = el.camVideo;
     const rect = EtikettOCR.textRect(bar, v.videoWidth, v.videoHeight);
@@ -929,16 +936,6 @@
     return job;
   }
 
-  function lookupText(code) {
-    if (lookups.has(code)) return 'Bezeichnung wird gesucht …';
-    const st = lookupState.get(code);
-    if (st === 'ocrfail') return 'Netto-Regaletikett: Text nicht lesbar – ganzes Schild ins Bild nehmen';
-    if (st === 'instore' || Erfassung.isInStore(code)) return 'Netto-Regaletikett: ganzes Schild ins Bild halten, dann wird der Name gelesen';
-    if (st === 'notfound') return 'Bei Open Food Facts unbekannt (antippen: Namen eingeben)';
-    if (st) return 'Keine Bezeichnung: ' + st + ' (antippen: Namen eingeben)';
-    return 'Ohne Bezeichnung (antippen: Namen eingeben)';
-  }
-
   function formatWhen(ms) {
     const d = new Date(ms);
     const pad = (n) => String(n).padStart(2, '0');
@@ -969,12 +966,8 @@
       if (e.code === lastAddedCode) li.className = 'is-new';
       li.innerHTML = '<span class="name"><span class="title"></span><span class="sub"></span></span><span class="state"></span>' +
         (e.synced ? '<span></span>' : '<button type="button" class="del" aria-label="Entfernen">✕</button>');
-      const title = e.name || lookupText(e.code);
-      li.dataset.edit = e.code; // antippen: Bezeichnung eingeben oder korrigieren
-      if (!e.name) li.classList.add('unnamed');
-      li.querySelector('.title').textContent = title;
-      li.querySelector('.title').classList.toggle('unknown', !e.name);
-      li.querySelector('.sub').textContent = [e.code, e.marke, e.inhalt, formatWhen(e.at)].filter(Boolean).join(' · ');
+      li.querySelector('.title').textContent = e.code; // nur EAN (Warengruppe steht als Überschrift darüber)
+      li.querySelector('.sub').textContent = formatWhen(e.at);
       const st = li.querySelector('.state');
       st.textContent = e.dirty ? 'geändert' : e.synced ? '✓ im Sortiment' : 'nur hier';
       st.classList.toggle('synced', !!e.synced);
@@ -1173,7 +1166,7 @@
     renderGruppeSelect();
     // Bezeichnungen, die beim letzten Mal nicht nachgeschlagen werden konnten (z. B. offline), nochmal suchen
     state.eigene.forEach((e) => {
-      if (e.name || e.synced) return;
+      if (!state.settings.bezeichnungen || e.name || e.synced) return;
       retries.delete(e.code);
       lookupName(e.code, true);
     });
@@ -1209,28 +1202,8 @@
     else camera.start().then(() => camera.running && showCamMessage(''));
   });
 
-  // Bezeichnung von Hand eingeben oder korrigieren (z. B. wenn die Texterkennung ein Wort falsch gelesen hat)
-  function editName(code) {
-    const e = state.eigene.find((x) => x.code === code);
-    if (!e) return;
-    const name = window.prompt('Bezeichnung für ' + code + ':', e.name || '');
-    if (name === null || !name.trim()) return;
-    const marke = window.prompt('Marke (leer lassen, wenn keine):', e.marke || '');
-    state.eigene = Erfassung.rename(state.eigene, code, marke === null ? { name } : { name, marke });
-    lookupState.delete(code);
-    saveCaptured();
-    rebuildAll();
-    captureChanged = true;
-    renderCaptured();
-  }
-
   el.captured.addEventListener('click', (e) => {
     const b = e.target.closest('button.del');
-    const row = !b && e.target.closest('li[data-edit]');
-    if (row) {
-      editName(row.dataset.edit);
-      return;
-    }
     if (!b) return;
     state.eigene = state.eigene.filter((x) => x.code !== b.dataset.code);
     saveCaptured();
@@ -1291,10 +1264,13 @@
         li.dataset.id = id;
         li.innerHTML =
           '<span class="lw-name"></span><span class="lw-count"></span>' +
+          '<select class="lw-freq" aria-label="Häufigkeit in der Tagesliste">' +
+          '<option value="selten">selten</option><option value="normal">normal</option><option value="oft">oft</option></select>' +
           '<button type="button" class="icon-btn" data-move="-1" aria-label="Nach oben">↑</button>' +
           '<button type="button" class="icon-btn" data-move="1" aria-label="Nach unten">↓</button>';
         li.querySelector('.lw-name').textContent = Warengruppen.nameOf(id);
         li.querySelector('.lw-count').textContent = stats[id] ? stats[id].total : 0;
+        li.querySelector('.lw-freq').value = state.settings.haeufigkeit[id] || 'normal';
         li.querySelector('[data-move="-1"]').disabled = i === 0;
         li.querySelector('[data-move="1"]').disabled = i === visible.length - 1;
         return li;
@@ -1303,6 +1279,20 @@
     const isDefault = state.settings.laufweg.join() === Warengruppen.normalizeOrder(Warengruppen.DEFAULT_ORDER).join();
     el.laufwegReset.hidden = isDefault;
   }
+
+  // Häufigkeit einer Warengruppe ändern: die heutige Liste wird sofort neu ausgelost (✓ bleiben erhalten)
+  el.laufweg.addEventListener('change', (e) => {
+    const sel = e.target.closest('select.lw-freq');
+    if (!sel) return;
+    const id = sel.closest('li').dataset.id;
+    const haeufigkeit = Object.assign({}, state.settings.haeufigkeit);
+    if (sel.value === 'normal') delete haeufigkeit[id];
+    else haeufigkeit[id] = sel.value;
+    changeSettings({ haeufigkeit });
+    rearrange();
+    renderTagesInfo();
+    renderLaufweg();
+  });
 
   el.laufweg.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-move]');
@@ -1333,6 +1323,7 @@
     const s = state.settings;
     el.setMic.checked = s.mic;
     el.setKeyboard.checked = s.keyboard;
+    el.setBezeichnungen.checked = !!s.bezeichnungen;
     el.setLoop.checked = s.loop;
     el.setLevel.value = s.minLevelDb;
     el.setCooldown.value = s.cooldownMs;
@@ -1366,6 +1357,7 @@
     if (!state.settings.mic && micState !== 'off') stopMic();
     updateListenUI();
   });
+  el.setBezeichnungen.addEventListener('change', () => changeSettings({ bezeichnungen: el.setBezeichnungen.checked }));
   el.setKeyboard.addEventListener('change', () => {
     changeSettings({ keyboard: el.setKeyboard.checked });
     updateListenUI();
