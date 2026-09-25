@@ -492,6 +492,20 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.7); }
 }
 .cam-result.added { background: var(--ok); }
 .cam-result.known { background: #4b5563; }
+.cam-torch {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cam-torch[aria-pressed="true"] { background: #f5c518; color: #000; }
 .cam.hit-added { outline: 4px solid var(--ok); outline-offset: -4px; }
 
 .capture-head { display: flex; align-items: baseline; gap: 6px; margin: 14px 0 6px; font-size: 16px; }

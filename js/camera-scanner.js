@@ -2,7 +2,9 @@
  * Barcode-Scanner mit der Kamera: EAN-13 / EAN-8 und Code 128 (z. B. auf Netto-Regaletiketten, dort steht
  * eine ladeninterne 13-stellige Nummer mit Prüfziffer drin). Was zählt, prüft der Aufrufer (gültige EAN).
  * Nutzt die eingebaute Barcode-Erkennung des Browsers (BarcodeDetector, z. B. Chrome auf Android).
- * Wo es die nicht gibt (Safari auf dem iPhone), wird ZXing nachgeladen (js/vendor/zxing.min.js).
+ * Wo es die nicht gibt (Safari auf dem iPhone), wird zxing-cpp als WebAssembly nachgeladen
+ * (js/vendor/zxing-wasm/, 3- bis 10-mal schneller als ZXing in JavaScript, erkennt auch gedrehte Codes);
+ * lädt das nicht, dient ZXing in JavaScript als Ersatz (js/vendor/zxing.min.js).
  */
 (function (root, factory) {
   const api = factory();
@@ -12,7 +14,9 @@
   'use strict';
 
   const ZXING_URL = 'js/vendor/zxing.min.js';
-  const INTERVAL_MS = 100; // Pause zwischen zwei Erkennungsversuchen
+  const WASM_DIR = 'js/vendor/zxing-wasm/';
+  const INTERVAL_MS = 30; // Pause zwischen zwei Erkennungsversuchen (die Erkennung selbst dauert meist 10–60 ms)
+  const WASM_FORMATS = ['EAN13', 'EAN8', 'Code128'];
   const MAX_SIDE = 1280; // Kamerabild für den schnellen Versuch auf höchstens diese Kantenlänge verkleinern
   const MARGIN = 0.08; // Suchbereich: sichtbarer Ausschnitt plus so viel Rand (Anteil des Kamerabilds) rundherum
 
@@ -143,6 +147,62 @@
     }
   }
 
+  /** Lage aus den vier Ecken, die zxing-cpp liefert: { left, right, y } (Außenkanten, y = Mitte). */
+  function barFromPosition(pos, dx, dy) {
+    if (!pos || !pos.topLeft) return null;
+    const pts = [pos.topLeft, pos.topRight, pos.bottomRight, pos.bottomLeft];
+    const xs = pts.map((p) => p.x);
+    return { left: Math.min(...xs) + dx, right: Math.max(...xs) + dx, y: pts.reduce((a, p) => a + p.y, 0) / 4 + dy };
+  }
+
+  async function wasmDecoder() {
+    if (typeof WebAssembly !== 'object') return null;
+    try {
+      const abs = (f) => new URL(WASM_DIR + f, document.baseURI).href;
+      if (!self.ZXingWASM) await loadScript(abs('zxing-wasm-reader.js'));
+      await self.ZXingWASM.prepareZXingModule({ overrides: { locateFile: (f) => abs(f) }, fireImmediately: true });
+    } catch (e) {
+      return null; // dann ZXing in JavaScript
+    }
+    const Z = self.ZXingWASM;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const grab = (sx, sy, w, h, video) => {
+      canvas.width = w;
+      canvas.height = h;
+      ctx.drawImage(video, sx, sy, w, h, 0, 0, w, h);
+      return ctx.getImageData(0, 0, w, h);
+    };
+    const first = (results, dx, dy) => {
+      const r = results.find((x) => x.isValid !== false && x.text);
+      return r ? { text: r.text, bar: barFromPosition(r.position, dx, dy) } : null;
+    };
+    // Meist das ganze Bild (zxing-cpp verkleinert und dreht selbst); jedes dritte Bild stattdessen der sichtbare
+    // Bereich mit harter Schwelle für Regaletiketten (Code auf dunkelgrauem Grund dicht am Etikettrand).
+    let pass = 0;
+    let hardStep = 0;
+    return async (video) => {
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      if (!vw || !vh) return null;
+      pass = (pass + 1) % 3;
+      if (pass !== 2) {
+        const img = grab(0, 0, vw, vh, video);
+        const res = await Z.readBarcodes(img, { formats: WASM_FORMATS, tryHarder: true, tryRotate: true, tryInvert: false, tryDownscale: true, maxNumberOfSymbols: 1 });
+        return first(res, 0, 0);
+      }
+      const r = searchRect(vw, vh, video.clientWidth, video.clientHeight, MARGIN);
+      const img = grab(r.x, r.y, r.w, r.h, video);
+      const lum = luminance(img.data, r.w, r.h);
+      const thresholds = darkThresholds(lum);
+      const t = thresholds[hardStep++ % thresholds.length];
+      const d = img.data;
+      for (let i = 0; i < lum.length; i++) d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = lum[i] < t ? 0 : 255;
+      const res = await Z.readBarcodes(img, { formats: WASM_FORMATS, tryHarder: true, tryRotate: false, tryDownscale: false, binarizer: 'BoolCast', maxNumberOfSymbols: 1 });
+      return first(res, r.x, r.y);
+    };
+  }
+
   async function zxingDecoder() {
     if (!self.ZXing) await loadScript(ZXING_URL);
     const ZXing = self.ZXing;
@@ -214,8 +274,11 @@
         if (!this.running) return stream.getTracks().forEach((t) => t.stop());
         this.stream = stream;
         this.video.srcObject = stream;
+        const track = stream.getVideoTracks()[0];
+        // Dauer-Autofokus, wo das Gerät es anbietet (sonst ohne)
+        if (track && track.applyConstraints) track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
         await this.video.play().catch(() => {});
-        if (!this.decode) this.decode = (await nativeDecoder()) || (await zxingDecoder());
+        if (!this.decode) this.decode = (await nativeDecoder()) || (await wasmDecoder()) || (await zxingDecoder());
         if (this.running) this.loop();
       } catch (err) {
         this.stop();
@@ -234,6 +297,25 @@
           this.h.onRead(found ? found.text : null, performance.now(), found && found.bar);
           this.timer = setTimeout(() => this.loop(), INTERVAL_MS);
         });
+    }
+
+    /** Ob das Gerät die Taschenlampe für die Kamera freigibt (Android meist ja, iPhone je nach iOS). */
+    torchSupported() {
+      const track = this.stream && this.stream.getVideoTracks()[0];
+      const caps = track && track.getCapabilities ? track.getCapabilities() : {};
+      return !!caps.torch;
+    }
+
+    /** Taschenlampe an/aus; liefert den neuen Zustand. */
+    async setTorch(on) {
+      const track = this.stream && this.stream.getVideoTracks()[0];
+      if (!track) return false;
+      try {
+        await track.applyConstraints({ advanced: [{ torch: !!on }] });
+        return !!on;
+      } catch (e) {
+        return false;
+      }
     }
 
     /** Ausschnitt { x, y, w, h } des aktuellen Kamerabilds in voller Auflösung als Canvas (z. B. für Texterkennung). */
@@ -255,5 +337,5 @@
     }
   }
 
-  return { Scanner, luminance, createZXingReader, decodeRGBA, decodeRGBAHard, decodeRGBAHardResult, darkThresholds, searchRect };
+  return { Scanner, luminance, createZXingReader, decodeRGBA, decodeRGBAHard, decodeRGBAHardResult, darkThresholds, searchRect, barFromPosition };
 });

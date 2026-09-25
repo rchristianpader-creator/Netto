@@ -64,6 +64,7 @@
     camVideo: $('#cam-video'),
     camMsg: $('#cam-msg'),
     camResult: $('#cam-result'),
+    camTorch: $('#cam-torch'),
     captured: $('#captured'),
     captureCount: $('#capture-count'),
     captureGruppe: $('#capture-gruppe'),
@@ -1179,10 +1180,19 @@
     renderCaptured();
     el.dlgCapture.showModal();
     showCamMessage('Kamera wird gestartet …');
+    el.camTorch.hidden = true;
+    el.camTorch.setAttribute('aria-pressed', 'false');
     camera.start().then(() => {
-      if (camera.running) showCamMessage('');
+      if (!camera.running) return;
+      showCamMessage('');
+      el.camTorch.hidden = !camera.torchSupported();
     });
   }
+
+  el.camTorch.addEventListener('click', async () => {
+    const on = el.camTorch.getAttribute('aria-pressed') !== 'true';
+    el.camTorch.setAttribute('aria-pressed', String(await camera.setTorch(on)));
+  });
 
   el.dlgCapture.addEventListener('close', () => {
     camera.stop();
