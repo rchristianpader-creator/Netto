@@ -820,26 +820,50 @@
   // Artikelbezeichnung im Hintergrund nachschlagen (Open Food Facts / Open Beauty Facts) und direkt eintragen.
   // Aus dem Namen ergibt sich auch die Warengruppe, danach wird automatisch sortiert.
   const lookups = new Map(); // EAN → laufende Abfrage
-  const lookedUp = new Set(); // in dieser Sitzung schon gesucht (nicht ständig neu fragen)
+  const lookupState = new Map(); // EAN → 'notfound' oder Fehlermeldung des letzten Versuchs
+  const retries = new Map(); // EAN → Zahl der automatischen Wiederholungen
+  const RETRY_MS = [5000, 15000, 45000];
 
-  function lookupName(code) {
-    if (lookups.has(code) || lookedUp.has(code)) return;
-    lookedUp.add(code);
-    const job = Produktinfo.lookup(code, (url, init) => fetch(url, init)).then((info) => {
+  // Liefert ein Promise, das fertig ist, wenn die Abfrage durch ist. force = auch nach "nicht gefunden" nochmal fragen.
+  function lookupName(code, force) {
+    if (lookups.has(code)) return lookups.get(code);
+    if (!force && lookupState.get(code) === 'notfound') return Promise.resolve();
+    const job = Produktinfo.lookupDetailed(code, (url, init) => fetch(url, init)).then((r) => {
       lookups.delete(code);
-      if (info && state.eigene.some((e) => e.code === code && !e.synced)) {
-        state.eigene = Erfassung.describe(state.eigene, code, info);
-        saveCaptured();
-        rebuildAll();
-        captureChanged = true;
-        const it = knownItem(code);
-        if (code === lastAddedCode && !el.camResult.hidden) {
-          showResult('added', '✓ ' + [info.name, info.marke].filter(Boolean).join(' · ') + ' → ' + Warengruppen.nameOf(it.gruppe));
+      if (r.info) {
+        lookupState.delete(code);
+        retries.delete(code);
+        if (state.eigene.some((e) => e.code === code && !e.synced)) {
+          state.eigene = Erfassung.describe(state.eigene, code, r.info);
+          saveCaptured();
+          rebuildAll();
+          captureChanged = true;
+          const it = knownItem(code);
+          if (code === lastAddedCode && !el.camResult.hidden) {
+            showResult('added', '✓ ' + [r.info.name, r.info.marke].filter(Boolean).join(' · ') + ' → ' + Warengruppen.nameOf(it.gruppe));
+          }
+        }
+      } else {
+        lookupState.set(code, r.error || 'notfound');
+        // Netzwerkfehler, Überlastung o. ä.: automatisch nochmal versuchen
+        const n = retries.get(code) || 0;
+        if (r.error && n < RETRY_MS.length) {
+          retries.set(code, n + 1);
+          setTimeout(() => lookupName(code, true), RETRY_MS[n]);
         }
       }
       if (el.dlgCapture.open) renderCaptured();
     });
     lookups.set(code, job);
+    return job;
+  }
+
+  function lookupText(code) {
+    if (lookups.has(code)) return 'Bezeichnung wird gesucht …';
+    const st = lookupState.get(code);
+    if (st === 'notfound') return 'Bei Open Food Facts unbekannt (antippen: nochmal suchen)';
+    if (st) return 'Keine Bezeichnung: ' + st + ' (antippen: nochmal)';
+    return 'Ohne Bezeichnung (antippen: suchen)';
   }
 
   function formatWhen(ms) {
@@ -872,8 +896,8 @@
       if (e.code === lastAddedCode) li.className = 'is-new';
       li.innerHTML = '<span class="name"><span class="title"></span><span class="sub"></span></span><span class="state"></span>' +
         (e.synced ? '<span></span>' : '<button type="button" class="del" aria-label="Entfernen">✕</button>');
-      let title = e.name;
-      if (!title) title = lookups.has(e.code) ? 'Bezeichnung wird gesucht …' : 'Bezeichnung nicht gefunden';
+      const title = e.name || lookupText(e.code);
+      if (!e.name && !e.synced) li.dataset.retry = e.code;
       li.querySelector('.title').textContent = title;
       li.querySelector('.title').classList.toggle('unknown', !e.name);
       li.querySelector('.sub').textContent = [e.code, e.marke, e.inhalt, formatWhen(e.at)].filter(Boolean).join(' · ');
@@ -935,7 +959,12 @@
   }
 
   async function syncCaptured(auto) {
-    await Promise.all(Array.from(lookups.values())); // erst die Bezeichnungen abwarten, dann mit Namen übernehmen
+    // Erst die Bezeichnungen abwarten, dann mit Namen übernehmen; nach einem Fehler einmal nachfragen.
+    await Promise.all(
+      state.eigene
+        .filter((e) => !e.synced && !e.name && lookupState.get(e.code) !== 'notfound')
+        .map((e) => lookupName(e.code, true))
+    );
     const pending = pendingSync();
     const token = getToken();
     if (syncing || !pending.length) return;
@@ -1020,7 +1049,11 @@
     lastAddedCode = null;
     el.camResult.hidden = true;
     // Bezeichnungen, die beim letzten Mal nicht nachgeschlagen werden konnten (z. B. offline), nochmal suchen
-    state.eigene.forEach((e) => !e.name && !e.synced && lookupName(e.code));
+    state.eigene.forEach((e) => {
+      if (e.name || e.synced) return;
+      retries.delete(e.code);
+      lookupName(e.code, true);
+    });
     renderCaptured();
     el.dlgCapture.showModal();
     showCamMessage('Kamera wird gestartet …');
@@ -1046,6 +1079,13 @@
 
   el.captured.addEventListener('click', (e) => {
     const b = e.target.closest('button.del');
+    const row = !b && e.target.closest('li[data-retry]');
+    if (row) {
+      retries.delete(row.dataset.retry);
+      lookupName(row.dataset.retry, true);
+      renderCaptured();
+      return;
+    }
     if (!b) return;
     state.eigene = state.eigene.filter((x) => x.code !== b.dataset.code);
     saveCaptured();

@@ -518,6 +518,8 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.7); }
 .captured .name { display: grid; min-width: 0; }
 .captured .title, .captured .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .captured .title.unknown { color: var(--muted); font-style: italic; }
+.captured li[data-retry] { cursor: pointer; }
+.captured li[data-retry] .title { white-space: normal; font-size: 14px; }
 .captured .sub { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 .captured li.group-head {
   position: sticky;

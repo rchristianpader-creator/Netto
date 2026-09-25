@@ -100,3 +100,40 @@ test('Warengruppe aus den Kategorien von Open Food Facts (vor dem Namen)', () =>
   // Warengruppe aus der CSV hat Vorrang
   assert.equal(W.classify({ name: 'Gouda', tags: ['en:coffees'], warengruppe: 'Käse' }), 'kaese');
 });
+
+test('lookupDetailed: "nicht gefunden" und Fehler werden unterschieden (Fehler → neuer Versuch lohnt sich)', async () => {
+  const reply = (status, body) => ({ ok: status < 300, status, json: async () => body });
+  const route = (handlers) => async (url) => handlers[new URL(url).host](url);
+  const off = 'world.openfoodfacts.org';
+  const obf = 'world.openbeautyfacts.org';
+
+  // neuere API-Antwort mit status "success"
+  let r = await Produktinfo.lookupDetailed('1', route({ [off]: () => reply(200, { status: 'success', product: { product_name: 'Kaffee' } }) }));
+  assert.equal(r.info.name, 'Kaffee');
+  assert.equal(r.error, undefined);
+
+  // beide Quellen kennen die EAN nicht: kein Fehler
+  r = await Produktinfo.lookupDetailed('2', route({ [off]: () => reply(404, { status: 0 }), [obf]: () => reply(404, { status: 0 }) }));
+  assert.deepEqual(r, { info: null });
+  r = await Produktinfo.lookupDetailed('2', route({ [off]: () => reply(200, { status: 0, status_verbose: 'product not found' }), [obf]: () => reply(404, {}) }));
+  assert.deepEqual(r, { info: null });
+
+  // Überlastung / zu viele Anfragen: Fehler, nicht "unbekannt"
+  r = await Produktinfo.lookupDetailed('3', route({ [off]: () => reply(429, {}), [obf]: () => reply(404, {}) }));
+  assert.equal(r.info, null);
+  assert.match(r.error, /Open Food Facts antwortet mit Fehler 429 \(zu viele Anfragen\)/);
+
+  // offline
+  r = await Produktinfo.lookupDetailed('4', route({ [off]: () => { throw new TypeError('Load failed'); }, [obf]: () => { throw new TypeError('Load failed'); } }));
+  assert.match(r.error, /nicht erreichbar/);
+
+  // Zeitüberschreitung (abgebrochene Anfrage)
+  const abort = () => { throw Object.assign(new Error('aborted'), { name: 'AbortError' }); };
+  r = await Produktinfo.lookupDetailed('5', route({ [off]: abort, [obf]: () => reply(404, {}) }));
+  assert.match(r.error, /Zeitüberschreitung/);
+
+  // Fehler bei der einen, Treffer bei der anderen Quelle: Treffer zählt
+  r = await Produktinfo.lookupDetailed('6', route({ [off]: () => reply(503, {}), [obf]: () => reply(200, { status: 1, product: { product_name: 'Duschgel' } }) }));
+  assert.equal(r.info.name, 'Duschgel');
+  assert.equal(r.error, undefined);
+});
