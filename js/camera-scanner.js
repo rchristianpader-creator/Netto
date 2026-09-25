@@ -1,5 +1,6 @@
 /*
- * Barcode-Scanner mit der Kamera (EAN-13 / EAN-8).
+ * Barcode-Scanner mit der Kamera: EAN-13 / EAN-8 und Code 128 (z. B. auf Netto-Regaletiketten, dort steht
+ * eine ladeninterne 13-stellige Nummer mit Prüfziffer drin). Was zählt, prüft der Aufrufer (gültige EAN).
  * Nutzt die eingebaute Barcode-Erkennung des Browsers (BarcodeDetector, z. B. Chrome auf Android).
  * Wo es die nicht gibt (Safari auf dem iPhone), wird ZXing nachgeladen (js/vendor/zxing.min.js).
  */
@@ -12,7 +13,8 @@
 
   const ZXING_URL = 'js/vendor/zxing.min.js';
   const INTERVAL_MS = 100; // Pause zwischen zwei Erkennungsversuchen
-  const MAX_WIDTH = 960; // Kamerabild für ZXing auf diese Breite verkleinern (schneller, reicht für EAN)
+  const MAX_WIDTH = 1280; // Kamerabild für ZXing höchstens so breit (schneller, reicht für EAN)
+  const CROP = { w: 0.7, h: 0.45 }; // zweiter Versuch: Bildmitte in voller Auflösung (kleine Codes, z. B. Regaletiketten)
 
   /** Graustufen aus RGBA-Pixeln (wie ImageData.data). */
   function luminance(rgba, width, height) {
@@ -23,19 +25,18 @@
     return lum;
   }
 
-  /** ZXing-Leser nur für EAN-13 und EAN-8. */
+  /** ZXing-Leser für EAN-13, EAN-8 und Code 128. */
   function createZXingReader(ZXing) {
     const hints = new Map();
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8]);
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.CODE_128]);
     hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
     const reader = new ZXing.MultiFormatReader();
     reader.setHints(hints);
     return reader;
   }
 
-  /** Einen EAN aus RGBA-Pixeln lesen; null, wenn nichts erkannt wurde. */
-  function decodeRGBA(ZXing, reader, rgba, width, height) {
-    const source = new ZXing.RGBLuminanceSource(luminance(rgba, width, height), width, height);
+  function decodeLuminance(ZXing, reader, lum, width, height) {
+    const source = new ZXing.RGBLuminanceSource(lum, width, height);
     try {
       return reader.decodeWithState(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(source))).getText();
     } catch (e) {
@@ -43,6 +44,40 @@
     } finally {
       reader.reset();
     }
+  }
+
+  /** Einen Barcode aus RGBA-Pixeln lesen (Inhalt als Text); null, wenn nichts erkannt wurde. */
+  function decodeRGBA(ZXing, reader, rgba, width, height) {
+    return decodeLuminance(ZXing, reader, luminance(rgba, width, height), width, height);
+  }
+
+  /**
+   * Schwellen für den Kontrast-Versuch: knapp über den dunkelsten Stellen (den Strichen). Auf Regaletiketten
+   * liegt der Code auf dunkelgrauem Grund direkt neben dem grauen Etikettrand; bei normalem Kontrast zählt der
+   * Rand als Strich und die freie Fläche vor dem Code (Ruhezone) reicht nicht.
+   */
+  function darkThresholds(lum) {
+    const hist = new Uint32Array(256);
+    for (let i = 0; i < lum.length; i += 7) hist[lum[i]]++; // Stichprobe reicht
+    const total = Math.ceil(lum.length / 7);
+    let sum = 0;
+    let dark = 0;
+    for (; dark < 255; dark++) if ((sum += hist[dark]) >= total * 0.02) break;
+    return [dark + 25, dark + 45].map((t) => Math.min(t, 250));
+  }
+
+  /** Wie decodeRGBA, aber zusätzlich mit harter Schwelle (nur sehr dunkle Pixel sind Strich), wenn nötig. */
+  function decodeRGBAHard(ZXing, reader, rgba, width, height) {
+    const lum = luminance(rgba, width, height);
+    const plain = decodeLuminance(ZXing, reader, lum, width, height);
+    if (plain) return plain;
+    for (const t of darkThresholds(lum)) {
+      const bw = new Uint8ClampedArray(lum.length);
+      for (let i = 0; i < lum.length; i++) bw[i] = lum[i] < t ? 0 : 255;
+      const code = decodeLuminance(ZXing, reader, bw, width, height);
+      if (code) return code;
+    }
+    return null;
   }
 
   function loadScript(url) {
@@ -59,8 +94,8 @@
     if (typeof BarcodeDetector === 'undefined') return null;
     try {
       const formats = await BarcodeDetector.getSupportedFormats();
-      if (!formats.includes('ean_13')) return null;
-      const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8'].filter((f) => formats.includes(f)) });
+      if (!formats.includes('ean_13') || !formats.includes('code_128')) return null;
+      const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128'].filter((f) => formats.includes(f)) });
       return async (video) => {
         const found = await detector.detect(video);
         return found.length ? found[0].rawValue : null;
@@ -81,10 +116,18 @@
       const vh = video.videoHeight;
       if (!vw || !vh) return null;
       const scale = Math.min(1, MAX_WIDTH / vw);
-      const w = (canvas.width = Math.round(vw * scale));
-      const h = (canvas.height = Math.round(vh * scale));
+      let w = (canvas.width = Math.round(vw * scale));
+      let h = (canvas.height = Math.round(vh * scale));
       ctx.drawImage(video, 0, 0, w, h);
-      return decodeRGBA(ZXing, reader, ctx.getImageData(0, 0, w, h).data, w, h);
+      const code = decodeRGBA(ZXing, reader, ctx.getImageData(0, 0, w, h).data, w, h);
+      if (code) return code;
+      // Bildmitte ohne Verkleinerung: kleine Strichcodes haben dann genug Pixel pro Strich
+      const cw = Math.round(vw * CROP.w);
+      const ch = Math.round(vh * CROP.h);
+      w = canvas.width = cw;
+      h = canvas.height = ch;
+      ctx.drawImage(video, Math.round((vw - cw) / 2), Math.round((vh - ch) / 2), cw, ch, 0, 0, cw, ch);
+      return decodeRGBAHard(ZXing, reader, ctx.getImageData(0, 0, w, h).data, w, h);
     };
   }
 
@@ -107,7 +150,7 @@
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw Object.assign(new Error(), { name: 'NotSupported' });
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: false,
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
         });
         if (!this.running) return stream.getTracks().forEach((t) => t.stop());
         this.stream = stream;
@@ -142,5 +185,5 @@
     }
   }
 
-  return { Scanner, luminance, createZXingReader, decodeRGBA };
+  return { Scanner, luminance, createZXingReader, decodeRGBA, decodeRGBAHard, darkThresholds };
 });
