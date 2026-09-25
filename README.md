@@ -86,6 +86,8 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
   und die Meldung „Schon im Sortiment“ mit dem Produktnamen.
 - Ein Code zählt erst, wenn er zweimal gleich gelesen wurde und die Prüfziffer stimmt. Das schützt vor Fehllesungen.
   Solange derselbe Barcode im Bild bleibt, wird er nur einmal gemeldet.
+- Gesucht wird im ganzen sichtbaren Kamerabild (und etwas darüber hinaus), nicht nur in der Mitte; auch hochkant
+  gehaltene Strichcodes werden erkannt. Man muss also nicht genau zielen.
 - Ein per USB/Bluetooth verbundener Scanner erfasst in diesem Fenster genauso.
 - **Warengruppe für neue Scans:** Oben im Fenster wählbar, nur eigene Warengruppen (keine vorgegebenen, keine
   automatische Zuordnung). Mit *＋ Neue Warengruppe …* legst du eine an (z. B. „Kühlregal“ oder „Aktion“). Alles
