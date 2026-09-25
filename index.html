@@ -9,7 +9,7 @@
   <title>EAN Scan-Liste</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="css/style.css?v=2026-09-25">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-25.2">
 </head>
 <body>
   <div class="app">
@@ -128,12 +128,15 @@
           ohne Nachfrage. EANs, die schon im Sortiment sind, werden nicht nochmal aufgenommen.</p>
         <h3 class="capture-head"><span>Selbst erfasst</span> <span class="capture-count" id="capture-count"></span></h3>
         <ol class="captured" id="captured"></ol>
+        <p class="sync-state" id="sync-state"></p>
         <div class="row">
+          <button type="button" class="btn primary" id="btn-capture-sync">Ins Sortiment übernehmen</button>
           <button type="button" class="btn" id="btn-capture-export">Als CSV speichern</button>
           <button type="button" class="btn danger" id="btn-capture-clear">Alle entfernen</button>
         </div>
-        <p class="hint">Selbst erfasste Artikel sind nur auf diesem Gerät gespeichert und kommen in der Tagesliste unter
-          „Sonstiges“. Die CSV kann ins feste Sortiment (data/netto-sortiment.csv) übernommen werden.</p>
+        <p class="hint">Selbst erfasste Artikel kommen in der Tagesliste unter „Sonstiges“. Mit GitHub-Schlüssel
+          (Einstellungen) werden sie ins feste Sortiment übernommen und sind dann auf allen Geräten da,
+          beim Schließen dieses Fensters auch automatisch.</p>
       </div>
     </form>
   </dialog>
@@ -202,6 +205,24 @@
         </section>
 
         <section class="group">
+          <h3>Sortiment auf GitHub</h3>
+          <p class="hint">Damit selbst erfasste Artikel auf allen Geräten erscheinen, schreibt die Seite sie direkt in
+            die Sortiment-Datei auf GitHub. Dafür einmalig einen Schlüssel anlegen: auf
+            <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com → Fine-grained token</a>
+            bei <em>Repository access</em> nur „Netto“ wählen, bei <em>Permissions</em> → <em>Contents</em> „Read and write“.
+            Der Schlüssel bleibt nur in diesem Browser gespeichert.</p>
+          <label class="field">
+            <span>GitHub-Schlüssel</span>
+            <input type="password" class="text-input" id="set-gh-token" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…">
+          </label>
+          <div class="row">
+            <button type="button" class="btn" id="btn-gh-save">Speichern und prüfen</button>
+            <button type="button" class="btn ghost" id="btn-gh-remove">Schlüssel löschen</button>
+          </div>
+          <p class="hint" id="gh-state"></p>
+        </section>
+
+        <section class="group">
           <h3>Scanner am selben Gerät (USB/Bluetooth)</h3>
           <label class="switch"><input type="checkbox" id="set-keyboard"><span>Eingabe des Scanners erkennen</span></label>
           <p class="hint">Ist der Scanner mit diesem Gerät verbunden, „tippt“ er den gelesenen Code. Das wird auch ohne Mikrofon erkannt.</p>
@@ -221,14 +242,15 @@
     </form>
   </dialog>
 
-  <script src="js/ean.js?v=2026-09-25"></script>
-  <script src="js/sortiment.js?v=2026-09-25"></script>
-  <script src="js/warengruppen.js?v=2026-09-25"></script>
-  <script src="js/tagesliste.js?v=2026-09-25"></script>
-  <script src="js/tone-detector.js?v=2026-09-25"></script>
-  <script src="js/keyboard-scanner.js?v=2026-09-25"></script>
-  <script src="js/erfassung.js?v=2026-09-25"></script>
-  <script src="js/camera-scanner.js?v=2026-09-25"></script>
-  <script src="js/app.js?v=2026-09-25"></script>
+  <script src="js/ean.js?v=2026-09-25.2"></script>
+  <script src="js/sortiment.js?v=2026-09-25.2"></script>
+  <script src="js/warengruppen.js?v=2026-09-25.2"></script>
+  <script src="js/tagesliste.js?v=2026-09-25.2"></script>
+  <script src="js/tone-detector.js?v=2026-09-25.2"></script>
+  <script src="js/keyboard-scanner.js?v=2026-09-25.2"></script>
+  <script src="js/erfassung.js?v=2026-09-25.2"></script>
+  <script src="js/camera-scanner.js?v=2026-09-25.2"></script>
+  <script src="js/github-sync.js?v=2026-09-25.2"></script>
+  <script src="js/app.js?v=2026-09-25.2"></script>
 </body>
 </html>

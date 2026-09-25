@@ -10,7 +10,9 @@ items.forEach((it) => (it.gruppe = W.classify(it)));
 const gruppeVon = (name) => W.classify({ name });
 
 test('jeder Artikel des Netto-Sortiments hat eine Warengruppe (nichts unter "Sonstiges")', () => {
-  assert.deepEqual(items.filter((it) => it.gruppe === 'sonstiges').map((it) => it.name), []);
+  // ausgenommen selbst per Kamera erfasste Artikel: ohne Namen gibt es keine Zuordnung
+  const erfasst = require('../js/erfassung.js').NAME;
+  assert.deepEqual(items.filter((it) => it.gruppe === 'sonstiges' && it.name !== erfasst).map((it) => it.name), []);
 });
 
 test('knifflige Zuordnungen', () => {

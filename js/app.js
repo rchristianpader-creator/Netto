@@ -1,7 +1,7 @@
 /*
  * EAN Scan-Liste – Bedienoberfläche.
  * Benötigt ean.js, sortiment.js, warengruppen.js, tagesliste.js, tone-detector.js, keyboard-scanner.js,
- * erfassung.js, camera-scanner.js.
+ * erfassung.js, camera-scanner.js, github-sync.js.
  */
 (function () {
   'use strict';
@@ -9,6 +9,7 @@
   const DATA_URL = 'data/netto-sortiment.csv';
   const STORE_KEY = 'ean-scan-liste.v2';
   const CAPTURE_KEY = 'ean-scan-liste.erfasst'; // selbst per Kamera erfasste EANs
+  const TOKEN_KEY = 'ean-scan-liste.github-token'; // Schlüssel zum Schreiben der Sortiment-Datei auf GitHub
   const OLD_STORE_KEY = 'ean-scan-liste.v1'; // frühere Version: Einstellungen (z. B. angelernter Ton) übernehmen
   const BASE_WIDTH = 520; // maximale Barcode-Breite in CSS-Pixeln bei Größe 100 %
   const MIN_BAR_HEIGHT = 22; // Module
@@ -61,6 +62,10 @@
     camResult: $('#cam-result'),
     captured: $('#captured'),
     captureCount: $('#capture-count'),
+    syncState: $('#sync-state'),
+    syncBtn: $('#btn-capture-sync'),
+    ghToken: $('#set-gh-token'),
+    ghState: $('#gh-state'),
     overview: $('#overview'),
     overviewStats: $('#overview-stats'),
     search: $('#overview-search'),
@@ -820,11 +825,14 @@
       .map((e) => {
         const li = document.createElement('li');
         if (e.code === lastAddedCode) li.className = 'is-new';
-        li.innerHTML = '<span class="code"></span><span class="when"></span>' +
-          '<button type="button" class="del" aria-label="Entfernen">✕</button>';
+        li.innerHTML = '<span class="code"></span><span class="when"></span><span class="state"></span>' +
+          (e.synced ? '<span></span>' : '<button type="button" class="del" aria-label="Entfernen">✕</button>');
         li.querySelector('.code').textContent = e.code;
         li.querySelector('.when').textContent = formatWhen(e.at);
-        li.querySelector('.del').dataset.code = e.code;
+        const st = li.querySelector('.state');
+        st.textContent = e.synced ? '✓ im Sortiment' : 'nur hier';
+        st.classList.toggle('synced', !!e.synced);
+        if (!e.synced) li.querySelector('.del').dataset.code = e.code;
         return li;
       });
     if (!rows.length) {
@@ -835,8 +843,113 @@
     }
     el.captured.replaceChildren(...rows);
     $('#btn-capture-export').disabled = !n;
-    $('#btn-capture-clear').disabled = !n;
+    $('#btn-capture-clear').disabled = !state.eigene.some((e) => !e.synced);
+    renderSyncState();
   }
+
+  // ---------- Selbst erfasste Artikel ins feste Sortiment auf GitHub übernehmen ----------
+
+  function getToken() {
+    try {
+      return localStorage.getItem(TOKEN_KEY) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function setToken(token) {
+    try {
+      if (token) localStorage.setItem(TOKEN_KEY, token);
+      else localStorage.removeItem(TOKEN_KEY);
+    } catch (e) {
+      /* privater Modus o. ä. */
+    }
+  }
+
+  const pendingSync = () => state.eigene.filter((e) => !e.synced);
+  let syncing = false;
+  let syncError = '';
+
+  function renderSyncState() {
+    const pending = pendingSync().length;
+    let text;
+    if (syncing) text = 'Wird ins Sortiment übernommen …';
+    else if (syncError) text = syncError;
+    else if (!getToken())
+      text = pending ? 'Nur auf diesem Gerät. Für alle Geräte: in den Einstellungen einen GitHub-Schlüssel eintragen.' : '';
+    else if (pending) text = pending + ' noch nicht im festen Sortiment. Wird beim Schließen automatisch übernommen.';
+    else if (state.eigene.length) text = 'Alles übernommen. Andere Geräte sehen die Artikel nach 1–2 Minuten.';
+    else text = '';
+    el.syncState.textContent = text;
+    el.syncState.classList.toggle('bad', !!syncError && !syncing);
+    el.syncBtn.disabled = syncing || !pending;
+    el.syncBtn.hidden = !getToken();
+  }
+
+  async function syncCaptured(auto) {
+    const pending = pendingSync();
+    const token = getToken();
+    if (syncing || !pending.length) return;
+    if (!token) {
+      if (!auto) toast('Erst in den Einstellungen einen GitHub-Schlüssel eintragen.', 'warn', 4000);
+      return;
+    }
+    syncing = true;
+    syncError = '';
+    renderSyncState();
+    try {
+      const r = await GitHubSync.push(token, pending, (url, init) => fetch(url, init));
+      const done = new Set(r.added.concat(r.present));
+      state.eigene = state.eigene.map((e) => (done.has(e.code) ? Object.assign({}, e, { synced: true }) : e));
+      saveCaptured();
+      const n = r.added.length;
+      toast(
+        n ? '✓ ' + n + ' Artikel ins Sortiment übernommen, in 1–2 Minuten auf allen Geräten'
+          : 'Schon alles im Sortiment',
+        'ok',
+        4000
+      );
+    } catch (err) {
+      syncError = 'Nicht übernommen: ' + ((err && err.message) || 'unbekannter Fehler');
+      toast(syncError, 'warn', 6000);
+    }
+    syncing = false;
+    if (el.dlgCapture.open) renderCaptured();
+  }
+
+  el.syncBtn.addEventListener('click', () => syncCaptured(false));
+
+  function renderGhState(html) {
+    const token = getToken();
+    el.ghToken.value = token;
+    el.ghState.innerHTML =
+      html || (token ? 'Schlüssel gespeichert.' : 'Kein Schlüssel: selbst erfasste Artikel bleiben auf diesem Gerät.');
+  }
+
+  $('#btn-gh-save').addEventListener('click', async () => {
+    const token = el.ghToken.value.trim();
+    if (!token) {
+      renderGhState('<span class="bad">Bitte zuerst den Schlüssel einfügen.</span>');
+      return;
+    }
+    el.ghState.textContent = 'Wird geprüft …';
+    try {
+      await GitHubSync.check(token, (url, init) => fetch(url, init));
+      setToken(token);
+      syncError = '';
+      renderGhState('<span class="ok">✓ Schlüssel funktioniert und ist gespeichert.</span>');
+      syncCaptured(true);
+    } catch (err) {
+      renderGhState('<span class="bad"></span>');
+      el.ghState.firstChild.textContent = 'Nicht gespeichert: ' + ((err && err.message) || 'unbekannter Fehler');
+      el.ghToken.value = token;
+    }
+  });
+
+  $('#btn-gh-remove').addEventListener('click', () => {
+    setToken('');
+    renderGhState();
+  });
 
   function openCapture() {
     if (state.loading || state.loadError) {
@@ -862,6 +975,7 @@
 
   el.dlgCapture.addEventListener('close', () => {
     camera.stop();
+    syncCaptured(true);
     if (captureChanged) {
       captureChanged = false;
       rearrange();
@@ -885,9 +999,9 @@
   });
 
   $('#btn-capture-clear').addEventListener('click', () => {
-    const n = state.eigene.length;
-    if (!n || !confirm('Alle ' + n + ' selbst erfassten Artikel aus dem Sortiment entfernen?')) return;
-    state.eigene = [];
+    const n = pendingSync().length;
+    if (!n || !confirm('Alle ' + n + ' noch nicht übernommenen Artikel entfernen?')) return;
+    state.eigene = state.eigene.filter((e) => e.synced);
     saveCaptured();
     rebuildAll();
     captureChanged = true;
@@ -909,6 +1023,7 @@
 
   function openSettings() {
     fillSettings();
+    renderGhState();
     renderCalibState();
     renderTagesInfo();
     renderLaufweg();

@@ -528,9 +528,10 @@ dialog.sheet::backdrop { background: rgba(2, 6, 23, 0.55); }
 }
 .captured li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto 36px;
   align-items: center;
   gap: 8px;
+  min-height: 44px;
   padding: 4px 6px 4px 12px;
 }
 .captured li + li { border-top: 1px solid var(--border); }
@@ -538,6 +539,20 @@ dialog.sheet::backdrop { background: rgba(2, 6, 23, 0.55); }
 .captured .when { color: var(--muted); font-size: 13px; }
 .captured li.empty { display: block; padding: 12px; color: var(--muted); text-align: center; }
 .captured li.is-new { background: color-mix(in srgb, var(--ok) 16%, transparent); }
+.captured .state { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.captured .state.synced { color: var(--ok); }
+.sync-state { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+.sync-state.bad { color: var(--danger); }
+.text-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
 .captured .del {
   min-width: 36px; min-height: 36px;
   border: 0; border-radius: 50%;
@@ -598,7 +613,8 @@ dialog.sheet::backdrop { background: rgba(2, 6, 23, 0.55); }
 
 .calib { margin: 6px 0 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
 .calib p { margin: 0 0 6px; }
-.calib .ok { color: var(--ok); font-weight: 600; }
+.calib .ok, #gh-state .ok { color: var(--ok); font-weight: 600; }
+#gh-state .bad { color: var(--danger); font-weight: 600; }
 .calib .bad { color: var(--danger); font-weight: 600; }
 .calib-progress { height: 6px; border-radius: 999px; background: var(--border); overflow: hidden; margin: 6px 0; }
 .calib-progress div { height: 100%; width: 0; background: var(--accent); }
