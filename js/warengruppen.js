@@ -37,6 +37,38 @@
   const BY_ID = new Map(GRUPPEN.map((g) => [g.id, g]));
   const DEFAULT_ORDER = GRUPPEN.map((g) => g.id);
 
+  /** Warengruppe (id) zu einem Namen oder einer id, auch für selbst angelegte Gruppen; sonst null. */
+  function idOf(nameOrId) {
+    const key = String(nameOrId || '').trim().toLowerCase();
+    if (!key) return null;
+    const g = GRUPPEN.find((x) => x.id === key || x.name.toLowerCase() === key);
+    return g ? g.id : null;
+  }
+
+  /**
+   * Eigene Warengruppe anlegen (z. B. "Aktion"); gibt die id zurück, bei schon vorhandenem Namen dessen id.
+   * Eigene Gruppen stehen im Standard-Laufweg vor "Sonstiges" und lassen sich wie alle anderen verschieben.
+   */
+  function register(name) {
+    const clean = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+    if (!clean) return null;
+    const known = idOf(clean);
+    if (known) return known;
+    const slug = clean
+      .toLowerCase()
+      .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+      .normalize('NFKD').replace(/[\u0300-\u036f]/g, '') // übrige Akzente weg
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const base = 'x-' + (slug || 'gruppe');
+    let id = base;
+    for (let n = 2; BY_ID.has(id); n++) id = base + '-' + n;
+    const g = { id, name: clean, eigen: true };
+    GRUPPEN.splice(GRUPPEN.length - 1, 0, g); // vor "Sonstiges"
+    DEFAULT_ORDER.splice(DEFAULT_ORDER.length - 1, 0, id);
+    BY_ID.set(id, g);
+    return id;
+  }
+
   // 1) Kategorie aus der CSV (wo vorhanden) – erste passende Regel gewinnt.
   const KATEGORIE_REGELN = [
     ['drogerie', /drogerie|haushalt|tiernahrung/],
@@ -133,11 +165,8 @@
 
   /** Warengruppe (id) eines Artikels; eine Spalte "warengruppe" in der CSV hat Vorrang, dann Open-Food-Facts-Kategorien. */
   function classify(item) {
-    const explicit = String(item.warengruppe || '').trim().toLowerCase();
-    if (explicit) {
-      const g = GRUPPEN.find((x) => x.id === explicit || x.name.toLowerCase() === explicit);
-      if (g) return g.id;
-    }
+    const explicit = idOf(item.warengruppe);
+    if (explicit) return explicit;
     // Artikel aus Open Beauty Facts sind Drogerieartikel.
     if (/beauty facts/i.test(String(item.quelle || ''))) return 'drogerie';
     const kategorie = String(item.kategorie || '').toLowerCase();
@@ -193,5 +222,5 @@
 
   const nameOf = (id) => (BY_ID.get(id) || BY_ID.get('sonstiges')).name;
 
-  return { GRUPPEN, DEFAULT_ORDER, classify, fromTags, arrange, normalizeOrder, nameOf, hash };
+  return { GRUPPEN, DEFAULT_ORDER, classify, fromTags, idOf, register, arrange, normalizeOrder, nameOf, hash };
 });

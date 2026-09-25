@@ -1,8 +1,9 @@
 /*
  * Erfassen: per Kamera (oder Scanner) gescannte EANs ohne Rückfrage ins Sortiment aufnehmen.
  * Was schon im Sortiment ist (auch schon selbst erfasst), wird nicht nochmal aufgenommen.
- * Die eigene Liste ist ein Array aus { code, at, name?, marke?, inhalt?, quelle?, tags?, synced? }
+ * Die eigene Liste ist ein Array aus { code, at, name?, marke?, inhalt?, quelle?, tags?, gruppe?, synced? }
  * (at = Zeitpunkt in ms; name/marke/inhalt/quelle/tags = nachgeschlagene Bezeichnung und Kategorien;
+ * gruppe = beim Scannen fest gewählte Warengruppe (Name), sonst automatisch;
  * synced = schon in die Sortiment-Datei auf GitHub übernommen), gespeichert im Browser.
  */
 (function (root, factory) {
@@ -25,7 +26,7 @@
       if (!norm || !norm.valid || seen.has(norm.code)) return;
       seen.add(norm.code);
       const entry = { code: norm.code, at: Number.isFinite(e.at) ? e.at : 0 };
-      ['name', 'marke', 'inhalt', 'quelle'].forEach((k) => {
+      ['name', 'marke', 'inhalt', 'quelle', 'gruppe'].forEach((k) => {
         if (typeof e[k] === 'string' && e[k].trim()) entry[k] = e[k].trim();
       });
       const tags = cleanTags(e.tags);
@@ -40,13 +41,16 @@
    * Einen gescannten Code verarbeiten. `known(code)` liefert den Artikel, wenn die EAN schon im Sortiment ist.
    * Ergebnis: { status: 'added' | 'known' | 'invalid', code, item?, list }
    * (bei 'added' ist `list` die neue Liste, sonst die unveränderte).
+   * `gruppe` (optional): feste Warengruppe (Name) für diesen Scan statt automatischer Zuordnung.
    */
-  function capture(list, raw, known, now) {
+  function capture(list, raw, known, now, gruppe) {
     const norm = EAN.normalize(String(raw || ''));
     if (!norm || !norm.valid) return { status: 'invalid', code: norm ? norm.code : String(raw || ''), list };
     const item = known(norm.code);
     if (item) return { status: 'known', code: norm.code, item, list };
-    return { status: 'added', code: norm.code, list: list.concat({ code: norm.code, at: now }) };
+    const entry = { code: norm.code, at: now };
+    if (gruppe) entry.gruppe = String(gruppe);
+    return { status: 'added', code: norm.code, list: list.concat(entry) };
   }
 
   /**
@@ -75,7 +79,7 @@
         marke: e.marke || '',
         inhalt: e.inhalt || '',
         kategorie: '',
-        warengruppe: '',
+        warengruppe: e.gruppe || '',
         tags: e.tags || [],
         quelle: e.quelle ? 'Kamera-Scan; ' + e.quelle : 'Kamera-Scan',
         eigen: true,

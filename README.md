@@ -92,6 +92,10 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
 - Ein Code zählt erst, wenn er zweimal gleich gelesen wurde und die Prüfziffer stimmt. Das schützt vor Fehllesungen.
   Solange derselbe Barcode im Bild bleibt, wird er nur einmal gemeldet.
 - Ein per USB/Bluetooth verbundener Scanner erfasst in diesem Fenster genauso.
+- **Warengruppe für neue Scans:** Oben im Fenster wählbar. *Automatisch* (Standard) nimmt die Gruppe aus Bezeichnung
+  und Kategorie. Wählt man eine Warengruppe, landet alles danach Gescannte ohne Rückfrage dort. Mit
+  *＋ Neue Warengruppe …* legt man eine eigene an (z. B. „Aktion“). Sie erscheint im Laufweg vor „Sonstiges“ und
+  kommt mit der Übernahme in die Spalte `warengruppe` der Sortimentsliste, so kennen sie auch andere Geräte.
 - **Netto-Regaletiketten:** Der kleine Strichcode auf den elektronischen Preisschildern (Code 128) wird ebenfalls
   gelesen. Er enthält eine ladeninterne 13-stellige Nummer mit Prüfziffer (z. B. `2707338130000` mit der
   Artikelnummer 733813), die wie eine EAN-13 aufgenommen und angezeigt wird. Eine Bezeichnung gibt es dafür nicht,
