@@ -29,32 +29,51 @@
     return { name, marke: clean(String(p.brands || '').split(',')[0]), inhalt: clean(p.quantity), tags };
   }
 
+  // Ob die Antwort einen Treffer meldet: API v2 liefert status 1, neuere Versionen "success".
+  const found = (data) => !!(data && data.product && (data.status === 1 || data.status === 'success' || data.status === undefined));
+
+  /** Eine Quelle abfragen: Artikel, null (dort unbekannt) oder Fehler (Netz, Zeitüberschreitung, Überlastung). */
   async function fromSource(source, code, fetchFn) {
     const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
     const timer = ctrl && setTimeout(() => ctrl.abort(), TIMEOUT_MS);
     try {
       const res = await fetchFn(source.url + code + '.json?fields=' + FIELDS, ctrl ? { signal: ctrl.signal } : {});
-      if (!res.ok) return null; // 404: nicht bekannt
+      if (res.status === 404) return null; // dort nicht bekannt
+      if (!res.ok) throw new Error(source.name + ' antwortet mit Fehler ' + res.status + (res.status === 429 ? ' (zu viele Anfragen)' : ''));
       const data = await res.json();
-      const info = data && data.status === 1 ? fromProduct(data.product) : null;
+      const info = found(data) ? fromProduct(data.product) : null;
       return info && Object.assign(info, { quelle: source.name });
+    } catch (err) {
+      if (err && err.name === 'AbortError') throw new Error(source.name + ' antwortet nicht (Zeitüberschreitung)');
+      if (err instanceof TypeError) throw new Error(source.name + ' nicht erreichbar (Internet?)');
+      throw err;
     } finally {
       if (timer) clearTimeout(timer);
     }
   }
 
-  /** Bezeichnung nachschlagen. Netzwerkfehler einer Quelle führen zur nächsten; ohne Treffer null. */
-  async function lookup(code, fetchFn) {
+  /**
+   * Bezeichnung nachschlagen. Ergebnis: { info } bei Treffer, { info: null } wenn keine Quelle die EAN kennt,
+   * { info: null, error } wenn es keinen Treffer gab und mindestens eine Quelle nicht antworten konnte
+   * (dann lohnt sich ein neuer Versuch).
+   */
+  async function lookupDetailed(code, fetchFn) {
+    let error = '';
     for (const source of SOURCES) {
       try {
         const info = await fromSource(source, code, fetchFn);
-        if (info) return info;
+        if (info) return { info };
       } catch (e) {
-        /* offline, Zeitüberschreitung o. ä.: nächste Quelle */
+        error = error || (e && e.message) || 'Fehler beim Nachschlagen';
       }
     }
-    return null;
+    return error ? { info: null, error } : { info: null };
   }
 
-  return { lookup, fromProduct, SOURCES };
+  /** Kurzform: Artikel oder null. */
+  async function lookup(code, fetchFn) {
+    return (await lookupDetailed(code, fetchFn)).info;
+  }
+
+  return { lookup, lookupDetailed, fromProduct, SOURCES };
 });
