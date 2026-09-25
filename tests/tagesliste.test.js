@@ -86,3 +86,34 @@ test('Tagesliste nach Laufweg: Warengruppen in Ladenreihenfolge', () => {
   const rank = (g) => W.DEFAULT_ORDER.indexOf(g);
   for (let i = 1; i < liste.length; i++) assert.ok(rank(liste[i - 1].gruppe) <= rank(liste[i].gruppe));
 });
+
+test('pick mit Häufigkeit: ohne Gewichte unverändert, "selten" kommt deutlich seltener, "oft" häufiger', () => {
+  // ohne Gewichte bzw. mit lauter Gewicht 1: exakt dieselbe Auswahl wie bisher
+  for (const seed of [1, 42, 99999]) {
+    assert.deepEqual(T.pick(items, seed).map((i) => i.code), T.pick(items, seed, undefined, () => 1).map((i) => i.code));
+  }
+  // zwei gleich große Hälften: eine "selten", die andere "normal" bzw. "oft"
+  const half = new Set(items.slice(0, Math.floor(items.length / 2)).map((i) => i.code));
+  const anteil = (w) => {
+    let inHalf = 0;
+    let total = 0;
+    for (let seed = 1; seed <= 300; seed++) {
+      const liste = T.pick(items, seed, { min: 60, max: 60 }, (it) => (half.has(it.code) ? w : 1));
+      total += liste.length;
+      inHalf += liste.filter((i) => half.has(i.code)).length;
+    }
+    return inHalf / total;
+  };
+  const gleich = anteil(1);
+  const selten = anteil(T.HAEUFIGKEIT.selten);
+  const oft = anteil(T.HAEUFIGKEIT.oft);
+  assert.ok(Math.abs(gleich - 0.5) < 0.03, 'gleich ' + gleich);
+  assert.ok(selten < 0.3, 'selten ' + selten); // ungefähr 0,35 : 1
+  assert.ok(oft > 0.68, 'oft ' + oft); // ungefähr 2,5 : 1
+  // trotzdem echter Zufall: "selten" kommt vor, nicht nie
+  assert.ok(selten > 0.15, 'selten ' + selten);
+  // Anzahl pro Tag bleibt gleich, jeder Artikel höchstens einmal
+  const l = T.pick(items, 7, { min: 60, max: 60 }, (it) => (half.has(it.code) ? 0.35 : 1));
+  assert.equal(l.length, 60);
+  assert.equal(new Set(l).size, 60);
+});

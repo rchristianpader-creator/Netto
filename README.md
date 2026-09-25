@@ -11,6 +11,7 @@ Seite automatisch zum nächsten Artikel.** Dafür hört die Seite über das Mikr
 - **Jeden Tag eine neue Liste:** 50 bis 80 zufällig ausgewählte Artikel, auch die Anzahl ist zufällig
 - Reihenfolge wie beim Gang durch den Laden: Warengruppe für Warengruppe, innerhalb jeder Gruppe zufällig gemischt
 - Immer schwarzes Design; Barcodes pixelgenau gerendert (EAN-13 und EAN-8), schwarz auf weiß
+- Angezeigt werden nur Warengruppe und EAN (keine Bezeichnung, keine Marke)
 - Scan-Ton-Erkennung mit Anlern-Funktion und Pegelanzeige, robust gegen Sprache, Musik und Klappern
 - Hängt der Scanner per USB/Bluetooth am selben Gerät, geht es auch ohne Mikrofon (Tastatureingabe wird erkannt)
 - Fortschritt mit ✓ je gescanntem Artikel, bleibt beim Neuladen erhalten; Bildschirm bleibt beim Scannen an
@@ -45,6 +46,10 @@ Innerhalb jeder Warengruppe ist die Reihenfolge zufällig (gehört zur Tageslist
 Die Warengruppe steht über dem Produktnamen; beim Wechsel in die nächste Gruppe kommt ein kurzer Hinweis
 („Weiter mit: Kühlregal“).
 
+- **Häufigkeit je Warengruppe:** Einstellungen → *Laufweg durch den Laden* → pro Gruppe *selten* / *normal* / *oft*.
+  Die Tagesliste wird gewichtet ausgelost (Gewicht 0,35 / 1 / 2,5, Ziehen ohne Zurücklegen): Eine Gruppe mit
+  „selten“ kommt etwa ein Drittel so oft vor, z. B. Fix-Tüten, die sich wenig verkaufen. Es bleibt echter Zufall,
+  am selben Tag stabil; ohne Einstellung ist alles gleich wahrscheinlich wie bisher.
 - **Laufweg anpassen:** Einstellungen → *Laufweg durch den Laden* → Gruppen mit ↑ ↓ verschieben (z. B. passend zur
   eigenen Filiale). Neu angelegte Gruppen kommen ans Ende. „Standard-Reihenfolge“ sortiert nach Anlegedatum.
 

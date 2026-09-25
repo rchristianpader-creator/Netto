@@ -43,18 +43,28 @@
     return Math.min(total, r.min + (hash(seed + ':anzahl') % (r.max - r.min + 1)));
   }
 
+  // Häufigkeit je Warengruppe: Gewicht beim Auslosen ("selten" z. B. für Fix-Tüten, die sich wenig verkaufen)
+  const HAEUFIGKEIT = Object.freeze({ selten: 0.35, normal: 1, oft: 2.5 });
+
   /**
    * Zufallsauswahl für einen seed: Jeder Artikel bekommt eine Losnummer, genommen werden die kleinsten.
+   * Mit Gewichten (weightOf(item) > 0, Standard 1) wird gewichtet gezogen, ohne Zurücklegen: Die Losnummer
+   * u ∈ (0,1) wird zu −ln(1−u)/Gewicht (Verfahren von Efraimidis/Spirakis) – ein doppelt so hohes Gewicht
+   * gibt ungefähr die doppelte Chance. Bei lauter Gewicht 1 ist die Reihenfolge dieselbe wie ohne Gewichte.
    * Kommen Artikel ins Sortiment dazu oder fallen weg, bleibt der Rest der Auswahl gleich.
    */
-  function pick(items, seed, range) {
+  function pick(items, seed, range, weightOf) {
     const n = count(seed, range, items.length);
     return items
-      .map((it) => ({ it, los: hash(seed + ':los:' + it.code) }))
+      .map((it) => {
+        const u = (hash(seed + ':los:' + it.code) + 0.5) / 4294967296;
+        const w = weightOf ? weightOf(it) : 1;
+        return { it, los: -Math.log(1 - u) / (w > 0 ? w : 1) };
+      })
       .sort((a, b) => a.los - b.los)
       .slice(0, n)
       .map((x) => x.it);
   }
 
-  return { DEFAULT_RANGE, dayKey, daySeed, normalizeRange, count, pick };
+  return { DEFAULT_RANGE, HAEUFIGKEIT, dayKey, daySeed, normalizeRange, count, pick };
 });
