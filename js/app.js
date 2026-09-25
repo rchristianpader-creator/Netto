@@ -1,12 +1,14 @@
 /*
  * EAN Scan-Liste – Bedienoberfläche.
- * Benötigt ean.js, sortiment.js, warengruppen.js, tagesliste.js, tone-detector.js, keyboard-scanner.js.
+ * Benötigt ean.js, sortiment.js, warengruppen.js, tagesliste.js, tone-detector.js, keyboard-scanner.js,
+ * erfassung.js, camera-scanner.js.
  */
 (function () {
   'use strict';
 
   const DATA_URL = 'data/netto-sortiment.csv';
   const STORE_KEY = 'ean-scan-liste.v2';
+  const CAPTURE_KEY = 'ean-scan-liste.erfasst'; // selbst per Kamera erfasste EANs
   const OLD_STORE_KEY = 'ean-scan-liste.v1'; // frühere Version: Einstellungen (z. B. angelernter Ton) übernehmen
   const BASE_WIDTH = 520; // maximale Barcode-Breite in CSS-Pixeln bei Größe 100 %
   const MIN_BAR_HEIGHT = 22; // Module
@@ -52,6 +54,13 @@
     fullscreen: $('#btn-fullscreen'),
     dlgList: $('#dlg-list'),
     dlgSettings: $('#dlg-settings'),
+    dlgCapture: $('#dlg-capture'),
+    cam: $('#cam'),
+    camVideo: $('#cam-video'),
+    camMsg: $('#cam-msg'),
+    camResult: $('#cam-result'),
+    captured: $('#captured'),
+    captureCount: $('#capture-count'),
     overview: $('#overview'),
     overviewStats: $('#overview-stats'),
     search: $('#overview-search'),
@@ -103,7 +112,9 @@
   // Der gespeicherte Stand gilt nur für denselben Tag – an einem neuen Tag gibt es eine neue Liste.
   const sameDay = saved.day === today && Number.isInteger(saved.seed);
   const state = {
-    all: [], // ganzes Sortiment wie in der CSV
+    all: [], // ganzes Sortiment: CSV + selbst erfasste Artikel
+    csv: [], // Sortiment aus der CSV
+    eigene: [], // selbst erfasste EANs: [{ code, at }]
     items: [], // heutige Auswahl, nach Laufweg sortiert, innerhalb der Warengruppen gemischt
     index: 0,
     day: today,
@@ -158,8 +169,11 @@
     render();
     try {
       const data = await Sortiment.load(DATA_URL);
-      data.items.forEach((it) => (it.gruppe = Warengruppen.classify(it)));
-      state.all = data.items;
+      state.csv = data.items;
+      // Was inzwischen im festen Sortiment steht, muss nicht mehr als eigener Artikel geführt werden.
+      state.eigene = Erfassung.normalizeList(loadCaptured(), new Set(data.items.map((it) => it.code)));
+      saveCaptured();
+      rebuildAll();
       state.items = arrangeDay();
       state.datenstand = data.datenstand;
       if (!state.items.length) state.loadError = 'Die Sortimentsliste enthält keine gültigen EAN-Codes.';
@@ -173,6 +187,27 @@
     }
     state.loading = false;
     render();
+  }
+
+  function loadCaptured() {
+    try {
+      return JSON.parse(localStorage.getItem(CAPTURE_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveCaptured() {
+    try {
+      localStorage.setItem(CAPTURE_KEY, JSON.stringify(state.eigene));
+    } catch (e) {
+      /* privater Modus o. ä. */
+    }
+  }
+
+  function rebuildAll() {
+    state.all = state.csv.concat(Erfassung.toItems(state.eigene));
+    state.all.forEach((it) => (it.gruppe = Warengruppen.classify(it)));
   }
 
   // Erster Artikel ohne Markierung (alle markiert: "Fertig"-Ansicht).
@@ -346,7 +381,7 @@
     goTo(0);
   }
 
-  const dialogOpen = () => el.dlgList.open || el.dlgSettings.open;
+  const dialogOpen = () => el.dlgList.open || el.dlgSettings.open || el.dlgCapture.open;
 
   // Neuer Tag bei offener Seite (z. B. über Nacht angelassen): neue Liste, aber nicht mitten im Scannen.
   function checkDay() {
@@ -363,6 +398,10 @@
   let lastScanAt = -Infinity;
   function onScan(source, scanned) {
     pulseMeters();
+    if (el.dlgCapture.open && source === 'keyboard') {
+      captureCode(scanned); // Scanner am Gerät erfasst genauso wie die Kamera
+      return;
+    }
     if (dialogOpen() || !state.items.length) return;
     const item = state.items[state.index];
     if (!item) {
@@ -652,8 +691,9 @@
       (c.skip ? ' · ' + c.skip + ' ↷ übersprungen' : '') + ' · ' + c.open + ' offen';
     el.dataInfo.textContent =
       'Tagesliste vom ' + formatDay(state.day) + ': ' + state.items.length + ' von ' + state.all.length +
-      ' Artikeln aus dem Sortiment von Netto Marken-Discount (Deutschland), Eigenmarken-Lebensmittel' +
-      (state.datenstand ? ', Datenstand ' + state.datenstand : '') + '. Angaben ohne Gewähr.';
+      ' Artikeln aus dem Sortiment von Netto Marken-Discount (Deutschland), Eigenmarken' +
+      (state.datenstand ? ', Datenstand ' + state.datenstand : '') +
+      (state.eigene.length ? ', dazu ' + state.eigene.length + ' selbst erfasste' : '') + '. Angaben ohne Gewähr.';
   }
 
   el.search.addEventListener('input', renderOverview);
@@ -669,6 +709,200 @@
     if (!b) return;
     el.dlgList.close();
     goTo(Number(b.dataset.index));
+  });
+
+  // ---------- Erfassen: EANs per Kamera ins Sortiment aufnehmen ----------
+
+  const readFilter = new Erfassung.ReadFilter();
+  const camera = new CameraScanner.Scanner(el.camVideo, {
+    onRead: (code, now) => {
+      const accepted = readFilter.push(code, now);
+      if (accepted) captureCode(accepted);
+    },
+    onError: (err) => showCamMessage(cameraError(err), true),
+  });
+  let captureChanged = false; // Sortiment geändert → Tagesliste beim Schließen neu zusammenstellen
+  let lastAddedCode = null;
+  let resultTimer = null;
+  let audio = null;
+
+  function cameraError(err) {
+    switch (err && err.name) {
+      case 'InsecureContext':
+        return 'Kamera geht nur über https:// (oder localhost).';
+      case 'NotAllowedError':
+      case 'SecurityError':
+        return 'Kamera-Zugriff verweigert. Bitte in den Browser-Einstellungen für diese Seite erlauben.';
+      case 'NotFoundError':
+      case 'OverconstrainedError':
+        return 'Keine Kamera gefunden.';
+      case 'NotReadableError':
+        return 'Die Kamera wird gerade von einer anderen App benutzt.';
+      case 'NotSupported':
+        return 'Dieser Browser kann nicht auf die Kamera zugreifen.';
+      default:
+        return (err && err.message) || 'Die Kamera konnte nicht gestartet werden.';
+    }
+  }
+
+  function showCamMessage(text, isError) {
+    el.camMsg.textContent = text;
+    el.camMsg.classList.toggle('error', !!isError);
+  }
+
+  // Kurzer Ton als Rückmeldung (hoch = neu aufgenommen, tief = schon vorhanden) und Vibration, wo möglich.
+  function beep(freq, ms) {
+    try {
+      if (!audio) return;
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      gain.gain.value = 0.15;
+      osc.frequency.value = freq;
+      osc.connect(gain).connect(audio.destination);
+      osc.start();
+      osc.stop(audio.currentTime + ms / 1000);
+    } catch (e) {
+      /* ohne Ton */
+    }
+  }
+
+  function showResult(kind, text) {
+    el.camResult.className = 'cam-result ' + kind;
+    el.camResult.textContent = text;
+    el.camResult.hidden = false;
+    el.cam.classList.toggle('hit-added', kind === 'added');
+    clearTimeout(resultTimer);
+    resultTimer = setTimeout(() => {
+      el.camResult.hidden = true;
+      el.cam.classList.remove('hit-added');
+    }, 2500);
+  }
+
+  function knownItem(code) {
+    return state.all.find((it) => it.code === code) || null;
+  }
+
+  // Gescannten Code ohne Rückfrage übernehmen; was schon im Sortiment ist, nicht nochmal.
+  function captureCode(raw) {
+    const r = Erfassung.capture(state.eigene, raw, knownItem, Date.now());
+    if (r.status === 'invalid') return; // Fehllesung: stillschweigend ignorieren
+    if (r.status === 'known') {
+      const it = r.item;
+      const what = it.eigen ? 'schon erfasst' : [it.name, it.marke].filter(Boolean).join(' · ');
+      showResult('known', 'Schon im Sortiment: ' + r.code + (what ? ' – ' + what : ''));
+      beep(440, 90);
+      return;
+    }
+    state.eigene = r.list;
+    saveCaptured();
+    rebuildAll();
+    captureChanged = true;
+    lastAddedCode = r.code;
+    showResult('added', '✓ Neu aufgenommen: ' + r.code);
+    beep(1320, 120);
+    if (navigator.vibrate) navigator.vibrate(80);
+    renderCaptured();
+  }
+
+  function formatWhen(ms) {
+    const d = new Date(ms);
+    const pad = (n) => String(n).padStart(2, '0');
+    const time = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    return d.toDateString() === new Date().toDateString() ? 'heute ' + time : pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '. ' + time;
+  }
+
+  function renderCaptured() {
+    const n = state.eigene.length;
+    el.captureCount.textContent = n + ' Artikel';
+    const rows = state.eigene
+      .slice()
+      .reverse()
+      .map((e) => {
+        const li = document.createElement('li');
+        if (e.code === lastAddedCode) li.className = 'is-new';
+        li.innerHTML = '<span class="code"></span><span class="when"></span>' +
+          '<button type="button" class="del" aria-label="Entfernen">✕</button>';
+        li.querySelector('.code').textContent = e.code;
+        li.querySelector('.when').textContent = formatWhen(e.at);
+        li.querySelector('.del').dataset.code = e.code;
+        return li;
+      });
+    if (!rows.length) {
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = 'Noch nichts erfasst.';
+      rows.push(li);
+    }
+    el.captured.replaceChildren(...rows);
+    $('#btn-capture-export').disabled = !n;
+    $('#btn-capture-clear').disabled = !n;
+  }
+
+  function openCapture() {
+    if (state.loading || state.loadError) {
+      toast('Erst muss das Sortiment geladen sein.', 'warn');
+      return;
+    }
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!audio && AC) audio = new AC();
+      if (audio && audio.state === 'suspended') audio.resume();
+    } catch (e) {
+      audio = null;
+    }
+    lastAddedCode = null;
+    el.camResult.hidden = true;
+    renderCaptured();
+    el.dlgCapture.showModal();
+    showCamMessage('Kamera wird gestartet …');
+    camera.start().then(() => {
+      if (camera.running) showCamMessage('');
+    });
+  }
+
+  el.dlgCapture.addEventListener('close', () => {
+    camera.stop();
+    if (captureChanged) {
+      captureChanged = false;
+      rearrange();
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!el.dlgCapture.open) return;
+    if (document.hidden) camera.stop();
+    else camera.start().then(() => camera.running && showCamMessage(''));
+  });
+
+  el.captured.addEventListener('click', (e) => {
+    const b = e.target.closest('button.del');
+    if (!b) return;
+    state.eigene = state.eigene.filter((x) => x.code !== b.dataset.code);
+    saveCaptured();
+    rebuildAll();
+    captureChanged = true;
+    renderCaptured();
+  });
+
+  $('#btn-capture-clear').addEventListener('click', () => {
+    const n = state.eigene.length;
+    if (!n || !confirm('Alle ' + n + ' selbst erfassten Artikel aus dem Sortiment entfernen?')) return;
+    state.eigene = [];
+    saveCaptured();
+    rebuildAll();
+    captureChanged = true;
+    renderCaptured();
+  });
+
+  $('#btn-capture-export').addEventListener('click', () => {
+    const blob = new Blob([Erfassung.toCSV(state.eigene)], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'selbst-erfasst-' + Tagesliste.dayKey() + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
   });
 
   // ---------- Einstellungen ----------
@@ -870,6 +1104,7 @@
   // ---------- Kopfzeile & Aktionen ----------
 
   $('#btn-list').addEventListener('click', openList);
+  $('#btn-capture').addEventListener('click', openCapture);
   $('#btn-settings').addEventListener('click', openSettings);
 
   if (document.fullscreenEnabled) {

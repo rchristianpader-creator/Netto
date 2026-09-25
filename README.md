@@ -78,6 +78,27 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
 - Ist der Barcode zu groß oder zu klein für den Leseabstand: **Einstellungen → Barcode-Größe**.
 - Der Scanner muss hörbar piepen (Piep-Lautstärke am Scanner nicht auf „aus“).
 
+## EANs mit der Kamera erfassen
+
+Über **Erfassen** oben rechts öffnet sich die Handy-Kamera. Barcode in den Rahmen halten, sonst nichts:
+
+- **Neue EAN:** kommt sofort ins Sortiment, ohne Nachfrage. Ein hoher Ton, auf Android zusätzlich eine kurze Vibration,
+  und die Meldung „✓ Neu aufgenommen“.
+- **EAN schon im Sortiment** (aus der CSV oder schon selbst erfasst): wird nicht nochmal aufgenommen. Ein tiefer Ton
+  und die Meldung „Schon im Sortiment“ mit dem Produktnamen.
+- Ein Code zählt erst, wenn er zweimal gleich gelesen wurde und die Prüfziffer stimmt. Das schützt vor Fehllesungen.
+  Solange derselbe Barcode im Bild bleibt, wird er nur einmal gemeldet.
+- Ein per USB/Bluetooth verbundener Scanner erfasst in diesem Fenster genauso.
+
+Selbst erfasste Artikel sind nur auf diesem Gerät gespeichert (`localStorage`). Sie kommen in die Tagesliste unter
+„Sonstiges“ und lassen sich im Fenster einzeln (✕) oder alle entfernen. **Als CSV speichern** liefert sie im Format
+von `data/netto-sortiment.csv`, damit sie ins feste Sortiment übernommen werden können. Steht eine EAN später in der
+CSV, wird sie dort geführt und nicht mehr als selbst erfasst.
+
+Die Kamera nutzt die eingebaute Barcode-Erkennung des Browsers (z. B. Chrome auf Android). Wo es die nicht gibt
+(Safari auf dem iPhone), wird [ZXing](https://github.com/zxing-js/library) (`js/vendor/zxing.min.js`, Apache-2.0)
+nachgeladen. Das Kamerabild wird nur im Browser ausgewertet.
+
 ## Sortiment ändern
 
 Die Artikel stehen in [`data/netto-sortiment.csv`](data/netto-sortiment.csv) (Semikolon-getrennt, UTF-8):
@@ -104,7 +125,8 @@ an `main` ist nach ein bis zwei Minuten online. Das Mikrofon funktioniert im Bro
 ## Datenschutz
 
 Das Mikrofonsignal wird nur im Browser analysiert (Frequenzspektrum), nichts wird aufgenommen, gespeichert
-oder verschickt. Fortschritt und Einstellungen liegen im `localStorage` des Browsers.
+oder verschickt. Das gilt genauso für das Kamerabild beim Erfassen. Fortschritt, Einstellungen und selbst erfasste
+EANs liegen im `localStorage` des Browsers.
 
 ## Technik
 
@@ -118,6 +140,8 @@ oder verschickt. Fortschritt und Einstellungen liegen im `localStorage` des Brow
 | `js/ean.js` | Prüfziffer, EAN-8/EAN-13-Codierung und SVG-Rendering |
 | `js/tone-detector.js` | Mikrofon-Analyse: Pieptöne erkennen, Scan-Ton anlernen |
 | `js/keyboard-scanner.js` | Erkennt Scanner, die als Tastatur „tippen“ (USB/Bluetooth) |
+| `js/erfassung.js` | Erfassen: gescannte EANs aufnehmen, Dubletten erkennen, CSV-Export |
+| `js/camera-scanner.js` | Kamera-Scanner: BarcodeDetector oder ZXing (`js/vendor/zxing.min.js`) |
 | `js/app.js` | Ablauf, Speicherung, Dialoge |
 
 **Wie die Ton-Erkennung funktioniert:** Die Seite berechnet ca. 65-mal pro Sekunde das Frequenzspektrum des

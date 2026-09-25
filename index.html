@@ -19,6 +19,10 @@
         <span class="brand-sub" id="list-summary">Sortiment wird geladen …</span>
       </div>
       <nav class="topbar-actions">
+        <button type="button" class="icon-btn" id="btn-capture" title="EANs erfassen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5h3M17 5h3v3M20 16v3h-3M7 19H4v-3M8 9v6M11 9v6M14 9v6M16.5 9v6"/></svg>
+          <span>Erfassen</span>
+        </button>
         <button type="button" class="icon-btn" id="btn-list" title="Tagesliste">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
           <span>Tagesliste</span>
@@ -93,8 +97,8 @@
   <dialog class="sheet" id="dlg-list" aria-labelledby="dlg-list-title">
     <form method="dialog" class="sheet-inner">
       <header class="sheet-head">
-        <h2 id="dlg-list-title">Tagesliste</h2>
-        <button class="icon-btn" value="close" aria-label="Schließen">✕</button>
+        <h2 id="dlg-list-title" tabindex="-1" autofocus>Tagesliste</h2>
+        <button class="close-btn" value="close" aria-label="Schließen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
       </header>
       <div class="sheet-body">
         <p class="overview-stats" id="overview-stats"></p>
@@ -106,12 +110,40 @@
     </form>
   </dialog>
 
+  <!-- Erfassen: EANs per Kamera ins Sortiment aufnehmen -->
+  <dialog class="sheet" id="dlg-capture" aria-labelledby="dlg-capture-title">
+    <form method="dialog" class="sheet-inner">
+      <header class="sheet-head">
+        <h2 id="dlg-capture-title" tabindex="-1" autofocus>EANs erfassen</h2>
+        <button class="close-btn" value="close" aria-label="Schließen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
+      </header>
+      <div class="sheet-body">
+        <div class="cam" id="cam">
+          <video id="cam-video" playsinline muted autoplay></video>
+          <div class="cam-frame" aria-hidden="true"></div>
+          <p class="cam-msg" id="cam-msg">Kamera wird gestartet …</p>
+          <div class="cam-result" id="cam-result" role="status" aria-live="polite" hidden></div>
+        </div>
+        <p class="hint">Barcode in den Rahmen halten, fertig. Neue EANs kommen sofort ins Sortiment,
+          ohne Nachfrage. EANs, die schon im Sortiment sind, werden nicht nochmal aufgenommen.</p>
+        <h3 class="capture-head"><span>Selbst erfasst</span> <span class="capture-count" id="capture-count"></span></h3>
+        <ol class="captured" id="captured"></ol>
+        <div class="row">
+          <button type="button" class="btn" id="btn-capture-export">Als CSV speichern</button>
+          <button type="button" class="btn danger" id="btn-capture-clear">Alle entfernen</button>
+        </div>
+        <p class="hint">Selbst erfasste Artikel sind nur auf diesem Gerät gespeichert und kommen in der Tagesliste unter
+          „Sonstiges“. Die CSV kann ins feste Sortiment (data/netto-sortiment.csv) übernommen werden.</p>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Einstellungen -->
   <dialog class="sheet" id="dlg-settings" aria-labelledby="dlg-settings-title">
     <form method="dialog" class="sheet-inner">
       <header class="sheet-head">
-        <h2 id="dlg-settings-title">Einstellungen</h2>
-        <button class="icon-btn" value="close" aria-label="Schließen">✕</button>
+        <h2 id="dlg-settings-title" tabindex="-1" autofocus>Einstellungen</h2>
+        <button class="close-btn" value="close" aria-label="Schließen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
       </header>
       <div class="sheet-body">
         <section class="group">
@@ -195,6 +227,8 @@
   <script src="js/tagesliste.js"></script>
   <script src="js/tone-detector.js"></script>
   <script src="js/keyboard-scanner.js"></script>
+  <script src="js/erfassung.js"></script>
+  <script src="js/camera-scanner.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
