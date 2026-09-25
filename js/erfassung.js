@@ -1,8 +1,8 @@
 /*
  * Erfassen: per Kamera (oder Scanner) gescannte EANs ohne Rückfrage ins Sortiment aufnehmen.
  * Was schon im Sortiment ist (auch schon selbst erfasst), wird nicht nochmal aufgenommen.
- * Die eigene Liste ist ein Array aus { code, at, name?, marke?, inhalt?, quelle?, synced? }
- * (at = Zeitpunkt in ms; name/marke/inhalt/quelle = nachgeschlagene Bezeichnung;
+ * Die eigene Liste ist ein Array aus { code, at, name?, marke?, inhalt?, quelle?, tags?, synced? }
+ * (at = Zeitpunkt in ms; name/marke/inhalt/quelle/tags = nachgeschlagene Bezeichnung und Kategorien;
  * synced = schon in die Sortiment-Datei auf GitHub übernommen), gespeichert im Browser.
  */
 (function (root, factory) {
@@ -13,6 +13,8 @@
   'use strict';
 
   const NAME = 'Selbst gescannter Artikel';
+
+  const cleanTags = (tags) => (Array.isArray(tags) ? tags.filter((t) => typeof t === 'string' && t).slice(0, 40) : []);
 
   /** Gespeicherte Liste bereinigen: nur gültige EANs, jede nur einmal, ohne die aus `exclude` (Set von Codes). */
   function normalizeList(list, exclude) {
@@ -26,6 +28,8 @@
       ['name', 'marke', 'inhalt', 'quelle'].forEach((k) => {
         if (typeof e[k] === 'string' && e[k].trim()) entry[k] = e[k].trim();
       });
+      const tags = cleanTags(e.tags);
+      if (tags.length) entry.tags = tags;
       if (e.synced === true) entry.synced = true;
       out.push(entry);
     });
@@ -45,13 +49,15 @@
     return { status: 'added', code: norm.code, list: list.concat({ code: norm.code, at: now }) };
   }
 
-  /** Nachgeschlagene Bezeichnung ({ name, marke, inhalt, quelle }) bei einer EAN eintragen. */
+  /** Nachgeschlagene Bezeichnung ({ name, marke, inhalt, quelle, tags }) bei einer EAN eintragen. */
   function describe(list, code, info) {
     if (!info || !info.name) return list;
     const found = {};
     ['name', 'marke', 'inhalt', 'quelle'].forEach((k) => {
       if (info[k]) found[k] = info[k];
     });
+    const tags = cleanTags(info.tags);
+    if (tags.length) found.tags = tags;
     return list.map((e) => (e.code === code ? Object.assign({}, e, found) : e));
   }
 
@@ -64,6 +70,8 @@
         inhalt: e.inhalt || '',
         kategorie: '',
         warengruppe: '',
+        tags: e.tags || [],
+        quelle: e.quelle ? 'Kamera-Scan; ' + e.quelle : 'Kamera-Scan',
         eigen: true,
         at: e.at,
       })
@@ -72,20 +80,42 @@
 
   const isoDay = (ms) => new Date(ms).toISOString().slice(0, 10);
 
-  const HEADER = 'ean;produktname;marke;inhalt;kategorie;status;quelle;datenstand';
+  const HEADER = 'ean;produktname;marke;inhalt;kategorie;warengruppe;status;quelle;datenstand';
   const cell = (v) => (/[;"\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v);
   const quelleOf = (e) => (e.quelle ? 'Kamera-Scan; ' + e.quelle : 'Kamera-Scan');
-  const csvRow = (e) =>
-    [e.code, e.name || NAME, e.marke || '', e.inhalt || '', '', 'selbst gescannt', quelleOf(e), isoDay(e.at || 0)].map(cell).join(';');
+
+  // Werte einer Zeile nach Spaltenname; `e.gruppe` = Name der Warengruppe (vom Aufrufer bestimmt).
+  const record = (e) => ({
+    ean: e.code,
+    produktname: e.name || NAME,
+    marke: e.marke || '',
+    inhalt: e.inhalt || '',
+    kategorie: '',
+    warengruppe: e.gruppe || '',
+    status: 'selbst gescannt',
+    quelle: quelleOf(e),
+    datenstand: isoDay(e.at || 0),
+  });
+
+  // Zeile passend zur Kopfzeile der Datei (unbekannte Spalten bleiben leer, fehlende werden weggelassen).
+  const csvRow = (e, columns) => {
+    const r = record(e);
+    return columns.map((c) => cell(r[c] || '')).join(';');
+  };
+
+  const columnsOf = (text) =>
+    String(text || '').replace(/^﻿/, '').split(/\r?\n/, 1)[0].split(';').map((c) => c.trim().toLowerCase());
 
   /** CSV im Format von data/netto-sortiment.csv, damit die Codes dort übernommen werden können. */
   function toCSV(list) {
-    return '﻿' + [HEADER].concat(list.map(csvRow)).join('\n') + '\n';
+    const columns = HEADER.split(';');
+    return '﻿' + [HEADER].concat(list.map((e) => csvRow(e, columns))).join('\n') + '\n';
   }
 
   /**
    * Selbst erfasste EANs an den Text der Sortiment-CSV anhängen, nur die, die dort noch fehlen.
    * `existing` = Set der EANs, die schon in der Datei stehen. Ergebnis: { text, added: [codes] }.
+   * Die Spalten richten sich nach der Kopfzeile der Datei.
    */
   function appendToCSV(text, list, existing) {
     const added = [];
@@ -93,8 +123,10 @@
       if (!existing.has(e.code) && !added.includes(e.code)) added.push(e.code);
     });
     if (!added.length) return { text, added };
-    const rows = added.map((code) => csvRow(list.find((e) => e.code === code)));
-    const base = text.length && !text.endsWith('\n') ? text + '\n' : text;
+    const columns = text.trim() ? columnsOf(text) : HEADER.split(';');
+    const head = text.trim() ? text : '﻿' + HEADER + '\n';
+    const rows = added.map((code) => csvRow(list.find((e) => e.code === code), columns));
+    const base = head.endsWith('\n') ? head : head + '\n';
     return { text: base + rows.join('\n') + '\n', added };
   }
 

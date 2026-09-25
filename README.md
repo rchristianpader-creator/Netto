@@ -41,7 +41,7 @@ Die Artikel der Tagesliste kommen nach Warengruppen sortiert, in der Reihenfolge
 
 Milch & Milchgetränke → Joghurt → Quark & Desserts → Butter, Sahne & Margarine → Käse → Wurst & Aufschnitt →
 Feinkost & Salate → Fleisch & Geflügel → H-Milch & Kondensmilch → Konserven & Fertiggerichte →
-Nudeln, Reis & Backzutaten → Saucen, Fonds & Gewürze → Frühstück & Brotaufstrich → Snacks & Nüsse → Drogerie & Haushalt → Getränke → Tiefkühl
+Nudeln, Reis & Backzutaten → Saucen, Fonds & Gewürze → Frühstück & Brotaufstrich → Kaffee & Tee → Snacks & Nüsse → Drogerie & Haushalt → Getränke → Tiefkühl
 
 Innerhalb jeder Warengruppe ist die Reihenfolge zufällig (gehört zur Tagesliste, bleibt also beim Neuladen gleich).
 Die Warengruppe steht über dem Produktnamen; beim Wechsel in die nächste Gruppe kommt ein kurzer Hinweis

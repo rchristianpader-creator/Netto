@@ -27,6 +27,7 @@
     { id: 'nudeln', name: 'Nudeln, Reis & Backzutaten' },
     { id: 'saucen', name: 'Saucen, Fonds & Gewürze' },
     { id: 'fruehstueck', name: 'Frühstück & Brotaufstrich' },
+    { id: 'kaffee', name: 'Kaffee & Tee' },
     { id: 'snacks', name: 'Snacks & Nüsse' },
     { id: 'drogerie', name: 'Drogerie & Haushalt' },
     { id: 'getraenke', name: 'Getränke' },
@@ -44,7 +45,8 @@
     ['konserven', /konserve|fertiggericht|eintopf/],
     ['saucen', /sauce|soße|ketchup|würz|fond|suppe|feinkost/],
     ['nudeln', /nudel|pasta|reis\b|backzutat|zucker|mehl|trockensortiment/],
-    ['fruehstueck', /aufstrich|frühstück|müsli|kaffee|\btee\b/],
+    ['kaffee', /kaffee|\btee\b/],
+    ['fruehstueck', /aufstrich|frühstück|müsli/],
     ['snacks', /snack|chips|nüsse|nuss|riegel|süßwaren|gebäck/],
     ['obst', /obst|gemüse/],
     ['brot', /\bbrot\b|backwaren|brötchen/],
@@ -73,13 +75,46 @@
     ['wurst', /wurst|würstchen|schinken|lyoner|salami|mortadella|kasseler|aufschnitt|pastete|pfefferbeisser|prosciutto|speck\b|cabanossi/],
     ['dessert', /quark|protein|genussmoment/],
     ['joghurt', /joghurt|skyr/],
-    ['milch', /milch|kefir|lassi|drink|kakao|molke|\beier\b/],
+    ['milch', /milch|kefir|\blassi\b|drink|kakao|molke|\beier\b/],
     ['butter', /butter|margarine|sahne|schmand|crème|creme/],
     ['nudeln', /nudel|spaghetti|lasagne|tortiglioni|fusilli|farfalle|linguine|maccheroni|penne|\breis\b|mehl|zucker|backkakao/],
-    ['fruehstueck', /aufstrich|marmelade|konfitüre|honig|müsli|cornflakes|kaffee|\btee\b|nougat/],
+    ['kaffee', /kaffee|café|\bcafe\b|mocca|mokka|tee\b|teebeutel|kaffeepads|kaffeekapseln/],
+    ['fruehstueck', /aufstrich|marmelade|konfitüre|honig|müsli|cornflakes|nougat/],
     ['snacks', /chips|knabber|nüsse|erdnuss|mandeln|cashew|studentenfutter|riegel|gebäck|salzstangen|flips|keks|schokolade/],
     ['konserven', /mais\b|bohnen|erbsen|champignon|ananas|püree|fruchtmus|tomaten/],
   ];
+
+  // 0) Kategorien aus Open Food Facts (categories_tags, z. B. "en:ground-coffees") – verlässlicher als der Name.
+  //    Die Tags sind hierarchisch (allgemein → speziell), deshalb zählt die Reihenfolge der Regeln.
+  const TAG_REGELN = [
+    ['tk', /frozen|ice-creams/],
+    ['kaffee', /coffee|^en:teas|tea-bags|herbal-teas|green-teas|black-teas|infusions/],
+    ['fruehstueck', /breakfast-cereals|muesli|spreads|jams|marmalades|honeys|cocoa-powders/],
+    ['dessert', /quarks|fromages-blancs|puddings|rice-puddings|semolina-puddings/],
+    ['joghurt', /yogurts|yoghurts|skyr/],
+    ['kaese', /cheese/],
+    ['hmilch', /uht|long-life|sterili[sz]ed-milks|condensed-milks|evaporated-milks|coffee-creamers|coffee-whiteners/],
+    ['butter', /butters|margarines|^en:creams|sour-creams|creme-fraiche|whipping-creams/],
+    ['milch', /^en:milks$|^en:whole-milks|^en:semi-skimmed-milks|^en:skimmed-milks|buttermilks|kefirs|dairy-drinks|milk-drinks|milk-substitutes|plant-based-milk|flavoured-milks/],
+    ['dessert', /dairy-desserts|^en:desserts/],
+    ['konserven', /canned|ready-meals|^en:soups|meals-with/],
+    ['wurst', /sausages|hams|salami|cold-cuts|prepared-meats|pates/],
+    ['fleisch', /^en:meats|poultr|chicken|beef|pork|turkey|minced|fishes|seafood|salmons/],
+    ['feinkost', /salads|dips|hummus|spreadable-salads/],
+    ['nudeln', /pastas|noodles|^en:rices|flours|sugars|baking|gnocchi/],
+    ['saucen', /sauces|condiments|spices|^en:oils|vegetable-oils|olive-oils|vinegars|broths|bouillon|mayonnaises|ketchup|mustards|salts/],
+    ['snacks', /snacks|chips|crisps|^en:nuts|chocolates|candies|confectioner|biscuits|cookies|bars|popcorn|pretzels|dried-fruits/],
+    ['brot', /breads|pastries|cakes|viennoiseries|rusks|toasts/],
+    ['getraenke', /beverages|waters|juices|nectars|sodas|beers|wines|spirits|lemonades|iced-teas/],
+    ['obst', /^en:fresh-fruits|^en:fresh-vegetables|^en:fruits$|^en:vegetables$|^en:potatoes|^en:dates|^en:apples|^en:bananas|^en:tomatoes|herbs/],
+  ];
+
+  function fromTags(tags) {
+    const list = (Array.isArray(tags) ? tags : []).map((t) => String(t).toLowerCase());
+    if (!list.length) return null;
+    for (const [id, re] of TAG_REGELN) if (list.some((t) => re.test(t))) return id;
+    return null;
+  }
 
   // 3) Marke als letzter Anhaltspunkt.
   const MARKE_REGELN = [
@@ -96,15 +131,18 @@
     return null;
   };
 
-  /** Warengruppe (id) eines Artikels; eine Spalte "warengruppe" in der CSV hat Vorrang. */
+  /** Warengruppe (id) eines Artikels; eine Spalte "warengruppe" in der CSV hat Vorrang, dann Open-Food-Facts-Kategorien. */
   function classify(item) {
     const explicit = String(item.warengruppe || '').trim().toLowerCase();
     if (explicit) {
       const g = GRUPPEN.find((x) => x.id === explicit || x.name.toLowerCase() === explicit);
       if (g) return g.id;
     }
+    // Artikel aus Open Beauty Facts sind Drogerieartikel.
+    if (/beauty facts/i.test(String(item.quelle || ''))) return 'drogerie';
     const kategorie = String(item.kategorie || '').toLowerCase();
     return (
+      fromTags(item.tags) ||
       (kategorie && first(KATEGORIE_REGELN, kategorie)) ||
       first(NAME_REGELN, String(item.name || '').toLowerCase()) ||
       first(MARKE_REGELN, String(item.marke || '').toLowerCase()) ||
@@ -112,11 +150,20 @@
     );
   }
 
-  /** Gespeicherte Reihenfolge bereinigen: unbekannte raus, fehlende ergänzen, "Sonstiges" immer zuletzt. */
+  /**
+   * Gespeicherte Reihenfolge bereinigen: unbekannte raus, fehlende ergänzen, "Sonstiges" immer zuletzt.
+   * Eine fehlende (z. B. neu eingeführte) Gruppe kommt hinter ihren Vorgänger aus der Standard-Reihenfolge,
+   * sonst ans Ende.
+   */
   function normalizeOrder(order) {
-    const known = (Array.isArray(order) ? order : []).filter((id, i, a) => BY_ID.has(id) && a.indexOf(id) === i);
-    const missing = DEFAULT_ORDER.filter((id) => !known.includes(id));
-    return known.concat(missing).filter((id) => id !== 'sonstiges').concat('sonstiges');
+    const result = (Array.isArray(order) ? order : []).filter((id, i, a) => BY_ID.has(id) && a.indexOf(id) === i);
+    DEFAULT_ORDER.forEach((id, i) => {
+      if (result.includes(id)) return;
+      const k = i > 0 ? result.indexOf(DEFAULT_ORDER[i - 1]) : -1;
+      if (k >= 0) result.splice(k + 1, 0, id);
+      else result.push(id);
+    });
+    return result.filter((id) => id !== 'sonstiges').concat('sonstiges');
   }
 
   // Stabiler Pseudozufall je (seed, EAN): gleiche Mischung nach Neuladen, neue Mischung bei neuem seed.
@@ -146,5 +193,5 @@
 
   const nameOf = (id) => (BY_ID.get(id) || BY_ID.get('sonstiges')).name;
 
-  return { GRUPPEN, DEFAULT_ORDER, classify, arrange, normalizeOrder, nameOf, hash };
+  return { GRUPPEN, DEFAULT_ORDER, classify, fromTags, arrange, normalizeOrder, nameOf, hash };
 });

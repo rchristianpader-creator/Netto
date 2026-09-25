@@ -77,3 +77,11 @@ test('normalizeOrder: unbekannte raus, fehlende rein, Sonstiges zuletzt', () => 
   assert.equal(order.length, W.DEFAULT_ORDER.length);
   assert.deepEqual([...order].sort(), [...W.DEFAULT_ORDER].sort());
 });
+
+test('normalizeOrder: neue Gruppe (Kaffee & Tee) kommt in einem gespeicherten Laufweg hinter ihren Vorgänger', () => {
+  const alt = W.DEFAULT_ORDER.filter((id) => id !== 'kaffee'); // Laufweg von vor der Einführung
+  const order = W.normalizeOrder(['tk', ...alt.filter((id) => id !== 'tk')]); // eigene Reihenfolge: Tiefkühl vorne
+  assert.equal(order[0], 'tk');
+  assert.equal(order[order.indexOf('fruehstueck') + 1], 'kaffee');
+  assert.deepEqual(W.normalizeOrder(alt), W.DEFAULT_ORDER);
+});

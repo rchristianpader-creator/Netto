@@ -1,7 +1,8 @@
 /*
  * Artikelbezeichnung zu einer EAN nachschlagen: erst Open Food Facts (Lebensmittel),
  * dann Open Beauty Facts (Drogerie). Beide sind freie Datenbanken mit offener API (CORS erlaubt).
- * Liefert { name, marke, inhalt, quelle } oder null, wenn die EAN dort nicht bekannt ist.
+ * Liefert { name, marke, inhalt, tags, quelle } oder null, wenn die EAN dort nicht bekannt ist
+ * (tags = Kategorien, z. B. "en:ground-coffees", daraus ergibt sich die Warengruppe).
  */
 (function (root, factory) {
   const api = factory();
@@ -14,17 +15,18 @@
     { name: 'Open Food Facts', url: 'https://world.openfoodfacts.org/api/v2/product/' },
     { name: 'Open Beauty Facts', url: 'https://world.openbeautyfacts.org/api/v2/product/' },
   ];
-  const FIELDS = 'product_name_de,product_name,generic_name_de,brands,quantity';
+  const FIELDS = 'product_name_de,product_name,generic_name_de,brands,quantity,categories_tags';
   const TIMEOUT_MS = 8000;
 
   const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim();
 
-  /** Antwort der API in { name, marke, inhalt } umwandeln (null, wenn kein Name bekannt ist). */
+  /** Antwort der API in { name, marke, inhalt, tags } umwandeln (null, wenn kein Name bekannt ist). */
   function fromProduct(p) {
     if (!p) return null;
     const name = clean(p.product_name_de) || clean(p.product_name) || clean(p.generic_name_de);
     if (!name) return null;
-    return { name, marke: clean(String(p.brands || '').split(',')[0]), inhalt: clean(p.quantity) };
+    const tags = (Array.isArray(p.categories_tags) ? p.categories_tags : []).map(clean).filter(Boolean).slice(0, 40);
+    return { name, marke: clean(String(p.brands || '').split(',')[0]), inhalt: clean(p.quantity), tags };
   }
 
   async function fromSource(source, code, fetchFn) {

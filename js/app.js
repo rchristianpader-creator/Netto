@@ -947,7 +947,12 @@
     syncError = '';
     renderSyncState();
     try {
-      const r = await GitHubSync.push(token, pending, (url, init) => fetch(url, init));
+      // Warengruppe mitschreiben, damit sie im Sortiment fest steht
+      const withGroup = pending.map((e) => {
+        const it = knownItem(e.code);
+        return Object.assign({}, e, { gruppe: it ? Warengruppen.nameOf(it.gruppe) : '' });
+      });
+      const r = await GitHubSync.push(token, withGroup, (url, init) => fetch(url, init));
       const done = new Set(r.added.concat(r.present));
       state.eigene = state.eigene.map((e) => (done.has(e.code) ? Object.assign({}, e, { synced: true }) : e));
       saveCaptured();
