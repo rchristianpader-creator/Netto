@@ -1,7 +1,7 @@
 /*
  * EAN Scan-Liste – Bedienoberfläche.
  * Benötigt ean.js, sortiment.js, warengruppen.js, tagesliste.js, tone-detector.js, keyboard-scanner.js,
- * erfassung.js, camera-scanner.js, github-sync.js, produktinfo.js.
+ * erfassung.js, camera-scanner.js, github-sync.js, produktinfo.js, etikett-ocr.js.
  */
 (function () {
   'use strict';
@@ -738,7 +738,8 @@
 
   const readFilter = new Erfassung.ReadFilter();
   const camera = new CameraScanner.Scanner(el.camVideo, {
-    onRead: (code, now) => {
+    onRead: (code, now, bar) => {
+      if (code && bar && Erfassung.isInStore(code)) keepLabelShot(code, bar);
       const accepted = readFilter.push(code, now);
       if (accepted) captureCode(accepted);
     },
@@ -839,10 +840,7 @@
   // Liefert ein Promise, das fertig ist, wenn die Abfrage durch ist. force = auch nach "nicht gefunden" nochmal fragen.
   function lookupName(code, force) {
     if (lookups.has(code)) return lookups.get(code);
-    if (Erfassung.isInStore(code)) {
-      lookupState.set(code, 'instore'); // Netto-interne Nummer: keine Datenbank kennt sie
-      return Promise.resolve();
-    }
+    if (Erfassung.isInStore(code)) return readLabel(code); // Netto-interne Nummer: keine Datenbank kennt sie
     if (!force && lookupState.get(code) === 'notfound') return Promise.resolve();
     const job = Produktinfo.lookupDetailed(code, (url, init) => fetch(url, init)).then((r) => {
       lookups.delete(code);
@@ -875,10 +873,66 @@
     return job;
   }
 
+  // Regaletikett: Bezeichnung per Texterkennung vom Schild lesen (Ausschnitt beim Scannen gesichert).
+  const labelShots = new Map(); // EAN → { canvas, clipped } mit Name/Marke/Inhalt
+  const needsLabel = (code) => {
+    const it = knownItem(code);
+    return !it || (it.eigen && it.name === Erfassung.NAME); // noch nicht erfasst oder noch ohne Bezeichnung
+  };
+
+  // Textausschnitt sichern, solange das Schild im Bild ist. Ein vollständiger Ausschnitt ersetzt einen am
+  // Bildrand abgeschnittenen; war der Text schon einmal unlesbar, wird mit dem besseren Bild neu gelesen.
+  function keepLabelShot(code, bar) {
+    if (!needsLabel(code)) return;
+    const v = el.camVideo;
+    const rect = EtikettOCR.textRect(bar, v.videoWidth, v.videoHeight);
+    const old = labelShots.get(code);
+    if (!rect || (old && (rect.clipped || !old.clipped))) return;
+    const canvas = camera.grab(rect);
+    if (!canvas) return;
+    labelShots.set(code, { canvas, clipped: rect.clipped });
+    const st = lookupState.get(code);
+    if (!rect.clipped && !lookups.has(code) && (st === 'ocrfail' || st === 'instore')) readLabel(code);
+  }
+
+  function readLabel(code) {
+    if (lookups.has(code)) return lookups.get(code);
+    const shot = labelShots.get(code);
+    if (!shot) {
+      lookupState.set(code, 'instore');
+      return Promise.resolve();
+    }
+    const job = EtikettOCR.read(shot.canvas)
+      .catch(() => null)
+      .then((info) => {
+        lookups.delete(code);
+        if (!info) {
+          lookupState.set(code, 'ocrfail');
+        } else {
+          lookupState.delete(code);
+          if (state.eigene.some((e) => e.code === code && !e.synced)) {
+            state.eigene = Erfassung.describe(state.eigene, code, Object.assign(info, { quelle: 'Regaletikett' }));
+            saveCaptured();
+            rebuildAll();
+            captureChanged = true;
+            const it = knownItem(code);
+            if (code === lastAddedCode && !el.camResult.hidden) {
+              const ziel = it.gruppe !== 'sonstiges' ? ' → ' + Warengruppen.nameOf(it.gruppe) : '';
+              showResult('added', '✓ ' + [info.name, info.marke].filter(Boolean).join(' · ') + ziel);
+            }
+          }
+        }
+        if (el.dlgCapture.open) renderCaptured();
+      });
+    lookups.set(code, job);
+    return job;
+  }
+
   function lookupText(code) {
     if (lookups.has(code)) return 'Bezeichnung wird gesucht …';
     const st = lookupState.get(code);
-    if (st === 'instore' || Erfassung.isInStore(code)) return 'Netto-Regaletikett (interne Nummer, ohne Bezeichnung)';
+    if (st === 'ocrfail') return 'Netto-Regaletikett: Text nicht lesbar – ganzes Schild ins Bild nehmen';
+    if (st === 'instore' || Erfassung.isInStore(code)) return 'Netto-Regaletikett: ganzes Schild ins Bild halten, dann wird der Name gelesen';
     if (st === 'notfound') return 'Bei Open Food Facts unbekannt (antippen: nochmal suchen)';
     if (st) return 'Keine Bezeichnung: ' + st + ' (antippen: nochmal)';
     return 'Ohne Bezeichnung (antippen: suchen)';
@@ -979,9 +1033,11 @@
   async function syncCaptured(auto) {
     // Erst die Bezeichnungen abwarten, dann mit Namen übernehmen; nach einem Fehler einmal nachfragen.
     await Promise.all(
-      state.eigene
-        .filter((e) => !e.synced && !e.name && lookupState.get(e.code) !== 'notfound' && !Erfassung.isInStore(e.code))
-        .map((e) => lookupName(e.code, true))
+      Array.from(lookups.values()).concat(
+        state.eigene
+          .filter((e) => !e.synced && !e.name && lookupState.get(e.code) !== 'notfound' && !Erfassung.isInStore(e.code))
+          .map((e) => lookupName(e.code, true))
+      )
     );
     const pending = pendingSync();
     const token = getToken();

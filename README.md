@@ -95,8 +95,12 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
   kommt mit der Übernahme in die Spalte `warengruppe` der Sortimentsliste, so kennen sie auch andere Geräte.
 - **Netto-Regaletiketten:** Der kleine Strichcode auf den elektronischen Preisschildern (Code 128) wird ebenfalls
   gelesen. Er enthält eine ladeninterne 13-stellige Nummer mit Prüfziffer (z. B. `2707338130000` mit der
-  Artikelnummer 733813), die wie eine EAN-13 aufgenommen und angezeigt wird. Eine Bezeichnung gibt es dafür nicht,
-  Open Food Facts wird bei solchen Nummern (Präfix 2) nicht gefragt.
+  Artikelnummer 733813), die wie eine EAN-13 aufgenommen und angezeigt wird. Open Food Facts kennt solche Nummern
+  (Präfix 2) nicht; stattdessen wird **die Bezeichnung vom Schild gelesen** (Texterkennung mit
+  [Tesseract](https://github.com/naptha/tesseract.js), `js/etikett-ocr.js`, `js/vendor/tesseract/`): Aus der Lage
+  des Strichcodes ergibt sich, wo Name, Marke und Inhalt stehen, nur dieser Ausschnitt wird gelesen. Dafür muss das
+  ganze Schild im Bild sein. Die Texterkennung (etwa 6 MB) wird erst beim ersten Regaletikett geladen und läuft
+  komplett im Browser.
 
 Die Liste im Fenster ist nach Warengruppen in Laufweg-Reihenfolge gegliedert. Selbst erfasste Artikel liegen zunächst
 nur auf diesem Gerät (`localStorage`) und lassen sich einzeln (✕) oder alle entfernen.
