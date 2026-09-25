@@ -191,3 +191,18 @@ test('searchRect: sichtbarer Teil des Kamerabilds plus Rand, für Quer- und Hoch
   // Fenstergröße unbekannt: ganzes Bild
   assert.deepEqual(CameraScanner.searchRect(1280, 720, 0, 0, 0.08), { x: 0, y: 0, w: 1280, h: 720 });
 });
+
+test('rename: Bezeichnung korrigieren; schon übernommene Einträge werden zum Nachziehen markiert', () => {
+  let list = [{ code: '4006381333931', at: 1, name: 'Aandeln' }, { code: '96385074', at: 2, name: 'X', synced: true }];
+  list = Erfassung.rename(list, '4006381333931', { name: ' Mandeln ', marke: 'Clarkys' });
+  assert.deepEqual(list[0], { code: '4006381333931', at: 1, name: 'Mandeln', marke: 'Clarkys' });
+  list = Erfassung.rename(list, '96385074', { name: 'Kaffee', inhalt: '' });
+  assert.deepEqual(list[1], { code: '96385074', at: 2, name: 'Kaffee', synced: true, dirty: true });
+  assert.deepEqual(Erfassung.normalizeList(JSON.parse(JSON.stringify(list))), list); // bleibt beim Speichern erhalten
+  // CSV: Zeile mit Anführungszeichen und Semikolon im Feld korrekt ersetzen, andere Spalten bleiben
+  const csv = '﻿ean;produktname;marke;inhalt;warengruppe;quelle\n96385074;"Alt; Name";M;1 l;Kühlregal;"Kamera-Scan; Regaletikett"\n4006381333931;Andere;;;;\n';
+  const r = Erfassung.updateInCSV(csv, [list[1]]);
+  assert.deepEqual(r.updated, ['96385074']);
+  assert.equal(r.text.split('\n')[1], '96385074;Kaffee;;;Kühlregal;"Kamera-Scan; Regaletikett"');
+  assert.equal(r.text.split('\n')[2], '4006381333931;Andere;;;;');
+});

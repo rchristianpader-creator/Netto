@@ -36,40 +36,54 @@
     return { x: Math.round(x), y: Math.round(y), w: Math.round(x2 - x), h: Math.round(y2 - y), clipped };
   }
 
-  const INHALT = /\b\d+(?:[.,]\d+)?\s?(?:x\s?\d+(?:[.,]\d+)?\s?)?(?:kg|g|mg|ml|cl|l|liter|stück|stk\.?|st\.?|blatt|rollen|tabs|wl|m)\b/i;
+  const UNIT = '(?:kg|g|mg|ml|cl|l|liter|stück|stk\\.?|st\\.?|blatt|rollen|tabs|wl|m)';
+  // Menge am Zeilenende, z. B. "800g", "500 ml", "4 x 150 g", "sortiert - 150 g"
+  const SIZE_END = new RegExp('(\\d+(?:[.,]\\d+)?\\s?(?:x\\s?\\d+(?:[.,]\\d+)?\\s?)?' + UNIT + ')\\.?$', 'i');
   const letters = (s) => (s.match(/[A-Za-zÄÖÜäöüß]/g) || []).length;
+  const textLike = (l) => letters(l) >= 3 && letters(l) / l.replace(/\s/g, '').length >= 0.6;
 
   /**
-   * Typische Verwechslungen der Texterkennung in der Inhaltszeile korrigieren (die Pixelschrift der Schilder):
-   * "8009" → "800 g" (g als 9), "1k9" → "1 kg", "500m1" → "500 ml". Nur für Zeilen aus Ziffern mit Einheit.
+   * Typische Verwechslungen der Texterkennung am Ende der Mengenzeile korrigieren (Pixelschrift der Schilder):
+   * g als 9 ("8009" → "800 g", "sortiert - 1509" → "sortiert - 150 g", "250 9" → "250 g"),
+   * "k9" → "kg", "m1" → "ml".
    */
   function fixInhalt(line) {
-    const l = line.replace(/\s+/g, ' ').trim();
-    if (/^\d+(?:[.,]\d+)?(?: ?x ?\d+(?:[.,]\d+)?)? ?9$/i.test(l) && l.replace(/\D/g, '').length >= 3) return l.replace(/ ?9$/, ' g');
-    return l.replace(/(\d) ?k9$/i, '$1 kg').replace(/(\d) ?m[1Il|]$/, '$1 ml');
+    let l = line.replace(/\s+/g, ' ').trim();
+    l = l.replace(/(\d) ?k9$/i, '$1 kg').replace(/(\d) ?m[1Il|]$/, '$1 ml');
+    if (!SIZE_END.test(l)) l = l.replace(/(\d) 9$/, '$1 g').replace(/(\d{2,})9$/, '$1 g');
+    return l;
   }
 
-  /** Erkannten Text in { name, marke, inhalt } zerlegen; null, wenn kein brauchbarer Name dabei ist. */
+  /**
+   * Erkannten Text in { name, marke, inhalt } zerlegen; null, wenn kein brauchbarer Name dabei ist.
+   * Aufbau der Schilder: 1. Zeile Name, 2. Zeile Marke (fehlt manchmal), dann die Mengenzeile – entweder nur die
+   * Menge ("800 g") oder mit Sorte davor ("sortiert - 150 g"). Was danach kommt (Grundpreis, Preis), zählt nicht.
+   */
   function parse(text) {
     const lines = String(text || '')
       .split(/\r?\n/)
       .map((l) => l.replace(/[|_©®“”"‚‘'`~^]+/g, ' ').replace(/\s+/g, ' ').trim())
       .map((l) => l.replace(/^[^0-9A-Za-zÄÖÜäöüß]+|[^0-9A-Za-zÄÖÜäöüß%.)]+$/g, ''))
       .filter(Boolean);
+    let name = '';
+    let marke = '';
     let inhalt = '';
-    const texte = [];
     for (const raw of lines) {
-      const l = texte.length ? fixInhalt(raw) : raw; // die erste Zeile ist der Name, nicht korrigieren
-      const m = l.match(INHALT);
-      if (!inhalt && m && letters(l.replace(m[0], '')) < 3) {
-        inhalt = m[0].replace(/\s+/g, ' ');
+      if (!name) {
+        if (textLike(raw)) name = raw; // Störzeilen davor überspringen
         continue;
       }
-      // Textzeile: genug Buchstaben, überwiegend Buchstaben (kein Preis, kein Störrauschen)
-      if (letters(l) >= 3 && letters(l) / l.replace(/\s/g, '').length >= 0.6) texte.push(l);
+      const l = fixInhalt(raw);
+      const m = l.match(SIZE_END);
+      if (m) {
+        // nur Menge → "150 g"; Sorte und Menge → ganze Zeile ("sortiert - 150 g")
+        inhalt = letters(l.slice(0, m.index)) >= 3 ? l.replace(/\s*[-–]\s*/g, ' - ') : m[1].replace(/\s+/g, ' ');
+        break;
+      }
+      if (!marke && textLike(l)) marke = l;
     }
-    if (!texte.length || texte[0].length < 3) return null;
-    return { name: texte[0], marke: texte[1] || '', inhalt };
+    if (name.length < 3) return null;
+    return { name, marke, inhalt };
   }
 
   let workerPromise = null;
