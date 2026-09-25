@@ -101,6 +101,9 @@ Solange ein Einstellungs- oder Listenfenster offen ist, wird nicht weitergeschal
   des Strichcodes ergibt sich, wo Name, Marke und Inhalt stehen, nur dieser Ausschnitt wird gelesen. Dafür muss das
   ganze Schild im Bild sein. Die Texterkennung (etwa 6 MB) wird erst beim ersten Regaletikett geladen und läuft
   komplett im Browser.
+- **Bezeichnung korrigieren:** Zeile in der Liste antippen, Name (und Marke) eingeben. Das geht auch, wenn der Artikel
+  schon ins Sortiment übernommen wurde; die Zeile in `data/netto-sortiment.csv` wird dann beim nächsten Übernehmen
+  nachgezogen.
 
 Die Liste im Fenster ist nach Warengruppen in Laufweg-Reihenfolge gegliedert. Selbst erfasste Artikel liegen zunächst
 nur auf diesem Gerät (`localStorage`) und lassen sich einzeln (✕) oder alle entfernen.

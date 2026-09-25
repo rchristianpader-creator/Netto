@@ -4,7 +4,8 @@
  * Die eigene Liste ist ein Array aus { code, at, name?, marke?, inhalt?, quelle?, tags?, gruppe?, synced? }
  * (at = Zeitpunkt in ms; name/marke/inhalt/quelle/tags = nachgeschlagene Bezeichnung und Kategorien;
  * gruppe = beim Scannen fest gewählte Warengruppe (Name), sonst automatisch;
- * synced = schon in die Sortiment-Datei auf GitHub übernommen), gespeichert im Browser.
+ * synced = schon in die Sortiment-Datei auf GitHub übernommen; dirty = danach von Hand korrigiert, die Zeile in der
+ * Datei muss noch nachgezogen werden), gespeichert im Browser.
  */
 (function (root, factory) {
   const api = factory(root.EAN || (typeof require === 'function' ? require('./ean.js') : null));
@@ -32,6 +33,7 @@
       const tags = cleanTags(e.tags);
       if (tags.length) entry.tags = tags;
       if (e.synced === true) entry.synced = true;
+      if (e.synced === true && e.dirty === true) entry.dirty = true;
       out.push(entry);
     });
     return out;
@@ -69,6 +71,23 @@
     const tags = cleanTags(info.tags);
     if (tags.length) found.tags = tags;
     return list.map((e) => (e.code === code ? Object.assign({}, e, found) : e));
+  }
+
+  /** Bezeichnung von Hand korrigieren ({ name?, marke?, inhalt? }); schon übernommene Einträge werden "dirty". */
+  function rename(list, code, fields) {
+    const clean = {};
+    ['name', 'marke', 'inhalt'].forEach((k) => {
+      if (typeof fields[k] === 'string') clean[k] = fields[k].replace(/\s+/g, ' ').trim();
+    });
+    return list.map((e) => {
+      if (e.code !== code) return e;
+      const next = Object.assign({}, e, clean);
+      ['name', 'marke', 'inhalt'].forEach((k) => {
+        if (next[k] === '') delete next[k];
+      });
+      if (next.synced) next.dirty = true;
+      return next;
+    });
   }
 
   /** Artikel für das Sortiment (gleiche Felder wie aus der CSV). */
@@ -140,6 +159,52 @@
     return { text: base + rows.join('\n') + '\n', added };
   }
 
+  // Eine CSV-Zeile in Felder zerlegen (Semikolon, Felder dürfen in "Anführungszeichen" stehen).
+  function splitRow(line) {
+    const cells = [];
+    let cur = '';
+    let quoted = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (quoted) {
+        if (c !== '"') cur += c;
+        else if (line[i + 1] === '"') cur += line[++i];
+        else quoted = false;
+      } else if (c === '"') quoted = true;
+      else if (c === ';') {
+        cells.push(cur);
+        cur = '';
+      } else cur += c;
+    }
+    cells.push(cur);
+    return cells;
+  }
+
+  /**
+   * Von Hand korrigierte Einträge in einer schon vorhandenen Zeile der Sortiment-CSV nachziehen
+   * (produktname, marke, inhalt; alle anderen Spalten bleiben). Ergebnis: { text, updated: [codes] }.
+   */
+  function updateInCSV(text, list) {
+    const byCode = new Map(list.map((e) => [e.code, e]));
+    const lines = text.split('\n');
+    const columns = columnsOf(text);
+    const col = (name) => columns.indexOf(name);
+    const updated = [];
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      const cells = splitRow(lines[i].replace(/\r$/, ''));
+      const e = byCode.get(String(cells[col('ean')] || '').trim());
+      if (!e || updated.includes(e.code)) continue;
+      const r = record(e);
+      ['produktname', 'marke', 'inhalt'].forEach((c) => {
+        if (col(c) >= 0) cells[col(c)] = r[c];
+      });
+      lines[i] = cells.map((v) => cell(v || '')).join(';') + (lines[i].endsWith('\r') ? '\r' : '');
+      updated.push(e.code);
+    }
+    return { text: lines.join('\n'), updated };
+  }
+
   /**
    * Filter für einen laufenden Kamera-Scan: Ein Code zählt erst, wenn er `confirm`-mal hintereinander
    * gelesen wurde (schützt vor Fehllesungen). Danach wird derselbe Code ignoriert, solange er im Bild
@@ -178,5 +243,5 @@
     }
   }
 
-  return { NAME, normalizeList, capture, describe, isInStore, toItems, toCSV, appendToCSV, ReadFilter };
+  return { NAME, normalizeList, capture, describe, rename, isInStore, toItems, toCSV, appendToCSV, updateInCSV, ReadFilter };
 });

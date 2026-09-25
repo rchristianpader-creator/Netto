@@ -43,7 +43,7 @@ test('push: fehlende EANs werden angehängt, vorhandene nicht, Rest der Datei bl
   const gh = fakeGitHub();
   const list = [{ code: '4006381333931', at: 0 }, { code: '4316268604710', at: 0 }]; // zweite steht schon drin
   const r = await Sync.push('TOKEN', list, gh.fetch);
-  assert.deepEqual(r, { added: ['4006381333931'], present: ['4316268604710'] });
+  assert.deepEqual(r, { added: ['4006381333931'], updated: [], present: ['4316268604710'] });
   assert.equal(gh.puts.length, 1);
   assert.equal(gh.puts[0].branch, 'main');
   assert.equal(gh.puts[0].sha, 'sha0');
@@ -76,4 +76,26 @@ test('check und Fehlermeldungen', async () => {
     throw new TypeError('Failed to fetch');
   };
   await assert.rejects(Sync.push('TOKEN', [], offline), /Keine Verbindung/);
+});
+
+test('push: von Hand korrigierte, schon übernommene Bezeichnung wird in ihrer Zeile nachgezogen', async () => {
+  const Erfassung = require('../js/erfassung.js');
+  const gh = fakeGitHub();
+  // erst übernehmen (Texterkennung hat "Aandeln" gelesen) …
+  let list = [{ code: '2704342060002', at: Date.UTC(2026, 8, 25), name: 'Aandeln', marke: '', inhalt: 'sortiert - 150 g', quelle: 'Regaletikett', gruppe: 'Snacks' }];
+  await Sync.push('TOKEN', list, gh.fetch);
+  list = list.map((e) => Object.assign({}, e, { synced: true }));
+  // … dann korrigieren
+  list = Erfassung.rename(list, '2704342060002', { name: 'Mandeln', marke: 'Clarkys' });
+  assert.equal(list[0].dirty, true);
+  const vorher = gh.text;
+  const r = await Sync.push('TOKEN', list, gh.fetch);
+  assert.deepEqual(r, { added: [], updated: ['2704342060002'], present: ['2704342060002'] });
+  assert.match(gh.puts[1].message, /1 Bezeichnung korrigiert/);
+  const item = Sortiment.parse(gh.text).items.find((i) => i.code === '2704342060002');
+  assert.deepEqual([item.name, item.marke, item.inhalt], ['Mandeln', 'Clarkys', 'sortiert - 150 g']);
+  // alle anderen Zeilen unverändert, gleiche Zeilenzahl
+  const zeilen = (t) => t.split('\n');
+  assert.equal(zeilen(gh.text).length, zeilen(vorher).length);
+  assert.deepEqual(zeilen(gh.text).filter((l) => !l.startsWith('2704342060002')), zeilen(vorher).filter((l) => !l.startsWith('2704342060002')));
 });

@@ -847,7 +847,7 @@
       if (r.info) {
         lookupState.delete(code);
         retries.delete(code);
-        if (state.eigene.some((e) => e.code === code && !e.synced)) {
+        if (state.eigene.some((e) => e.code === code && !e.synced && !e.name)) {
           state.eigene = Erfassung.describe(state.eigene, code, r.info);
           saveCaptured();
           rebuildAll();
@@ -910,7 +910,7 @@
           lookupState.set(code, 'ocrfail');
         } else {
           lookupState.delete(code);
-          if (state.eigene.some((e) => e.code === code && !e.synced)) {
+          if (state.eigene.some((e) => e.code === code && !e.synced && !e.name)) {
             state.eigene = Erfassung.describe(state.eigene, code, Object.assign(info, { quelle: 'Regaletikett' }));
             saveCaptured();
             rebuildAll();
@@ -933,9 +933,9 @@
     const st = lookupState.get(code);
     if (st === 'ocrfail') return 'Netto-Regaletikett: Text nicht lesbar – ganzes Schild ins Bild nehmen';
     if (st === 'instore' || Erfassung.isInStore(code)) return 'Netto-Regaletikett: ganzes Schild ins Bild halten, dann wird der Name gelesen';
-    if (st === 'notfound') return 'Bei Open Food Facts unbekannt (antippen: nochmal suchen)';
-    if (st) return 'Keine Bezeichnung: ' + st + ' (antippen: nochmal)';
-    return 'Ohne Bezeichnung (antippen: suchen)';
+    if (st === 'notfound') return 'Bei Open Food Facts unbekannt (antippen: Namen eingeben)';
+    if (st) return 'Keine Bezeichnung: ' + st + ' (antippen: Namen eingeben)';
+    return 'Ohne Bezeichnung (antippen: Namen eingeben)';
   }
 
   function formatWhen(ms) {
@@ -969,12 +969,13 @@
       li.innerHTML = '<span class="name"><span class="title"></span><span class="sub"></span></span><span class="state"></span>' +
         (e.synced ? '<span></span>' : '<button type="button" class="del" aria-label="Entfernen">✕</button>');
       const title = e.name || lookupText(e.code);
-      if (!e.name && !e.synced && !Erfassung.isInStore(e.code)) li.dataset.retry = e.code;
+      li.dataset.edit = e.code; // antippen: Bezeichnung eingeben oder korrigieren
+      if (!e.name) li.classList.add('unnamed');
       li.querySelector('.title').textContent = title;
       li.querySelector('.title').classList.toggle('unknown', !e.name);
       li.querySelector('.sub').textContent = [e.code, e.marke, e.inhalt, formatWhen(e.at)].filter(Boolean).join(' · ');
       const st = li.querySelector('.state');
-      st.textContent = e.synced ? '✓ im Sortiment' : 'nur hier';
+      st.textContent = e.dirty ? 'geändert' : e.synced ? '✓ im Sortiment' : 'nur hier';
       st.classList.toggle('synced', !!e.synced);
       if (!e.synced) li.querySelector('.del').dataset.code = e.code;
       rows.push(li);
@@ -1010,7 +1011,7 @@
     }
   }
 
-  const pendingSync = () => state.eigene.filter((e) => !e.synced);
+  const pendingSync = () => state.eigene.filter((e) => !e.synced || e.dirty);
   let syncing = false;
   let syncError = '';
 
@@ -1057,11 +1058,20 @@
       });
       const r = await GitHubSync.push(token, withGroup, (url, init) => fetch(url, init));
       const done = new Set(r.added.concat(r.present));
-      state.eigene = state.eigene.map((e) => (done.has(e.code) ? Object.assign({}, e, { synced: true }) : e));
+      const fixed = new Set(r.updated || []);
+      state.eigene = state.eigene.map((e) => {
+        if (!done.has(e.code)) return e;
+        const next = Object.assign({}, e, { synced: true });
+        if (fixed.has(e.code) || !r.present.includes(e.code) || !e.dirty) delete next.dirty;
+        return next;
+      });
       saveCaptured();
       const n = r.added.length;
+      const k = fixed.size;
       toast(
-        n ? '✓ ' + n + ' Artikel ins Sortiment übernommen, in 1–2 Minuten auf allen Geräten'
+        n || k
+          ? '✓ ' + [n ? n + ' Artikel ins Sortiment übernommen' : '', k ? k + ' korrigiert' : ''].filter(Boolean).join(', ') +
+              ', in 1–2 Minuten auf allen Geräten'
           : 'Schon alles im Sortiment',
         'ok',
         4000
@@ -1189,13 +1199,26 @@
     else camera.start().then(() => camera.running && showCamMessage(''));
   });
 
+  // Bezeichnung von Hand eingeben oder korrigieren (z. B. wenn die Texterkennung ein Wort falsch gelesen hat)
+  function editName(code) {
+    const e = state.eigene.find((x) => x.code === code);
+    if (!e) return;
+    const name = window.prompt('Bezeichnung für ' + code + ':', e.name || '');
+    if (name === null || !name.trim()) return;
+    const marke = window.prompt('Marke (leer lassen, wenn keine):', e.marke || '');
+    state.eigene = Erfassung.rename(state.eigene, code, marke === null ? { name } : { name, marke });
+    lookupState.delete(code);
+    saveCaptured();
+    rebuildAll();
+    captureChanged = true;
+    renderCaptured();
+  }
+
   el.captured.addEventListener('click', (e) => {
     const b = e.target.closest('button.del');
-    const row = !b && e.target.closest('li[data-retry]');
+    const row = !b && e.target.closest('li[data-edit]');
     if (row) {
-      retries.delete(row.dataset.retry);
-      lookupName(row.dataset.retry, true);
-      renderCaptured();
+      editName(row.dataset.edit);
       return;
     }
     if (!b) return;

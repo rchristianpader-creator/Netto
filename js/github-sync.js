@@ -78,8 +78,9 @@
   }
 
   /**
-   * Hängt die noch fehlenden EANs aus `list` an die Sortiment-Datei an.
-   * Ergebnis: { added: [codes], present: [codes] } (present = stand schon in der Datei).
+   * Hängt die noch fehlenden EANs aus `list` an die Sortiment-Datei an und zieht von Hand korrigierte
+   * (dirty) Einträge in ihren vorhandenen Zeilen nach.
+   * Ergebnis: { added: [codes], updated: [codes], present: [codes] } (present = stand schon in der Datei).
    * Hat sich die Datei zwischen Lesen und Schreiben geändert, wird neu gelesen und nochmal versucht.
    */
   async function push(token, list, fetchFn) {
@@ -87,24 +88,28 @@
       const file = await call(fetchFn, token, 'GET', fileUrl() + '?ref=' + TARGET.branch);
       const text = decodeBase64(file.content);
       const existing = new Set(Sortiment.parse(text).items.map((it) => it.code));
-      const result = Erfassung.appendToCSV(text, list, existing);
+      // von Hand korrigierte, schon übernommene Artikel: ihre Zeile nachziehen
+      const upd = Erfassung.updateInCSV(text, list.filter((e) => e.dirty && existing.has(e.code)));
+      const result = Erfassung.appendToCSV(upd.text, list, existing);
       const present = list.map((e) => e.code).filter((c) => existing.has(c));
-      if (!result.added.length) return { added: [], present };
+      if (!result.added.length && !upd.updated.length) return { added: [], updated: [], present };
+      const n = (k, one, many) => k + (k === 1 ? one : many);
+      const parts = [];
+      if (result.added.length) parts.push(n(result.added.length, ' selbst erfasste EAN', ' selbst erfasste EANs') + ' ergänzt');
+      if (upd.updated.length) parts.push(n(upd.updated.length, ' Bezeichnung', ' Bezeichnungen') + ' korrigiert');
       try {
         await call(fetchFn, token, 'PUT', fileUrl(), {
-          message:
-            'Sortiment: ' + result.added.length + (result.added.length === 1 ? ' selbst erfasste EAN' : ' selbst erfasste EANs') +
-            ' ergänzt (Kamera-Scan)',
+          message: 'Sortiment: ' + parts.join(', ') + ' (Kamera-Scan)',
           content: encodeBase64(result.text),
           sha: file.sha,
           branch: TARGET.branch,
         });
-        return { added: result.added, present };
+        return { added: result.added, updated: upd.updated, present };
       } catch (err) {
         if (!(err instanceof SyncError) || (err.status !== 409 && err.status !== 422) || attempt === 2) throw err;
       }
     }
-    return { added: [], present: [] };
+    return { added: [], updated: [], present: [] };
   }
 
   return { TARGET, check, push, decodeBase64, encodeBase64, SyncError };

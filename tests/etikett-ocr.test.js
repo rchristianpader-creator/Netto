@@ -37,3 +37,13 @@ test('textRect: Textbereich links über dem Strichcode, am Bildrand abgeschnitte
   assert.equal(oben.clipped, true);
   assert.equal(E.textRect({ left: 300, right: 330, y: 1810 }, 1932, 2576), null); // Strichcode zu klein
 });
+
+test('parse: weißes Schild mit Sorte und Menge in einer Zeile ("sortiert - 150 g")', () => {
+  assert.deepEqual(E.parse('Mandeln\nClarkys\nsortiert - 150 g\n1 kg\n14.60\n2.19'), { name: 'Mandeln', marke: 'Clarkys', inhalt: 'sortiert - 150 g' });
+  // wie auf dem Handy gelesen: g als 9
+  assert.deepEqual(E.parse('Mandeln\nClarkys\nsortiert - 1509'), { name: 'Mandeln', marke: 'Clarkys', inhalt: 'sortiert - 150 g' });
+  // Marke nicht erkannt: die Mengenzeile wird trotzdem nicht zur Marke
+  assert.deepEqual(E.parse('Mandeln\nsortiert - 1509'), { name: 'Mandeln', marke: '', inhalt: 'sortiert - 150 g' });
+  // Grundpreis und Preis danach zählen nicht
+  assert.equal(E.parse('Linsen-Eintopf\nSonnen Bassermann\n800 g\n1 kg = 2.49').inhalt, '800 g');
+});
