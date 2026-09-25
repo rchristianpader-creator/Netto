@@ -264,7 +264,7 @@
       el.summary.textContent = state.loading ? 'Sortiment wird geladen …' : empty ? 'Sortiment ist leer' : 'Sortiment nicht verfügbar';
       el.loadingTitle.textContent = state.loading ? 'Sortiment wird geladen …' : empty ? 'Sortiment ist leer' : 'Fehler beim Laden';
       el.loadingText.textContent = empty
-        ? 'Oben auf „Erfassen“ tippen und Artikel scannen. Sie kommen sofort ins Sortiment, mit Bezeichnung und Warengruppe.'
+        ? 'Oben auf „Erfassen“ tippen und Artikel scannen. Vorher oben im Fenster eine eigene Warengruppe anlegen oder wählen.'
         : state.loadError;
       el.loadingActions.hidden = state.loading;
       el.reloadBtn.hidden = empty;
@@ -856,7 +856,8 @@
           captureChanged = true;
           const it = knownItem(code);
           if (code === lastAddedCode && !el.camResult.hidden) {
-            showResult('added', '✓ ' + [r.info.name, r.info.marke].filter(Boolean).join(' · ') + ' → ' + Warengruppen.nameOf(it.gruppe));
+            const ziel = it.gruppe !== 'sonstiges' ? ' → ' + Warengruppen.nameOf(it.gruppe) : '';
+            showResult('added', '✓ ' + [r.info.name, r.info.marke].filter(Boolean).join(' · ') + ziel);
           }
         }
       } else {
@@ -996,7 +997,7 @@
       // Warengruppe mitschreiben, damit sie im Sortiment fest steht
       const withGroup = pending.map((e) => {
         const it = knownItem(e.code);
-        return Object.assign({}, e, { gruppe: it ? Warengruppen.nameOf(it.gruppe) : '' });
+        return Object.assign({}, e, { gruppe: it && it.gruppe !== 'sonstiges' ? Warengruppen.nameOf(it.gruppe) : '' });
       });
       const r = await GitHubSync.push(token, withGroup, (url, init) => fetch(url, init));
       const done = new Set(r.added.concat(r.present));
@@ -1062,14 +1063,16 @@
 
   function renderGruppeSelect() {
     const current = captureGruppeId();
-    const opts = [new Option('Automatisch (aus der Bezeichnung)', '')];
-    Warengruppen.normalizeOrder(state.settings.laufweg).forEach((id) => opts.push(new Option(Warengruppen.nameOf(id), id)));
+    const opts = [new Option('Ohne Warengruppe', '')];
+    Warengruppen.normalizeOrder(state.settings.laufweg)
+      .filter((id) => id !== 'sonstiges')
+      .forEach((id) => opts.push(new Option(Warengruppen.nameOf(id), id)));
     opts.push(new Option('＋ Neue Warengruppe …', NEW_GROUP));
     el.captureGruppe.replaceChildren(...opts);
     el.captureGruppe.value = current;
     el.captureGruppeHint.textContent = current
       ? 'Alles, was du jetzt scannst, kommt nach „' + Warengruppen.nameOf(current) + '“.'
-      : 'Die Warengruppe ergibt sich aus Bezeichnung und Kategorie.';
+      : 'Scans kommen nach „Ohne Warengruppe“. Eigene Warengruppe wählen oder mit „＋ Neue Warengruppe …“ anlegen.';
   }
 
   el.captureGruppe.addEventListener('change', () => {
