@@ -10,6 +10,7 @@
   const STORE_KEY = 'ean-scan-liste.v2';
   const CAPTURE_KEY = 'ean-scan-liste.erfasst'; // selbst per Kamera erfasste EANs
   const TOKEN_KEY = 'ean-scan-liste.github-token'; // Schlüssel zum Schreiben der Sortiment-Datei auf GitHub
+  const DEVICE_KEY = 'ean-scan-liste.geraet'; // zufällige Kennung dieses Geräts: jedes Gerät bekommt eine eigene Tagesliste
   const OLD_STORE_KEY = 'ean-scan-liste.v1'; // frühere Version: Einstellungen (z. B. angelernter Ton) übernehmen
   const BASE_WIDTH = 520; // maximale Barcode-Breite in CSS-Pixeln bei Größe 100 %
   const MIN_BAR_HEIGHT = 22; // Module
@@ -125,7 +126,22 @@
   const legacy = saved.settings ? {} : load(OLD_STORE_KEY);
   const today = Tagesliste.dayKey();
   // Der gespeicherte Stand gilt nur für denselben Tag – an einem neuen Tag gibt es eine neue Liste.
-  const sameDay = saved.day === today && Number.isInteger(saved.seed);
+  // Gerätekennung: einmal zufällig erzeugt und gespeichert (ohne Speicher: pro Sitzung eine neue)
+  const device = (() => {
+    try {
+      let id = localStorage.getItem(DEVICE_KEY);
+      if (!id) {
+        id = Tagesliste.newDeviceId();
+        localStorage.setItem(DEVICE_KEY, id);
+      }
+      return id;
+    } catch (e) {
+      return Tagesliste.newDeviceId();
+    }
+  })();
+  // Heute gespeicherte Liste gilt weiter – außer es ist noch die frühere, für alle Geräte gleiche Liste:
+  // dann sofort auf die eigene Liste dieses Geräts wechseln (Häkchen bleiben je EAN erhalten).
+  const sameDay = saved.day === today && Number.isInteger(saved.seed) && saved.seed !== Tagesliste.daySeed(today);
   const state = {
     all: [], // ganzes Sortiment: CSV + selbst erfasste Artikel
     csv: [], // Sortiment aus der CSV
@@ -135,7 +151,7 @@
     day: today,
     // Fortschritt je EAN ('ok' | 'mismatch' | 'skip'), damit er auch nach einer geänderten Liste passt
     marks: sameDay && saved.marks && typeof saved.marks === 'object' && !Array.isArray(saved.marks) ? saved.marks : {},
-    seed: sameDay ? saved.seed : Tagesliste.daySeed(today),
+    seed: sameDay ? saved.seed : Tagesliste.daySeed(today, device),
     settings: Object.assign({}, DEFAULT_SETTINGS, legacy.settings, saved.settings),
     datenstand: '',
     loading: true,
@@ -419,7 +435,7 @@
     if (day === state.day || !state.all.length || dialogOpen()) return;
     if (Date.now() - lastActivityAt < IDLE_MS) return;
     state.day = day;
-    startList(Tagesliste.daySeed(day));
+    startList(Tagesliste.daySeed(day, device));
     toast('Neuer Tag – neue Liste mit ' + state.items.length + ' Artikeln', 'ok', 3000);
   }
   setInterval(checkDay, 60 * 1000);
