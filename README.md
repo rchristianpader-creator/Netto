@@ -26,8 +26,9 @@ Seite automatisch zum nächsten Artikel.** Dafür hört die Seite über das Mikr
 ### Tagesliste: jeden Tag 50 bis 80 zufällige Artikel
 
 Jeden Tag wird aus dem Sortiment eine neue Liste ausgelost: 50 bis 80 Artikel, auch die Anzahl ist jeden Tag
-zufällig. Jeder Artikel hat jeden Tag dieselbe Chance, dranzukommen. Die Auslosung hängt nur vom Datum ab: Die Liste
-bleibt den ganzen Tag gleich (auch nach dem Neuladen und auf jedem Gerät), um Mitternacht kommt die nächste. Bleibt
+zufällig. Jeder Artikel hat jeden Tag dieselbe Chance, dranzukommen. Jedes Gerät bekommt seine eigene Liste: Die
+Auslosung hängt vom Datum und einer zufälligen Kennung des Geräts ab (beim ersten Öffnen im Browser gespeichert). Die
+Liste bleibt auf dem Gerät den ganzen Tag gleich (auch nach dem Neuladen), um Mitternacht kommt die nächste. Bleibt
 die Seite über Nacht offen, wechselt sie zur neuen Liste, sobald zehn Minuten lang nichts gescannt wurde. Die
 Häkchen (✓, ↷) gelten jeweils für den Tag.
 

@@ -117,3 +117,19 @@ test('pick mit Häufigkeit: ohne Gewichte unverändert, "selten" kommt deutlich 
   assert.equal(l.length, 60);
   assert.equal(new Set(l).size, 60);
 });
+
+test('jedes Gerät bekommt eine eigene Liste, auf dem Gerät bleibt sie den Tag über gleich', () => {
+  const a = T.newDeviceId();
+  const b = T.newDeviceId();
+  assert.match(a, /^[0-9a-f]{16}$/);
+  assert.notEqual(a, b);
+  const tag = '2026-09-26';
+  assert.equal(T.daySeed(tag, a), T.daySeed(tag, a));
+  assert.deepEqual(codes(T.pick(items, T.daySeed(tag, a))), codes(T.pick(items, T.daySeed(tag, a))));
+  // viele Geräte: (fast) alle Listen verschieden
+  const listen = Array.from({ length: 20 }, () => codes(T.pick(items, T.daySeed(tag, T.newDeviceId()))).join());
+  assert.ok(new Set(listen).size >= 19);
+  // ohne Gerät wie bisher
+  assert.equal(T.daySeed(tag, ''), T.daySeed(tag));
+  assert.notEqual(T.daySeed(tag, a), T.daySeed(tag));
+});

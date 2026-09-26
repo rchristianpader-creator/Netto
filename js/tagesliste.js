@@ -1,8 +1,8 @@
 /*
  * Tagesliste: jeden Tag eine neue Zufallsauswahl aus dem Sortiment, standardmäßig 50 bis 80 Artikel
  * (auch die Anzahl ist zufällig). Alles hängt nur vom Zufallswert "seed" ab; der seed eines Tages ergibt
- * sich aus dem Datum – so bleibt die Liste den ganzen Tag gleich (auch nach dem Neuladen, auf jedem Gerät)
- * und am nächsten Tag kommt eine neue.
+ * sich aus dem Datum und der zufälligen Kennung des Geräts – so hat jedes Gerät eine andere Liste, die
+ * auf diesem Gerät den ganzen Tag gleich bleibt (auch nach dem Neuladen); am nächsten Tag kommt eine neue.
  */
 (function (root, factory) {
   const api = factory(root.Warengruppen || (typeof require === 'function' ? require('./warengruppen.js') : null));
@@ -22,8 +22,19 @@
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   }
 
-  /** Zufallswert eines Tages: an jedem Tag ein anderer, am selben Tag immer derselbe. */
-  const daySeed = (day) => hash('tagesliste:' + day);
+  /**
+   * Zufallswert eines Tages: an jedem Tag ein anderer, am selben Tag immer derselbe. Mit Gerätekennung
+   * (device) bekommt jedes Gerät einen eigenen; ohne gilt der frühere, für alle gleiche Wert.
+   */
+  const daySeed = (day, device) => hash('tagesliste:' + day + (device ? ':' + device : ''));
+
+  /** Neue zufällige Gerätekennung (einmal pro Gerät erzeugt und gespeichert). */
+  function newDeviceId() {
+    const bytes = new Uint8Array(8);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) crypto.getRandomValues(bytes);
+    else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  }
 
   /** Bereich "Artikel pro Tag" bereinigen: ganze Zahlen ab 1, von ≤ bis; Unbrauchbares → Standard. */
   function normalizeRange(range) {
@@ -66,5 +77,5 @@
       .map((x) => x.it);
   }
 
-  return { DEFAULT_RANGE, HAEUFIGKEIT, dayKey, daySeed, normalizeRange, count, pick };
+  return { DEFAULT_RANGE, HAEUFIGKEIT, dayKey, daySeed, newDeviceId, normalizeRange, count, pick };
 });
