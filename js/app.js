@@ -1,7 +1,7 @@
 /*
  * EAN Scan-Liste – Bedienoberfläche.
  * Benötigt ean.js, sortiment.js, warengruppen.js, tagesliste.js, tone-detector.js, keyboard-scanner.js,
- * erfassung.js, camera-scanner.js, github-sync.js, produktinfo.js, etikett-ocr.js.
+ * erfassung.js, camera-scanner.js, github-sync.js, produktinfo.js, etikett-ocr.js, artikelnummern.js.
  */
 (function () {
   'use strict';
@@ -11,6 +11,7 @@
   const CAPTURE_KEY = 'ean-scan-liste.erfasst'; // selbst per Kamera erfasste EANs
   const TOKEN_KEY = 'ean-scan-liste.github-token'; // Schlüssel zum Schreiben der Sortiment-Datei auf GitHub
   const DEVICE_KEY = 'ean-scan-liste.geraet'; // zufällige Kennung dieses Geräts: jedes Gerät bekommt eine eigene Tagesliste
+  const ARTNR_KEY = 'ean-scan-liste.artikelnummern'; // Stand der Inventur Liste (feste Artikelnummern)
   const OLD_STORE_KEY = 'ean-scan-liste.v1'; // frühere Version: Einstellungen (z. B. angelernter Ton) übernehmen
   const BASE_WIDTH = 520; // maximale Barcode-Breite in CSS-Pixeln bei Größe 100 %
   const MIN_BAR_HEIGHT = 22; // Module
@@ -29,6 +30,8 @@
     captureGruppe: '', // Erfassen: feste Warengruppe (id) für neue Scans, '' = automatisch
     eigeneGruppen: [], // selbst angelegte Warengruppen (Namen)
     haeufigkeit: {}, // Warengruppe (id) → 'selten' | 'normal' | 'oft': wie oft sie in der Tagesliste vorkommt
+    liste: 'tag', // angezeigte Liste: 'tag' = Tagesliste, 'artnr' = Inventur Liste (feste Artikelnummern)
+    artnrFormat: 'c128', // Barcode der Artikelnummern: 'c128' = Code 128, 'ean' = EAN-13 mit führenden Nullen
     bezeichnungen: false, // Erfassen: Bezeichnung nachschlagen (Open Food Facts, Schild-Texterkennung); angezeigt wird sie nicht
   };
 
@@ -100,6 +103,10 @@
     tagesInfo: $('#tages-info'),
     setPerDayMin: $('#set-per-day-min'),
     setPerDayMax: $('#set-per-day-max'),
+    setArtnrFormat: $('#set-artnr-format'),
+    listTabs: Array.from(document.querySelectorAll('[data-liste]')),
+    btnList: $('#btn-list'),
+    btnListLabel: $('#btn-list span'),
   };
   const meters = Array.from(document.querySelectorAll('[data-meter]')).map((root) => ({
     root,
@@ -146,17 +153,39 @@
     all: [], // ganzes Sortiment: CSV + selbst erfasste Artikel
     csv: [], // Sortiment aus der CSV
     eigene: [], // selbst erfasste EANs: [{ code, at }]
-    items: [], // heutige Auswahl, nach Laufweg sortiert, innerhalb der Warengruppen gemischt
-    index: 0,
+    // Zwei Listen mit eigenem Stand; state.items / index / marks zeigen auf die gerade angezeigte (siehe unten).
+    tag: {
+      items: [], // heutige Auswahl, nach Laufweg sortiert, innerhalb der Warengruppen gemischt
+      index: 0,
+      // Fortschritt je EAN ('ok' | 'mismatch' | 'skip'), damit er auch nach einer geänderten Liste passt
+      marks: sameDay && saved.marks && typeof saved.marks === 'object' && !Array.isArray(saved.marks) ? saved.marks : {},
+    },
+    artnr: {
+      items: Artikelnummern.items(), // feste Liste, eigene Kategorie
+      index: 0,
+      marks: {},
+    },
     day: today,
-    // Fortschritt je EAN ('ok' | 'mismatch' | 'skip'), damit er auch nach einer geänderten Liste passt
-    marks: sameDay && saved.marks && typeof saved.marks === 'object' && !Array.isArray(saved.marks) ? saved.marks : {},
     seed: sameDay ? saved.seed : Tagesliste.daySeed(today, device),
     settings: Object.assign({}, DEFAULT_SETTINGS, legacy.settings, saved.settings),
     datenstand: '',
     loading: true,
     loadError: '',
   };
+  if (state.settings.liste !== 'artnr') state.settings.liste = 'tag';
+  if (state.settings.artnrFormat !== 'ean') state.settings.artnrFormat = 'c128';
+  (() => {
+    const a = load(ARTNR_KEY);
+    if (a.marks && typeof a.marks === 'object' && !Array.isArray(a.marks)) state.artnr.marks = a.marks;
+    const k = state.artnr.items.findIndex((it) => it.code === a.code);
+    state.artnr.index = k >= 0 ? k : Number.isInteger(a.index) ? Math.max(0, Math.min(a.index, state.artnr.items.length)) : 0;
+  })();
+  const active = () => (state.settings.liste === 'artnr' ? state.artnr : state.tag);
+  ['items', 'index', 'marks'].forEach((key) =>
+    Object.defineProperty(state, key, { get: () => active()[key], set: (v) => (active()[key] = v) })
+  );
+  const isArtnr = () => state.settings.liste === 'artnr';
+  const groupName = (id) => (id === Artikelnummern.GRUPPE ? Artikelnummern.GRUPPE_NAME : Warengruppen.nameOf(id));
   if (!Array.isArray(state.settings.eigeneGruppen)) state.settings.eigeneGruppen = [];
   state.settings.eigeneGruppen.forEach((name) => Warengruppen.register(name));
   state.settings.laufweg = Warengruppen.normalizeOrder(state.settings.laufweg);
@@ -165,15 +194,17 @@
   let resume = sameDay ? { code: saved.code, index: saved.index } : null; // Stelle, an der es heute weitergeht
 
   function save() {
-    const item = state.items[state.index];
+    const item = state.tag.items[state.tag.index];
+    const a = state.artnr.items[state.artnr.index];
     try {
+      localStorage.setItem(ARTNR_KEY, JSON.stringify({ code: a ? a.code : null, index: state.artnr.index, marks: state.artnr.marks }));
       localStorage.setItem(
         STORE_KEY,
         JSON.stringify({
           day: state.day,
           code: item ? item.code : null,
-          index: state.index,
-          marks: state.marks,
+          index: state.tag.index,
+          marks: state.tag.marks,
           seed: state.seed,
           settings: state.settings,
         })
@@ -183,7 +214,10 @@
     }
   }
 
-  const markOf = (item) => (MARKS[state.marks[item.code]] ? state.marks[item.code] : '');
+  const markOf = (item, marks) => {
+    const m = (marks || state.marks)[item.code];
+    return MARKS[m] ? m : '';
+  };
 
   function counts() {
     const c = { ok: 0, mismatch: 0, skip: 0, open: 0 };
@@ -214,12 +248,13 @@
       });
       state.settings.laufweg = Warengruppen.normalizeOrder(state.settings.laufweg);
       rebuildAll();
-      state.items = arrangeDay();
+      const t = state.tag;
+      t.items = arrangeDay();
       state.datenstand = data.datenstand;
-      const byCode = resume && resume.code ? state.items.findIndex((it) => it.code === resume.code) : -1;
+      const byCode = resume && resume.code ? t.items.findIndex((it) => it.code === resume.code) : -1;
       const byIndex = resume && Number.isInteger(resume.index) ? resume.index : 0;
-      state.index = byCode >= 0 ? byCode : Math.max(0, Math.min(byIndex, state.items.length));
-      if (!resume && state.items.length) toast('Neue Tagesliste: ' + state.items.length + ' Artikel', 'ok', 2500);
+      t.index = byCode >= 0 ? byCode : Math.max(0, Math.min(byIndex, t.items.length));
+      if (!resume && t.items.length && !isArtnr()) toast('Neue Tagesliste: ' + t.items.length + ' Artikel', 'ok', 2500);
       save();
     } catch (err) {
       state.loadError = 'Das Sortiment konnte nicht geladen werden (' + ((err && err.message) || 'unbekannter Fehler') + ').';
@@ -250,17 +285,19 @@
   }
 
   // Erster Artikel ohne Markierung (alle markiert: "Fertig"-Ansicht).
-  function firstOpen() {
-    const i = state.items.findIndex((it) => !markOf(it));
-    return i >= 0 ? i : state.items.length;
+  function firstOpen(list) {
+    const l = list || active();
+    const i = l.items.findIndex((it) => !markOf(it, l.marks));
+    return i >= 0 ? i : l.items.length;
   }
 
   // Neu zusammenstellen (Laufweg oder Anzahl pro Tag geändert); der aktuelle Artikel bleibt der aktuelle.
   function rearrange() {
-    const current = state.items[state.index];
-    state.items = arrangeDay();
-    const k = current ? state.items.indexOf(current) : -1;
-    state.index = k >= 0 ? k : firstOpen();
+    const t = state.tag;
+    const current = t.items[t.index];
+    t.items = arrangeDay();
+    const k = current ? t.items.indexOf(current) : -1;
+    t.index = k >= 0 ? k : firstOpen(t);
     save();
     render();
   }
@@ -270,7 +307,7 @@
   function render() {
     const n = state.items.length;
     const i = state.index;
-    const ready = !state.loading && !state.loadError && n > 0;
+    const ready = n > 0 && (isArtnr() || (!state.loading && !state.loadError));
     const done = ready && i >= n;
     const c = counts();
 
@@ -293,8 +330,16 @@
       el.emptyCapture.hidden = !empty;
       return;
     }
-    el.summary.textContent = 'Heute ' + n + ' Artikel · ' + (c.ok + c.mismatch) + ' gescannt';
+    el.summary.textContent = isArtnr()
+      ? 'Inventur Liste · ' + (c.ok + c.mismatch) + ' von ' + n + ' gescannt'
+      : 'Heute ' + n + ' Artikel · ' + (c.ok + c.mismatch) + ' gescannt';
 
+    if (done && isArtnr()) {
+      el.doneText.textContent =
+        'Alle ' + n + ' Nummern der Inventur Liste durchlaufen – ' + (c.ok + c.mismatch) + ' per Scan' +
+        (c.skip ? ', ' + c.skip + ' übersprungen' : '') + '.';
+      return;
+    }
     if (done) {
       el.doneText.textContent =
         'Alle ' + n + ' Artikel der Tagesliste durchlaufen – ' + (c.ok + c.mismatch) + ' per Scan' +
@@ -306,9 +351,10 @@
     el.pos.textContent = i + 1 + ' / ' + n;
     // Angezeigt werden nur Warengruppe und EAN (Bezeichnung und Marke sind unzuverlässig und werden nicht gebraucht)
     el.group.textContent = '';
-    el.name.textContent = Warengruppen.nameOf(item.gruppe);
+    el.name.textContent = item.artnr ? 'Nr. ' + item.code : Warengruppen.nameOf(item.gruppe);
     el.meta.textContent = '';
-    el.code.textContent = item.type + ' ' + item.code;
+    const bc = barcodeOf(item);
+    el.code.textContent = item.artnr ? 'Art.-Nr. ' + item.code + ' · ' + bc.type : item.type + ' ' + item.code;
     if (!item.valid) el.note.textContent = item.note + ' – der Scanner wird diesen Code nicht lesen';
     else if (markOf(item) === 'ok') el.note.textContent = '✓ bereits gescannt';
     else el.note.textContent = item.note;
@@ -317,11 +363,18 @@
     drawBarcode();
   }
 
+  // Was als Barcode gezeichnet wird: EAN des Sortiments oder Artikelnummer (Code 128 bzw. EAN-13).
+  function barcodeOf(item) {
+    return item.artnr ? Artikelnummern.barcode(item.code, state.settings.artnrFormat) : { type: item.type, value: item.code, kind: 'ean' };
+  }
+
   // Barcode so groß wie möglich, aber mit ganzzahligen Gerätepixeln pro Modul (gleichmäßige, scharfe Balken).
   function drawBarcode() {
     const item = state.items[state.index];
     if (!item || el.viewCode.hidden) return;
-    const g = EAN.geometry(item.code);
+    const bc = barcodeOf(item);
+    const lib = bc.kind === 'c128' ? Artikelnummern : EAN;
+    const g = lib.geometry(bc.value);
     const dpr = window.devicePixelRatio || 1;
     const pad = 20; // Innenabstand der weißen Karte, beidseitig
     const availW = el.area.clientWidth - pad;
@@ -336,7 +389,7 @@
       if (barHeight >= MIN_BAR_HEIGHT || px === 1) break;
       px--;
     }
-    el.barcode.innerHTML = EAN.toSVG(item.code, { module: px / dpr, barHeight: Math.max(MIN_BAR_HEIGHT, barHeight) });
+    el.barcode.innerHTML = lib.toSVG(bc.value, { module: px / dpr, barHeight: Math.max(MIN_BAR_HEIGHT, barHeight) });
   }
 
   let drawQueued = false;
@@ -384,7 +437,7 @@
   function goTo(i) {
     const n = state.items.length;
     if (!n) return;
-    if (i >= n && state.settings.loop) i = 0;
+    if (i >= n && state.settings.loop && !isArtnr()) i = 0; // Inventur Liste: jede Nummer nur einmal, nie wieder von vorne
     state.index = Math.max(0, Math.min(i, n)); // n = "Fertig"-Ansicht
     lastActivityAt = Date.now();
     save();
@@ -397,7 +450,7 @@
     goTo(state.index + 1);
     const after = state.items[state.index];
     const changed = before && after && after !== before && after.gruppe !== before.gruppe;
-    if (changed) toast('Weiter mit: ' + Warengruppen.nameOf(after.gruppe), 'ok', 2200);
+    if (changed) toast('Weiter mit: ' + groupName(after.gruppe), 'ok', 2200);
     return changed;
   }
 
@@ -421,10 +474,30 @@
   // Andere Liste (neuer Tag oder neu ausgelost): Auswahl, Anzahl und Reihenfolge hängen am seed.
   function startList(seed) {
     state.seed = seed;
-    state.marks = {};
-    state.items = arrangeDay();
+    state.tag.marks = {};
+    state.tag.items = arrangeDay();
+    state.tag.index = 0;
     resume = null;
-    goTo(0);
+    lastActivityAt = Date.now();
+    save();
+    render();
+  }
+
+  // Zwischen Tagesliste und Inventur Liste umschalten; jede Liste behält ihren Stand.
+  function switchList(name) {
+    if (name !== 'tag' && name !== 'artnr') return;
+    if (name !== state.settings.liste) {
+      state.settings.liste = name;
+      save();
+      render();
+    }
+    renderListTabs();
+  }
+
+  function renderListTabs() {
+    el.listTabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.liste === state.settings.liste)));
+    el.btnList.title = isArtnr() ? 'Inventur Liste' : 'Tagesliste';
+    el.btnListLabel.textContent = isArtnr() ? 'Übersicht' : 'Tagesliste';
   }
 
   const dialogOpen = () => el.dlgList.open || el.dlgSettings.open || el.dlgCapture.open;
@@ -436,7 +509,7 @@
     if (Date.now() - lastActivityAt < IDLE_MS) return;
     state.day = day;
     startList(Tagesliste.daySeed(day, device));
-    toast('Neuer Tag – neue Liste mit ' + state.items.length + ' Artikeln', 'ok', 3000);
+    toast('Neuer Tag – neue Liste mit ' + state.tag.items.length + ' Artikeln', 'ok', 3000);
   }
   setInterval(checkDay, 60 * 1000);
 
@@ -458,7 +531,8 @@
     if (now - lastScanAt < state.settings.cooldownMs) return; // z. B. Piepton + Tastatur vom selben Scan
     lastScanAt = now;
 
-    const match = source !== 'keyboard' || EAN.sameCode(scanned, item.code);
+    const match =
+      source !== 'keyboard' || (item.artnr ? Artikelnummern.matches(scanned, item.code) : EAN.sameCode(scanned, item.code));
     state.marks[item.code] = match ? 'ok' : 'mismatch';
     advance();
     flash(match ? 'ok' : 'warn');
@@ -670,6 +744,8 @@
 
   function openList() {
     if (!state.items.length) return;
+    $('#dlg-list-title').textContent = isArtnr() ? 'Inventur Liste' : 'Tagesliste';
+    el.search.placeholder = isArtnr() ? 'Suchen: Nummer' : 'Suchen: Name, Marke oder EAN';
     el.search.value = '';
     renderOverview();
     el.dlgList.showModal();
@@ -678,17 +754,19 @@
   }
 
   function matches(item, q) {
-    const text = item.name + ' ' + item.marke + ' ' + Warengruppen.nameOf(item.gruppe);
+    const text = item.name + ' ' + item.marke + ' ' + groupName(item.gruppe);
     return !q || item.code.includes(q) || text.toLowerCase().includes(q);
   }
 
   // Stand je Warengruppe: { gruppe: { total, done } }
-  function groupStats() {
+  function groupStats(list) {
+    const l = list || active();
     const stats = {};
-    state.items.forEach((it) => {
+    l.items.forEach((it) => {
       const s = stats[it.gruppe] || (stats[it.gruppe] = { total: 0, done: 0 });
       s.total++;
-      if (markOf(it) === 'ok' || markOf(it) === 'mismatch') s.done++;
+      const m = markOf(it, l.marks);
+      if (m === 'ok' || m === 'mismatch') s.done++;
     });
     return stats;
   }
@@ -705,7 +783,7 @@
         const head = document.createElement('li');
         head.className = 'group-head';
         head.innerHTML = '<span class="gname"></span><span class="gcount"></span>';
-        head.querySelector('.gname').textContent = Warengruppen.nameOf(it.gruppe);
+        head.querySelector('.gname').textContent = groupName(it.gruppe);
         head.querySelector('.gcount').textContent = stats[it.gruppe].done + ' / ' + stats[it.gruppe].total + ' ✓';
         frag.appendChild(head);
       }
@@ -720,7 +798,7 @@
         '<span class="name"><span class="title"></span><span class="sub"></span></span><span class="code">' + it.code + '</span>';
       b.querySelector('.title').textContent = it.code; // nur EAN, die Warengruppe steht als Überschrift darüber
       b.querySelector('.sub').textContent = '';
-      b.querySelector('.code').textContent = it.type;
+      b.querySelector('.code').textContent = it.artnr ? barcodeOf(it).type : it.type;
       li.appendChild(b);
       frag.appendChild(li);
     });
@@ -734,8 +812,14 @@
 
     const c = counts();
     el.overviewStats.textContent =
-      state.items.length + ' Artikel: ' + c.ok + ' ✓ gescannt' + (c.mismatch ? ' · ' + c.mismatch + ' ⚠ abweichend' : '') +
+      state.items.length + (isArtnr() ? ' Nummern: ' : ' Artikel: ') + c.ok + ' ✓ gescannt' + (c.mismatch ? ' · ' + c.mismatch + ' ⚠ abweichend' : '') +
       (c.skip ? ' · ' + c.skip + ' ↷ übersprungen' : '') + ' · ' + c.open + ' offen';
+    if (isArtnr()) {
+      el.dataInfo.textContent =
+        'Inventur Liste: ' + state.items.length + ' feste Artikelnummern in fester Reihenfolge. Barcode: ' +
+        barcodeOf(state.items[0]).type + ' (änderbar in den Einstellungen).';
+      return;
+    }
     el.dataInfo.textContent =
       'Tagesliste vom ' + formatDay(state.day) + ': ' + state.items.length + ' von ' + state.all.length +
       ' Artikeln aus dem per Kamera erfassten Sortiment' +
@@ -1262,7 +1346,7 @@
 
   function renderTagesInfo() {
     el.tagesInfo.textContent =
-      'Heute (' + formatDay(state.day) + '): ' + state.items.length + ' von ' + state.all.length + ' Artikeln';
+      'Heute (' + formatDay(state.day) + '): ' + state.tag.items.length + ' von ' + state.all.length + ' Artikeln';
   }
 
   // Laufweg: alle Warengruppen, die im Sortiment vorkommen (auch wenn heute keiner ihrer Artikel dran ist).
@@ -1272,7 +1356,7 @@
   }
 
   function renderLaufweg() {
-    const stats = groupStats();
+    const stats = groupStats(state.tag);
     const visible = visibleGroups();
     el.laufweg.replaceChildren(
       ...visible.map((id, i) => {
@@ -1346,6 +1430,7 @@
     el.setSize.value = s.size;
     el.setPerDayMin.value = s.perDay.min;
     el.setPerDayMax.value = s.perDay.max;
+    el.setArtnrFormat.value = s.artnrFormat;
     el.outLevel.textContent = s.minLevelDb + ' dB';
     el.outCooldown.textContent = (s.cooldownMs / 1000).toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' s';
     el.outSize.textContent = s.size + ' %';
@@ -1450,13 +1535,29 @@
   el.dlgSettings.addEventListener('close', () => listener.cancelCalibration());
 
   $('#btn-restart-day').addEventListener('click', () => {
+    switchList('tag');
     restart();
     el.dlgSettings.close();
     toast('Von vorne – ' + state.items.length + ' Artikel');
   });
 
+  $('#btn-restart-artnr').addEventListener('click', () => {
+    switchList('artnr');
+    restart();
+    el.dlgSettings.close();
+    toast('Inventur Liste von vorne – ' + state.items.length + ' Nummern');
+  });
+
+  el.setArtnrFormat.addEventListener('change', () => {
+    changeSettings({ artnrFormat: el.setArtnrFormat.value === 'ean' ? 'ean' : 'c128' });
+    render();
+  });
+
+  el.listTabs.forEach((b) => b.addEventListener('click', () => switchList(b.dataset.liste)));
+
   $('#btn-new-list').addEventListener('click', () => {
     startList(newSeed());
+    switchList('tag');
     el.dlgSettings.close();
     const first = state.items[0];
     toast(
@@ -1497,6 +1598,7 @@
 
   // ---------- Start ----------
 
+  renderListTabs();
   updateListenUI();
   loadData();
 })();

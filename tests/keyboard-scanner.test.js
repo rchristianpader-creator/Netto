@@ -33,3 +33,12 @@ test('Scanner ohne Enter/Tab: Scan endet nach kurzer Pause', async () => {
   await new Promise((r) => setTimeout(r, 60));
   assert.deepEqual(scans, ['96385074']);
 });
+
+test('Fünfstellige Artikelnummer mit Enter wird als Scan erkannt', () => {
+  const scans = [];
+  const s = new KeyboardScanner((c) => scans.push(c));
+  let t = 0;
+  for (const k of '38018') s.key(k, (t += 10));
+  s.key('Enter', (t += 10));
+  assert.deepStrictEqual(scans, ['38018']);
+});

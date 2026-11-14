@@ -128,6 +128,18 @@ gedrehte Codes. Lädt WebAssembly nicht, dient [ZXing](https://github.com/zxing-
 Apache-2.0) als Ersatz. Wo das Gerät es erlaubt, gibt es Dauer-Autofokus und einen Knopf *Licht* (Taschenlampe).
 Das Kamerabild wird nur im Browser ausgewertet.
 
+## Inventur Liste
+
+Oben in der App umschalten zwischen **Tagesliste** und **Inventur Liste**. Die Inventur Liste ist eine eigene Liste
+mit 179 festen fünfstelligen Artikelnummern ([`js/artikelnummern.js`](js/artikelnummern.js)):
+
+- Nur die Nummern (keine Bezeichnung, keine Warengruppe), Reihenfolge fest, es wird nichts gemischt oder ausgelost
+- Jede Nummer kommt genau einmal: nach der letzten ist Schluss (auch wenn „wieder von vorne“ für die Tagesliste an ist)
+- Weiter geht es mit derselben Scan-Ton-Erkennung wie bei der Tagesliste (Anlernen, Pegelanzeige, Sperrzeit);
+  ein Scanner am selben Gerät schaltet ebenfalls weiter und prüft die Nummer
+- Barcode als Code 128 (Standard) oder EAN-13 mit führenden Nullen: Einstellungen → *Inventur Liste*
+- Jede Liste behält ihren eigenen Stand (✓, ↷, Position); *Inventur Liste von vorne* setzt nur diese zurück
+
 ## Sortiment ändern
 
 Die Artikel stehen in [`data/netto-sortiment.csv`](data/netto-sortiment.csv) (Semikolon-getrennt, UTF-8):

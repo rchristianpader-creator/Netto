@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#000000">
-  <meta name="description" content="Zeigt jeden Tag 50 bis 80 zufällige Artikel aus dem Netto-Marken-Discount-Sortiment als Barcodes an und schaltet beim Piepton des Scanners automatisch zum nächsten Artikel.">
+  <meta name="description" content="Zeigt jeden Tag 50 bis 80 zufällige Artikel aus dem Netto-Marken-Discount-Sortiment und die Inventur Liste als Barcodes an und schaltet beim Piepton des Scanners automatisch zum nächsten Artikel.">
   <title>EAN Scan-Liste</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="css/style.css?v=2026-09-26.1">
+  <link rel="stylesheet" href="css/style.css?v=2026-11-14.1">
 </head>
 <body>
   <div class="app">
@@ -37,6 +37,11 @@
         </button>
       </nav>
     </header>
+
+    <div class="list-tabs" role="tablist" aria-label="Liste">
+      <button type="button" role="tab" class="list-tab" data-liste="tag" aria-selected="true">Tagesliste</button>
+      <button type="button" role="tab" class="list-tab" data-liste="artnr" aria-selected="false">Inventur Liste</button>
+    </div>
 
     <main class="stage">
       <section class="panel" id="view-loading">
@@ -245,12 +250,28 @@
         </section>
 
         <section class="group">
+          <h3>Inventur Liste</h3>
+          <p class="hint">Eigene Liste mit 179 festen Artikelnummern, nur die Nummern, Reihenfolge fest (nicht gemischt), jede Nummer genau einmal: nach der letzten ist Schluss. Oben über „Inventur Liste“ umschalten. Weiter geht es
+            mit derselben Scan-Ton-Erkennung (und Scanner-Eingabe) wie bei der Tagesliste; der Stand bleibt je Liste erhalten.</p>
+          <label class="field">
+            <span>Barcode</span>
+            <select class="text-input" id="set-artnr-format">
+              <option value="c128">Code 128 (Artikelnummer direkt)</option>
+              <option value="ean">EAN-13 (mit führenden Nullen)</option>
+            </select>
+          </label>
+          <div class="row">
+            <button type="button" class="btn" id="btn-restart-artnr">Inventur Liste von vorne</button>
+          </div>
+        </section>
+
+        <section class="group">
           <h3>Anzeige</h3>
           <label class="field">
             <span>Barcode-Größe <output id="out-size"></output></span>
             <input type="range" id="set-size" min="40" max="160" step="5">
           </label>
-          <label class="switch"><input type="checkbox" id="set-loop"><span>Nach dem letzten Artikel wieder von vorne</span></label>
+          <label class="switch"><input type="checkbox" id="set-loop"><span>Tagesliste: nach dem letzten Artikel wieder von vorne</span></label>
         </section>
 
         <p class="hint">Solange dieses Fenster offen ist, wird nicht weitergeschaltet – ein erkannter Ton lässt nur den Punkt an der Anzeige grün aufleuchten.</p>
@@ -258,17 +279,18 @@
     </form>
   </dialog>
 
-  <script src="js/ean.js?v=2026-09-26.1"></script>
-  <script src="js/sortiment.js?v=2026-09-26.1"></script>
-  <script src="js/warengruppen.js?v=2026-09-26.1"></script>
-  <script src="js/tagesliste.js?v=2026-09-26.1"></script>
-  <script src="js/tone-detector.js?v=2026-09-26.1"></script>
-  <script src="js/keyboard-scanner.js?v=2026-09-26.1"></script>
-  <script src="js/erfassung.js?v=2026-09-26.1"></script>
-  <script src="js/camera-scanner.js?v=2026-09-26.1"></script>
-  <script src="js/github-sync.js?v=2026-09-26.1"></script>
-  <script src="js/produktinfo.js?v=2026-09-26.1"></script>
-  <script src="js/etikett-ocr.js?v=2026-09-26.1"></script>
-  <script src="js/app.js?v=2026-09-26.1"></script>
+  <script src="js/ean.js?v=2026-11-14.1"></script>
+  <script src="js/sortiment.js?v=2026-11-14.1"></script>
+  <script src="js/warengruppen.js?v=2026-11-14.1"></script>
+  <script src="js/tagesliste.js?v=2026-11-14.1"></script>
+  <script src="js/tone-detector.js?v=2026-11-14.1"></script>
+  <script src="js/keyboard-scanner.js?v=2026-11-14.1"></script>
+  <script src="js/erfassung.js?v=2026-11-14.1"></script>
+  <script src="js/camera-scanner.js?v=2026-11-14.1"></script>
+  <script src="js/github-sync.js?v=2026-11-14.1"></script>
+  <script src="js/produktinfo.js?v=2026-11-14.1"></script>
+  <script src="js/etikett-ocr.js?v=2026-11-14.1"></script>
+  <script src="js/artikelnummern.js?v=2026-11-14.1"></script>
+  <script src="js/app.js?v=2026-11-14.1"></script>
 </body>
 </html>
