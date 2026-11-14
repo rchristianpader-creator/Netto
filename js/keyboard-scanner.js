@@ -12,7 +12,7 @@
 
   const DEFAULTS = {
     maxGapMs: 80, // größter Abstand zwischen zwei Zeichen eines Scans
-    minLength: 6, // Mindestlänge mit Enter/Tab am Ende
+    minLength: 5, // Mindestlänge mit Enter/Tab am Ende (5: Artikelnummern Obst & Gemüse als Code 128)
     minLengthNoSuffix: 8, // Mindestlänge, wenn der Scanner nichts hinterherschickt
     idleMs: 150, // danach gilt ein Scan ohne Enter/Tab als beendet
   };
