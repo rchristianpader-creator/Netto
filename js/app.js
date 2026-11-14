@@ -437,7 +437,7 @@
   function goTo(i) {
     const n = state.items.length;
     if (!n) return;
-    if (i >= n && state.settings.loop) i = 0;
+    if (i >= n && state.settings.loop && !isArtnr()) i = 0; // Inventur Liste: jede Nummer nur einmal, nie wieder von vorne
     state.index = Math.max(0, Math.min(i, n)); // n = "Fertig"-Ansicht
     lastActivityAt = Date.now();
     save();

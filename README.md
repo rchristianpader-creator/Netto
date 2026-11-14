@@ -134,6 +134,7 @@ Oben in der App umschalten zwischen **Tagesliste** und **Inventur Liste**. Die I
 mit 179 festen fünfstelligen Artikelnummern ([`js/artikelnummern.js`](js/artikelnummern.js)):
 
 - Nur die Nummern (keine Bezeichnung, keine Warengruppe), Reihenfolge fest, es wird nichts gemischt oder ausgelost
+- Jede Nummer kommt genau einmal: nach der letzten ist Schluss (auch wenn „wieder von vorne“ für die Tagesliste an ist)
 - Weiter geht es mit derselben Scan-Ton-Erkennung wie bei der Tagesliste (Anlernen, Pegelanzeige, Sperrzeit);
   ein Scanner am selben Gerät schaltet ebenfalls weiter und prüft die Nummer
 - Barcode als Code 128 (Standard) oder EAN-13 mit führenden Nullen: Einstellungen → *Inventur Liste*
