@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Article numbers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF1E8; --ink:#1E2A1F; --soft:#5C6B5C; --line:#C9D3C3; --accent:#3E7B3A; --mark:#F2A65A; --btn:#DDE5D7;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141A14; --ink:#E8EEE4; --soft:#9AA897; --line:#2C362B; --accent:#7BBE72; --mark:#E8964A; --btn:#212A20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141A14; --ink:#E8EEE4; --soft:#9AA897; --line:#2C362B; --accent:#7BBE72; --mark:#E8964A; --btn:#212A20;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  display:flex; flex-direction:column;
+  -webkit-user-select:none; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+header{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 18px; font-size:15px; color:var(--soft);
+}
+header strong{color:var(--ink); font-weight:600}
+.progress{height:4px; background:var(--line); margin:0 18px; border-radius:2px; overflow:hidden}
+.progress i{display:block; height:100%; background:var(--accent); width:0; transition:width .2s}
+#tap{
+  flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;
+  padding:20px; cursor:pointer; text-align:center; position:relative;
+}
+#num{
+  font-family:"Barlow Condensed","Arial Narrow",sans-serif; font-weight:700;
+  font-size:min(34vw,220px); line-height:1; letter-spacing:.01em;
+  font-variant-numeric:tabular-nums;
+}
+#code{background:#fff; padding:14px 10px; border-radius:10px; width:min(92vw,520px); margin-bottom:14px}
+#bc{display:block; width:100%; height:min(32vw,170px)}
+#num{font-size:min(16vw,96px)}
+#mode{flex:1.2}
+.hb{font:600 14px "Barlow",system-ui,sans-serif; color:var(--ink); background:var(--btn); border:1px solid var(--line); border-radius:8px; padding:6px 10px; margin-left:8px}
+.hb[aria-pressed="true"]{background:var(--accent); color:#fff; border-color:var(--accent)}
+#micbar{display:none; margin:8px 18px 0; position:relative; height:22px; background:var(--btn); border-radius:6px; overflow:hidden; font-size:13px; color:var(--soft)}
+#micbar.on{display:block}
+#lvl{position:absolute; left:0; top:0; bottom:0; width:0; background:var(--mark); opacity:.6}
+#micmsg{position:relative; padding-left:8px; line-height:22px}
+#name{margin-top:14px; font-size:20px; color:var(--soft); max-width:30ch}
+#flag{
+  margin-top:18px; height:8px; width:90px; border-radius:4px; background:var(--mark);
+  visibility:hidden;
+}
+#flag.on{visibility:visible}
+#hint{position:absolute; bottom:12px; font-size:14px; color:var(--soft)}
+#done{display:none; font-size:28px; font-weight:600}
+nav{display:flex; gap:10px; padding:12px 18px 18px}
+nav button{
+  flex:1; font:600 17px "Barlow",system-ui,sans-serif; color:var(--ink);
+  background:var(--btn); border:1px solid var(--line); border-radius:12px; padding:14px 8px;
+}
+nav button:active{filter:brightness(.92)}
+button:focus-visible,#tap:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+</style>
+</head>
+<body>
+<header><span>Item <strong id="pos">1</strong> of <span id="total"></span></span><span><span id="hl">Highlighted</span> <button id="snd" class="hb" aria-pressed="false">Listen off</button><button id="auto" class="hb" aria-pressed="false">Auto off</button></span></header>
+<div id="micbar"><i id="lvl"></i><span id="micmsg"></span></div>
+<div class="progress"><i id="bar"></i></div>
+<div id="tap" tabindex="0" aria-live="polite">
+  <div id="code"><svg id="bc" role="img" aria-label="Barcode"></svg></div>
+  <div id="num"></div>
+  <div id="name"></div>
+  <div id="flag" aria-label="Highlighted on the list"></div>
+  <div id="done">All done</div>
+  <div id="hint">Tap anywhere for the next number</div>
+</div>
+<nav>
+  <button id="mode">Code 128</button>
+  <button id="back">Back</button>
+  <button id="jump">Go to number</button>
+  <button id="reset">Start over</button>
+</nav>
+<script>
+// [number, name, highlighted]
+const D=[
+["38018","Bananen Lose MT",0],["38032","Banane Chiquita Lose",0],["38015","BIO Bananen Lose",1],["39042","Orangen Lose",1],["39020","Orangen 2kg VKE",1],["39023","Orangen 3kg Netz",1],["39094","Liebl. Orange 1,5kg VKE",1],["39025","Clementinen Lose",1],["39046","Clementinen 1kg VKE",0],["39059","Blatt Clementine 750g VKE",1],["39106","Clementinen 2kg VKE",0],["39124","Liebl.Clementine 1kg VKE",0],["39150","Satsumas 1kg VKE",0],["39071","Grapefruit rose ST",0],["39096","Pomelo weiss ST",0],["39170","Grapefruit Sweetie ST",0],["39008","Zitronen AP ST",0],["39010","Zitronen 500g VKE",0],["39000","Zitronen 1kg VKE",1],["39158","Bio NL Zitronen 500g VKE",0],["40148","GuacamoleMix 390g VKE",1],["40020","Kiwi Gruen ST",0],["40025","Kiwi 1kg VKE",1],["40141","Kiwi Gold ST",1],["40142","Kiwi rot VKEST",1],["40152","Ananas Lose",0],["40039","Mangos ST",0],["40421","Avocado vorgereift CH ST",0],
+["40422","Lieblings Avocado ST",0],["40423","Avocados 500g VKE",1],["40101","Papayas ST",1],["40098","Kaki ST",0],["40720","Kaki 1kg VKE",1],["40100","Granataepfel ST",1],["39162","Limetten 4er Schale VKE",0],["41071","Birne Nashi",0],["40722","Bio BB Ingwer Lose",0],["41020","Apfel Pink Lady Lose",0],["41055","Apfel Gala lose",0],["41213","Apfel Boskoop Lose",1],["41329","Apfel Wellant lose",0],["41510","Apfel Golden Deli. Lose",0],["41069","Apfel 2kg VKE",0],["41221","Apfel rot 1kg VKE",0],["41241","Apf. Evelina 1kg VKE",1],["41248","Apfel 2kg VKE EHFE QS",0],["41269","Apfel Kanzi 1kg VKE",1],["41270","Lieblings Aepfel 1kg VKE",1],["41277","Apfel 3kg VKE",1],["41359","Apf Elstar IDHG QS1Kg VKE",1],["41518","Apfel Pink Lady 1 kg VKE",0],["41332","Liebl.Birne Falstaff rot",0],["41346","Birne Xenia lose",0],["41153","Birnen 1kg VKE",0],["41169","Birnen 1,5 kg VKE",1],["46005","Wassermelonen Lose",1],
+["41371","Honigmelone Lose",1],["41317","Bio NL Apfel 1kg VKE",1],["42077","Pflaumen Dunkel 1kg VKE",1],["42088","Zwetschgen VKELose",0],["43073","Trauben rot lose",1],["43101","Trauben hell kernl. Lose",1],["43103","Tr. hell kernl. 500g VKE",0],["43125","Lieb.Tr.he.kernl.400g VKE",0],["43025","Tr. dkl. kernl. 500g VKE",0],["43036","TraubenMix 500g VKE",0],["40084","Kiwiberries 125g VKE",0],["43009","Brombeeren 125g VKE",0],["43132","Johannisbeeren 125g VKE",0],["43054","Himbeeren 125g VKE",0],["43131","Himbeeren 200g VKE",0],["43047","Heidelbeeren 125g VKE",1],["43112","Heidelbeeren 300g VKE",0],["43126","Liebl. Heidelbeeren 125g",1],["44146","Erdnuesse 400g VKE",0],["44031","Walnuesse LOSE",0],["44137","Pistazien Lose",0],["44075","Maronen/Esskastan. Lose",0],["44211","Bananench. 100g VKE Ch",0],["44212","Kokoschips 100g VKE Ch",0],["44213","Mangostreif. 100g VKE Ch",0],["44214","Ananasstuecke 100g VKE Ch",0],["44156","Datteln Deglet N 400g VKE",0],["44095","Bio Datteln 200g VKE",0],
+["44980","Bio Erdnuesse 250g VKE",0],["46298","Hokkaido Kuerbis lose",0],["45263","Moehren Tabaluga 250g VKE",1],["44999","Suesskartoffeln Lose",0],["45022","KartPfanni.unsGr2,5kg VKE",1],["45099","Kartoffeln 4kg VKE",1],["45103","KartoffPf.Grumb.2kg VKEQS",1],["45161","Kartoff. EHFE 4kg VKE QS",1],["45270","Kart.Pfannigruen2,5kg VKE",0],["45271","Kart.Pfanni blau2,5kg VKE",0],["45272","Kart.Pfanni rot2,5kg VKE",0],["45331","Kartoffeln Box VKE",1],["45345","SpkartBabyPotatoes1kg VKE",0],["45163","Kartoffeln 7,5kg",0],["45301","Zwiebeln 1,5kg VKE",0],["45330","Zwiebel Box 1,5kg VKE",1],["45110","Zwiebeln 3kg VKE",1],["45136","Gemuesezwiebel 1kg VKE",0],["45268","Schalotten 250g QS VKE",0],["45554","Zwiebel rot 1kg VKE",0],["45111","Spitzkohl lose",1],["45200","Weisskraut/-kohl lose",0],["45210","Blaukraut/Rotkohl lose",0],["45230","Wirsing lose",1],["45521","Kohlrabi ST",0],["45540","Kohlrabi ST",0],["46730","Sellerie lose",1],["45020","Blumenkohl ST",1],
+["45239","Rosenkohl 750g VKE",0],["45544","Speisemoehren 2kg VKE QS",0],["45545","Bundmoehren 750g VKE QS",0],["46370","Blumenkohl ST",0],["48580","Moehren Mini 300g VKE",0],["45247","BioRoteBete gek. 500g VKE",0],["45308","BIO NL Kartoff. 1,5kg VKE",0],["45325","Bio NL Zwiebel 1kg VKE",0],["45553","Bio NLZwiebel rot500g VKE",0],["46915","Bio NL Speisem. 1kg VKE",0],["48634","Zuckermais vak. 400g VKE",0],["46150","Gurken ST",0],["46158","Minigurken 750g VKE",0],["46746","MiniGurk.Tabaluga200g VKE",0],["46098","Rispentomaten lose",0],["46141","Fleischtomaten lose",0],["46082","Minipflaumentom. 200g VKE",0],["46097","Tomaten 500g VKE",0],["46104","Minipfl.Rispento.300g VKE",0],["46111","Minipflaumentom.500g VKE",0],["46119","Cocktailrispento.500g VKE",0],["46584","Liebl.Mi-Rispent.400g VKE",0],["46865","Rispentom. 650g VKE QS",0],["46877","Mini Rispentom350g VKE QS",0],["46884","Mini-Ch.Rispent. 200g VKE",0],["46812","Minipflaumentom. 1 kg VKE",0],["46220","Chinakohl lose",0],["46190","Rucola 125g VKE",0],
+["46200","Kopfsalat ST",0],["46230","EndivienSalat ST",0],["46405","Salat m. Wurzel Mix ST",0],["46416","Eisbergsalat ST",0],["46417","MiniRomanasalat VKEST",0],["46827","VeromaMix VKEST",0],["46875","Chicoree 500g VKE QS",0],["46934","Paprika Rot St",0],["46500","Paprika Mix 500g VKE",0],["46512","Paprika rot 500g VKE",0],["46676","Spitzpaprika Rot 500g VKE",0],["46296","Kuerbis Butternut lose",0],["46323","Zucchini lose",0],["46824","Lauch/Porree ST",0],["46863","Auberginen ST",0],["45138","Snackradieschen 200g VKE",0],["46325","Brokkoli 500g VKE",0],["46402","Lauchzwiebel ST",0],["46805","Rosenkohl 1Kg VKE",0],["46854","Broccoli 500g VKE RF",0],["46603","Champignon weiss 400g VKE",0],["46607","Champignon braun 400g VKE",0],["46857","Minze 25g VKE",0],["46859","Petersilie kraus 40g VKE",0],["46860","Petersilie glatt 40 g VKE",0],["46861","Dill 25g VKE",0],["46883","Suppengemuese 500g VKE",0],["46886","Schnittlauch 25g VKE",0],
+["45156","Bio Knoblauch 150g VKE",0],["46084","Bio Rispentom. 500g VKE",0],["46086","Bio Cherrytomaten250g VKE",0],["46118","Bio Gurken ST",0],["46290","Bio Zucchini 500g VKE",0],["46343","Bio Paprika Mix 400g VKE",0],["46912","Bio NL Kraeutertopf",0],["46914","Bio NL Hokk. Kuerbis lose",0],["46924","BIO NL Feldsalat 100g VKE",0],["46946","Bio Champignon 250g VKE",0],["46989","Bio Mini-Romana-S. VKE-ST",0]
+];
+const $=id=>document.getElementById(id);
+// ---- Barcodes ----
+const C128="212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232".split(" ");
+function code128(s){ // Code Set B -> module string of 1/0
+  const vals=[104]; for(const ch of s) vals.push(ch.charCodeAt(0)-32);
+  let sum=104; for(let k=1;k<vals.length;k++) sum+=k*vals[k];
+  vals.push(sum%103);
+  let w=vals.map(v=>C128[v]).join("")+"2331112", m="";
+  for(let k=0;k<w.length;k++) m+=(k%2?"0":"1").repeat(+w[k]);
+  return {m, guards:null};
+}
+const EL=["0001101","0011001","0010011","0111101","0100011","0110001","0101111","0111011","0110111","0001011"];
+const ER=EL.map(p=>p.replace(/./g,c=>c==="0"?"1":"0"));
+const EG=ER.map(p=>p.split("").reverse().join(""));
+const EP=["LLLLLL","LLGLGG","LLGGLG","LLGGGL","LGLLGG","LGGLLG","LGGGLL","LGLGLG","LGLGGL","LGGLGL"];
+function ean13digits(n){
+  const d=n.padStart(12,"0").slice(-12);
+  let s=0; for(let k=0;k<12;k++) s+=(+d[k])*(k%2?3:1);
+  return d+((10-s%10)%10);
+}
+function ean13(n){
+  const d=ean13digits(n), par=EP[+d[0]]; let m="101";
+  for(let k=1;k<7;k++) m+=(par[k-1]==="L"?EL:EG)[+d[k]];
+  m+="01010"; for(let k=7;k<13;k++) m+=ER[+d[k]]; m+="101";
+  return {m, digits:d};
+}
+let mode="c128";
+try{ if(localStorage.getItem("artnr-mode")==="ean") mode="ean"; }catch(e){}
+function drawCode(n){
+  const r=mode==="ean"?ean13(n):code128(n), q=11, W=r.m.length+2*q, H=60;
+  let p="";
+  for(let k=0;k<r.m.length;){ if(r.m[k]==="1"){let j=k; while(r.m[j]==="1") j++; p+=`M${k+q} 0h${j-k}v${H}h-${j-k}z`; k=j;} else k++; }
+  const svg=$("bc"); svg.setAttribute("viewBox",`0 0 ${W} ${H}`); svg.setAttribute("preserveAspectRatio","none");
+  svg.innerHTML=`<rect width="${W}" height="${H}" fill="#fff"/><path d="${p}" fill="#000" shape-rendering="crispEdges"/>`;
+  $("num").textContent=mode==="ean"?r.digits:n;
+  $("mode").textContent=mode==="ean"?"EAN-13":"Code 128";
+}
+let i=0;
+try{const s=parseInt(localStorage.getItem("artnr-pos"),10); if(s>=0&&s<=D.length) i=s;}catch(e){}
+$("total").textContent=D.length;
+const hlCount=D.filter(d=>d[2]).length;
+$("hl").textContent=hlCount+" highlighted";
+function save(){try{localStorage.setItem("artnr-pos",i)}catch(e){}}
+function render(){
+  const end=i>=D.length;
+  $("num").style.display=end?"none":"";
+  $("code").style.display=end?"none":"";
+  $("name").style.display=end?"none":"";
+  $("done").style.display=end?"block":"none";
+  $("hint").textContent=end?"Tap Start over to begin again":"Tap anywhere for the next number";
+  if(!end){
+    drawCode(D[i][0]);
+    $("name").textContent=D[i][1];
+    $("flag").classList.toggle("on",!!D[i][2]);
+  }else $("flag").classList.remove("on");
+  $("pos").textContent=Math.min(i+1,D.length);
+  $("bar").style.width=(Math.min(i+1,D.length)/D.length*100)+"%";
+  save();
+}
+function next(){ if(i<D.length){i++;render(); if(navigator.vibrate) navigator.vibrate(10);} }
+
+// ---- Listen: hear the scanner's beep through the microphone, then go to the next number ----
+let listening=false, actx=null, stream=null, raf=0, lastHit=0, toneSince=0;
+const COOLDOWN=900, MIN_TONE=30; // ms
+function setListen(on,msg){
+  listening=on; $("snd").textContent=on?"Listening":"Listen off"; $("snd").setAttribute("aria-pressed",on);
+  $("micbar").classList.toggle("on",on||!!msg); $("micmsg").textContent=msg||(on?"Waiting for the scanner beep":"");
+}
+async function startListen(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  }catch(e){ setListen(false,"Microphone blocked here. Use Auto instead."); return; }
+  actx=new (window.AudioContext||window.webkitAudioContext)();
+  if(actx.state==="suspended") await actx.resume();
+  const src=actx.createMediaStreamSource(stream), an=actx.createAnalyser();
+  an.fftSize=2048; an.smoothingTimeConstant=0; src.connect(an);
+  const buf=new Float32Array(an.frequencyBinCount), hz=actx.sampleRate/an.fftSize;
+  const lo=Math.floor(1500/hz), hi=Math.ceil(5000/hz);
+  setListen(true);
+  const loop=()=>{
+    an.getFloatFrequencyData(buf);
+    let peak=-Infinity, pk=lo; for(let k=lo;k<=hi;k++) if(buf[k]>peak){peak=buf[k];pk=k;}
+    // background level: average of bins outside the peak
+    let s=0,n=0; for(let k=lo;k<=hi;k++) if(Math.abs(k-pk)>4){s+=buf[k];n++;}
+    const bg=s/n, prom=peak-bg, now=performance.now();
+    $("lvl").style.width=Math.max(0,Math.min(100,prom*2))+"%";
+    const tone = peak>-60 && prom>28; // loud, narrow tone = beep
+    if(tone){ if(!toneSince) toneSince=now; } else toneSince=0;
+    if(tone && now-toneSince>=MIN_TONE && now-lastHit>COOLDOWN){ lastHit=now; toneSince=0; next(); }
+    raf=requestAnimationFrame(loop);
+  };
+  loop();
+}
+function stopListen(){
+  cancelAnimationFrame(raf); if(stream) stream.getTracks().forEach(t=>t.stop()); if(actx) actx.close();
+  stream=null; actx=null; setListen(false);
+}
+$("snd").addEventListener("click",e=>{ e.stopPropagation(); listening?stopListen():startListen(); });
+
+// ---- Auto: next number every few seconds ----
+let autoT=0, autoSec=2;
+try{ const a=parseFloat(localStorage.getItem("artnr-autoSec")); if(a>0) autoSec=a; }catch(e){}
+$("auto").addEventListener("click",e=>{
+  e.stopPropagation();
+  if(autoT){ clearInterval(autoT); autoT=0; $("auto").textContent="Auto off"; $("auto").setAttribute("aria-pressed",false); return; }
+  const v=parseFloat((prompt("Seconds per number",autoSec)||"").replace(",","."));
+  if(!(v>0)) return; autoSec=v; try{localStorage.setItem("artnr-autoSec",v)}catch(_){}
+  autoT=setInterval(()=>{ if(i>=D.length-1){ next(); clearInterval(autoT); autoT=0; $("auto").textContent="Auto off"; $("auto").setAttribute("aria-pressed",false);} else next(); }, v*1000);
+  $("auto").textContent="Auto "+v+"s"; $("auto").setAttribute("aria-pressed",true);
+});
+$("tap").addEventListener("click",next);
+$("tap").addEventListener("keydown",e=>{if(e.key===" "||e.key==="Enter"||e.key==="ArrowRight"){e.preventDefault();next();}});
+document.addEventListener("keydown",e=>{if(e.key==="ArrowLeft"&&i>0){i--;render();}});
+$("mode").addEventListener("click",()=>{mode=mode==="ean"?"c128":"ean"; try{localStorage.setItem("artnr-mode",mode)}catch(e){} render();});
+$("back").addEventListener("click",()=>{if(i>0){i--;render();}});
+$("reset").addEventListener("click",()=>{if(confirm("Start over at the first number?")){i=0;render();}});
+$("jump").addEventListener("click",()=>{
+  const v=(prompt("Enter article number or position (1–"+D.length+")")||"").trim();
+  if(!v) return;
+  let k=D.findIndex(d=>d[0]===v);
+  if(k<0){const n=parseInt(v,10); if(n>=1&&n<=D.length) k=n-1;}
+  if(k>=0){i=k;render();} else alert("Number not found: "+v);
+});
+render();
+</script>
+</body>
+</html>

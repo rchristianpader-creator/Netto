@@ -128,6 +128,14 @@ gedrehte Codes. Lädt WebAssembly nicht, dient [ZXing](https://github.com/zxing-
 Apache-2.0) als Ersatz. Wo das Gerät es erlaubt, gibt es Dauer-Autofokus und einen Knopf *Licht* (Taschenlampe).
 Das Kamerabild wird nur im Browser ausgewertet.
 
+## Artikelnummern (Obst & Gemüse)
+
+Zusätzliche Seite [`artikelnummern.html`](artikelnummern.html), online unter
+<https://rchristianpader-creator.github.io/Netto/artikelnummern.html>: 179 fünfstellige Artikelnummern aus Obst &
+Gemüse, nacheinander als Barcode (Code 128 oder EAN-13 umschaltbar). Antippen = nächste Nummer; *Listen* hört auf den
+Scanner-Piep, *Auto* schaltet alle paar Sekunden weiter. Markierte Artikel bekommen einen orangen Balken. Fortschritt
+bleibt im Browser gespeichert.
+
 ## Sortiment ändern
 
 Die Artikel stehen in [`data/netto-sortiment.csv`](data/netto-sortiment.csv) (Semikolon-getrennt, UTF-8):
